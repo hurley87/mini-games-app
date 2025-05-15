@@ -58,6 +58,11 @@ export default function App() {
     <div className="flex flex-col min-h-screen font-sans text-[var(--app-foreground)] mini-app-theme from-[var(--app-background)] to-[var(--app-gray)]">
       Mini Games
       {saveFrameButton}
+      <div className="flex flex-col items-center justify-center h-screen">  
+        {
+          JSON.stringify(context)
+        }
+      </div>
     </div>
   );
 }
