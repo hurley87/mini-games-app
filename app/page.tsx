@@ -5,8 +5,7 @@ import {
   useAddFrame,
 } from "@coinbase/onchainkit/minikit";
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { Button } from "./components/DemoComponents";
-import { Icon } from "./components/DemoComponents";
+import Link from "next/link";
 
 export default function App() {
   const { setFrameReady, isFrameReady, context } = useMiniKit();
@@ -28,22 +27,18 @@ export default function App() {
   const saveFrameButton = useMemo(() => {
     if (context && !context.client.added) {
       return (
-        <Button
-          variant="ghost"
-          size="sm"
+        <button
           onClick={handleAddFrame}
           className="text-[var(--app-accent)] p-4"
-          icon={<Icon name="plus" size="sm" />}
         >
           Save Frame
-        </Button>
+        </button>
       );
     }
 
     if (frameAdded) {
       return (
         <div className="flex items-center space-x-1 text-sm font-medium text-[#0052FF] animate-fade-out">
-          <Icon name="check" size="sm" className="text-[#0052FF]" />
           <span>Saved</span>
         </div>
       );
@@ -53,16 +48,13 @@ export default function App() {
   }, [context, frameAdded, handleAddFrame]);
 
   console.log("context", context);
+  // const userId = context?.user?.fid?.toString() || "";
 
   return (
     <div className="flex flex-col min-h-screen font-sans text-[var(--app-foreground)] mini-app-theme from-[var(--app-background)] to-[var(--app-gray)]">
       Mini Games
       {saveFrameButton}
-      <div className="flex flex-col items-center justify-center h-screen">  
-        {
-          JSON.stringify(context)
-        }
-      </div>
+      <Link href="/games/32340a96-316c-4f9c-a433-d919db443fc3">Game</Link>
     </div>
   );
 }
