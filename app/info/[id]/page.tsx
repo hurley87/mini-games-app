@@ -55,7 +55,7 @@ export async function generateMetadata({
         action: {
           type: 'launch_frame',
           name: 'Token Not Found',
-          url: `${appUrl}/games/${id}`,
+          url: `${appUrl}/info/${id}`,
           splashImageUrl: `${appUrl}/splash.jpg`,
           splashBackgroundColor: '#000000',
         },
