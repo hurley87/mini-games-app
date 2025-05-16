@@ -146,6 +146,18 @@ export const taskHandlers = {
         At the appropriate moment (such as when the game ends or points are earned), you must call:
         
         window.awardPoints(score);
+
+        Do not call window.awardPoints(score) directly. Instead, check if it exists first. Use this helper function:
+
+        function tryAwardPoints(score) {
+          if (typeof window.awardPoints === 'function') {
+            window.awardPoints(score);
+          } else {
+            setTimeout(() => tryAwardPoints(score), 50);
+          }
+        }
+
+        When the player earns points, call tryAwardPoints(score) instead of calling window.awardPoints(score) directly.
         
         Pass the player's score as a number. Do not define or modify this function — it is already provided by the environment.
 
