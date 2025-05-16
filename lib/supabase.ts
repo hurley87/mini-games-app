@@ -169,7 +169,9 @@ export const supabaseService = {
   ) {
     const { data, error } = await supabase
       .from('notifications')
-      .insert([notification])
+      .upsert(notification, {
+        onConflict: 'fid'
+      })
       .select()
       .single();
   

@@ -29,6 +29,8 @@ export async function POST(request: Request) {
     // Handle different event types
     switch (event) {
       case 'frame_added':
+        console.log('Frame added');
+        console.log('Data:', data);
         if ('notificationDetails' in data.event) {
           const fid = data.fid;
           const url = data.event.notificationDetails?.url;

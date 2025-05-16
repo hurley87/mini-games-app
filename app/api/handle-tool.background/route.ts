@@ -1,4 +1,5 @@
 import { publishCast } from '@/lib/neynar';
+import { notifyAllUsers } from '@/lib/notifications';
 import { taskHandlers } from '@/lib/task-handlers';
 import { NextResponse } from 'next/server';
 
@@ -46,6 +47,11 @@ export async function POST(request: Request) {
             `Game created!`,
             parent,
             `https://app.minigames.studio/info/${result.data.gameId}`
+          );
+          await notifyAllUsers(
+            `Game created!`,
+            `It's called ${args.name}.`,
+            result.data.gameId
           );
         }
         break;
