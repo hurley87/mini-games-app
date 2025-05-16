@@ -12,7 +12,6 @@ type MessageContentPartParam = {
   };
 };
 
-
 // Types
 interface WebhookRequestData {
   text: string;
@@ -233,8 +232,8 @@ const processOpenAIInteraction = async (
     console.log('content', content);
     await client.beta.threads.messages.create(threadId, {
       role: 'user',
-      // @ts-ignore
-      content: content as any, // Type assertion needed due to SDK type mismatch
+      // @ts-expect-error - OpenAI SDK type mismatch
+      content: content,
     });
     console.log(`Added user message to thread ${threadId}`);
     // --- Run Assistant on Conversation Thread ---
