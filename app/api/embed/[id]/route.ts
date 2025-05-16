@@ -54,13 +54,10 @@ export async function GET(
           console.error('Error awarding points:', error);
         }
       };
-
-      // Notify parent that iframe is ready
-      window.parent.postMessage('iframe-ready', '*');
     </script>
   `;
 
-    const html = game.code.replace('</body>', `${injectedScript}</body>`);
+    const html = game.code.replace('<head>', `<head>${injectedScript}`);
 
     console.log('html', html);
 
