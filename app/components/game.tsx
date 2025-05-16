@@ -70,7 +70,11 @@ export function Game({ id, timeoutSeconds = 10 }: GameProps) {
 
   return (
     <div className='fixed inset-0 z-50 top-0 left-0 w-full h-full'>
-      {loading && <p>Loading game...</p>}
+      {loading && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50">
+          <p className="text-white text-xl">Loading game...</p>
+        </div>
+      )}
       <iframe
         src={iframeUrl}
         sandbox="allow-scripts allow-same-origin"
@@ -78,8 +82,8 @@ export function Game({ id, timeoutSeconds = 10 }: GameProps) {
           width: '100%',
           height: '100%',
           border: 'none',
+          visibility: loading ? 'hidden' : 'visible'
         }}
-        onLoad={() => setLoading(false)}
       />
     </div>
   );
