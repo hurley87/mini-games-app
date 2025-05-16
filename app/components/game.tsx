@@ -22,6 +22,17 @@ export function Game({ id, timeoutSeconds = 10 }: GameProps) {
   }, [setFrameReady, isFrameReady]);
 
   useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data === 'iframe-ready') {
+        setLoading(false);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
+  useEffect(() => {
     const timer = setTimeout(() => {
       setIsGameOver(true);
     }, timeoutSeconds * 1000);

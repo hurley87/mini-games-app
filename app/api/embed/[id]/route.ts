@@ -37,16 +37,26 @@ export async function GET(
     const injectedScript = `
     <script>
       window.awardPoints = async function(score) {
-        await fetch('${process.env.NEXT_PUBLIC_URL}/api/award', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: '${userId}',
-            gameId: '${gameId}',
-            score: score
-          })
-        });
+        try {
+          const response = await fetch('${process.env.NEXT_PUBLIC_URL}/api/award', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: '${userId}',
+              gameId: '${gameId}',
+              score: score
+            })
+          });
+          if (!response.ok) {
+            console.error('Failed to award points:', await response.text());
+          }
+        } catch (error) {
+          console.error('Error awarding points:', error);
+        }
       };
+
+      // Notify parent that iframe is ready
+      window.parent.postMessage('iframe-ready', '*');
     </script>
   `;
 
