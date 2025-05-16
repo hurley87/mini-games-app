@@ -19,6 +19,14 @@ export default function App() {
     }
   }, [setFrameReady, isFrameReady]);
 
+  useEffect(() => {
+    if (context) {
+      console.log('context', context);
+      const user = context.user;
+      console.log('user', user);
+    }
+  }, [context]);
+
   const handleAddFrame = useCallback(async () => {
     const frameAdded = await addFrame();
     setFrameAdded(Boolean(frameAdded));

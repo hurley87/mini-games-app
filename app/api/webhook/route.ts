@@ -32,16 +32,20 @@ export async function POST(request: Request) {
           const fid = data.fid;
           const url = data.event.notificationDetails?.url as string;
           const token = data.event.notificationDetails?.token as string;
-          const user = {
-            fid,
-            url,
-            token,
-          };
 
           try {
-            await supabaseService.insertUser(user);
+            const existingUsers = await supabaseService.getUserByFid(fid);
+            const existingUser = existingUsers?.[0];
 
-            console.log('User stored in Supabase:', user);
+            if (existingUser) {
+              // Update existing user with new notification details
+              await supabaseService.updateUser(fid, {
+                url,
+                token,
+              });
+            }
+
+            console.log('User stored in Supabase:', { fid, url, token });
 
           } catch (error) {
             console.error('Failed to store notification:', error);

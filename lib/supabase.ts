@@ -5,8 +5,11 @@ import { createClient } from '@supabase/supabase-js';
     id?: string; // Supabase ID, usually UUID
     created_at?: string; // Timestamp
     fid: number;
-    url: string;
-    token: string;
+    name?: string;
+    pfp?: string;
+    username: string;
+    url?: string;
+    token?: string;
   };
 
 // --- End Types ---
@@ -37,7 +40,7 @@ const supabase = createClient(
 export const supabaseService = {
   async upsertUser(
     record: Partial<User> &
-      Pick<User, 'fid' | 'url' | 'token'>
+      Pick<User, 'fid' | 'name' | 'pfp' | 'username'>
   ) {
     // Use standard upsert to set fid and openai_thread_id
     // Note: This will NOT increment message_count
@@ -113,33 +116,15 @@ export const supabaseService = {
     return data;
   },
 
-  async updateUserMemory(fid: number, memoryData: Pick<User, 'url' | 'token'>) {
+  async updateUser(fid: number, user: Partial<User>) {
     const { data, error } = await supabase
       .from('users')
-      .update(memoryData)
-      .eq('fid', fid)
-      .select(); // Optionally select the updated row
-
-    if (error) {
-      console.error(
-        `Supabase update error (user memory for FID ${fid}):`,
-        error
-      );
-      // Decide if this error should halt execution
-      throw new Error('Failed to update user memory');
-    }
-    console.log(`Updated memory for user FID ${fid}`);
-    return data;
-  },
-
-  async storeMemory(fid: number, memory: string) {
-    const { data, error } = await supabase
-      .from('memories')
-      .insert({ fid, memory });
+      .update(user)
+      .eq('fid', fid);
 
     if (error) {
       console.error('Supabase error:', error);
-      throw new Error('Failed to store memory');
+      throw new Error('Failed to update user');
     }
 
     return data;
@@ -168,22 +153,6 @@ export const supabaseService = {
       throw new Error('Failed to get game');
     }
 
-    return data;
-  },
-
-  async insertUser(
-    user: Omit<User, 'id' | 'created_at'>
-  ) {
-    const { data, error } = await supabase
-      .from('users')
-      .insert([user])
-      .select()
-      .single();
-  
-    if (error) {
-      throw error;
-    }
-  
     return data;
   },
 
