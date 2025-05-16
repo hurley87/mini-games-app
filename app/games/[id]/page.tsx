@@ -84,8 +84,6 @@ export default async function GamePage({
   const { id } = await params;
   const userId = '7988';
   return (
-    <div className="w-screen h-screen">
-      <Game id={id} userId={userId} />
-    </div>
+    <Game id={id} userId={userId} />
   );
 }
