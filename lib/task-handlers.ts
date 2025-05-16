@@ -155,7 +155,7 @@ export const taskHandlers = {
 
         All game must last 30 seconds before they reset.
 
-        Use simple colors and shapes. Interactions should be simple - think taps and clicks (no swipes or complex gestures).
+        Use simple colors and shapes. Interactions should be simple - just taps and clicks (no swipes or complex gestures). Don't use any external packacges. dont follow the users cursor.
         
         Return only the full code — no explanation or extra text.
                 `
