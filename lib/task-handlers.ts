@@ -121,6 +121,9 @@ export const taskHandlers = {
             console.log('Saving code for thread:', taskData.threadId);
         
             const instructions = `
+
+        Use image in this thread to generate style of the game.
+
         You are now generating the implementation of a simple, fun browser-based game.
         
         You are a game generator. Create a complete HTML file that contains a canvas-based game using vanilla JS or Three.js. 
@@ -145,6 +148,14 @@ export const taskHandlers = {
         window.awardPoints(score);
         
         Pass the player's score as a number. Do not define or modify this function — it is already provided by the environment.
+
+        Show the players score in the top left corner of the screen. Only update score but 1 point at a time.
+
+        All games must be playable in the browser.
+
+        All game must last 30 seconds before they reset.
+
+        Use simple colors and shapes. Interactions should be simple - think taps and clicks (no swipes or complex gestures).
         
         Return only the full code — no explanation or extra text.
                 `

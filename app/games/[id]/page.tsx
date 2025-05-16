@@ -1,4 +1,4 @@
-import { Game } from '@/app/components/game';
+// import { Game } from '@/app/components/game';
 import { supabaseService } from '@/lib/supabase';
 import { Metadata } from 'next';
 
@@ -84,6 +84,6 @@ export default async function GamePage({
   const { id } = await params;
   const userId = '7988';
   return (
-    <Game id={id} userId={userId} />
+    <div>helo {id} {userId}</div>
   );
 }
