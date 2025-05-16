@@ -49,7 +49,10 @@ export function Game({ id, timeoutSeconds = 10, coinAddress }: GameProps) {
   const iframeUrl = `/api/embed/${id}?userId=${userId}&gameId=${id}`;
   console.log('Iframe URL:', iframeUrl);
 
+  
+
   const handleSwapToken = async () => {
+    console.log('Coin Address:', coinAddress);
     await sdk.actions.swapToken({ 
       sellToken: '0x0000000000000000000000000000000000000000',
       buyToken: coinAddress,
