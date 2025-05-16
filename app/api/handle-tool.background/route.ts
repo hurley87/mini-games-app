@@ -45,7 +45,7 @@ export async function POST(request: Request) {
           await publishCast(
             `Game created!`,
             parent,
-            `https://app.minigames.studio/games/${result.data.gameId}`
+            `https://app.minigames.studio/info/${result.data.gameId}`
           );
         }
         break;

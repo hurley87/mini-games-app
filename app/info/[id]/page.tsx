@@ -27,7 +27,7 @@ export async function generateMetadata({
         action: {
           type: 'launch_frame',
           name: game.name,
-          url: `${appUrl}/games/${id}`,
+          url: `${appUrl}/info/${id}`,
           splashImageUrl: `${appUrl}/splash.jpg`,
           splashBackgroundColor: '#000000',
         },
@@ -87,7 +87,7 @@ export default async function GamePage({
       <div className='flex flex-col items-center justify-center h-screen w-screen relative z-50 max-w-lg mx-auto gap-4'>
         <h1 className='text-2xl font-bold'>{game.name}</h1>
         <p className='text-sm text-gray-500 text-center'>{game.description}</p>
-        <Link href={`/games/${id}`}>
+        <Link href={`/info/${id}`}>
           <button className='bg-white text-black py-2 text-2xl rounded-full px-10'>Play</button>
         </Link>
       </div>

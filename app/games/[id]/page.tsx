@@ -28,7 +28,7 @@ export async function generateMetadata({
         action: {
           type: 'launch_frame',
           name: game.name,
-          url: `${appUrl}/games/${id}`,
+          url: `${appUrl}/info/${id}`,
           splashImageUrl: `${appUrl}/splash.jpg`,
           splashBackgroundColor: '#000000',
         },
