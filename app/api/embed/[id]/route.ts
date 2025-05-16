@@ -36,7 +36,6 @@ export async function GET(
 
     const injectedScript = `
     <script>
-      // Ensure awardPoints is available globally
       window.awardPoints = async function(score) {
         try {
           const response = await fetch('${process.env.NEXT_PUBLIC_URL}/api/award', {
@@ -61,8 +60,7 @@ export async function GET(
     </script>
   `;
 
-    // Inject the script at the start of the body, before any game code
-    const html = game.code.replace('<body>', `<body>${injectedScript}`);
+    const html = game.code.replace('</body>', `${injectedScript}</body>`);
 
     console.log('html', html);
 
