@@ -33,7 +33,7 @@ export async function POST(request: Request) {
         {
           user_id: userId,
           game_id: gameId,
-          score: score,
+          score: 1,
         },
       ]);
 
