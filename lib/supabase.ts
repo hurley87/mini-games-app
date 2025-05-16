@@ -1,5 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
 
+export type Notification = {
+  id: string;
+  fid: number;
+  url?: string;
+  token?: string;
+  created_at: string;
+}
+
+
 // --- Types ---
   export type User = {
     id?: string; // Supabase ID, usually UUID
@@ -153,6 +162,21 @@ export const supabaseService = {
       throw new Error('Failed to get game');
     }
 
+    return data;
+  },
+  async insertNotification(
+    notification: Omit<Notification, 'id' | 'created_at'>
+  ) {
+    const { data, error } = await supabase
+      .from('notifications')
+      .insert([notification])
+      .select()
+      .single();
+  
+    if (error) {
+      throw error;
+    }
+  
     return data;
   },
 

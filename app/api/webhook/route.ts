@@ -5,6 +5,13 @@ import {
   ParseWebhookEventResult,
 } from '@farcaster/frame-node';
 import { supabaseService } from '@/lib/supabase';
+import { NeynarAPIClient, Configuration } from '@neynar/nodejs-sdk';
+
+const config = new Configuration({
+  apiKey: process.env.NEYNAR_API_KEY || '',
+});
+
+const client = new NeynarAPIClient(config);
 
 function isFrameEvent(
   data: ParseWebhookEventResult
@@ -28,24 +35,18 @@ export async function POST(request: Request) {
     switch (event) {
       case 'frame_added':
         if ('notificationDetails' in data.event) {
-          console.log('Frame added:', data);
           const fid = data.fid;
-          const url = data.event.notificationDetails?.url as string;
-          const token = data.event.notificationDetails?.token as string;
+          const url = data.event.notificationDetails?.url;
+          const token = data.event.notificationDetails?.token;
+          const notification = {
+            fid,
+            url,
+            token,
+          };
+
 
           try {
-            const existingUsers = await supabaseService.getUserByFid(fid);
-            const existingUser = existingUsers?.[0];
-
-            if (existingUser) {
-              // Update existing user with new notification details
-              await supabaseService.updateUser(fid, {
-                url,
-                token,
-              });
-            }
-
-            console.log('User stored in Supabase:', { fid, url, token });
+            await supabaseService.insertNotification(notification);
 
           } catch (error) {
             console.error('Failed to store notification:', error);
