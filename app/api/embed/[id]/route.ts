@@ -1,4 +1,4 @@
-import supabase from '@/lib/supabase';
+import { supabaseService } from '@/lib/supabase';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
@@ -27,37 +27,38 @@ export async function GET(
     );
   }
 
-  const { data: game, error } = await supabase
-    .from('games')
-    .select('react_code')
-    .eq('id', id)
-    .single();
+  try {
+    const game = await supabaseService.getGameById(id);
 
-  if (error || !game) {
-    return NextResponse.json({ error: 'Game not found' }, { status: 404 });
+    if (!game) {
+      return NextResponse.json({ error: 'Game not found' }, { status: 404 });
+    }
+
+    const injectedScript = `
+    <script>
+      window.awardPoints = async function(score) {
+        await fetch('${process.env.NEXT_PUBLIC_URL}/api/award', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: '${userId}',
+            gameId: '${gameId}',
+            score: score
+          })
+        });
+      };
+    </script>
+  `;
+
+    const html = game.code.replace('</body>', `${injectedScript}</body>`);
+
+    console.log('html', html);
+
+    return new Response(html, {
+      headers: { 'Content-Type': 'text/html' },
+    });
+  } catch (error) {
+    console.error('Error fetching game:', error);
+    return NextResponse.json({ error: 'Failed to fetch game' }, { status: 500 });
   }
-
-  const injectedScript = `
-  <script>
-    window.awardPoints = async function(score) {
-      await fetch('/api/award', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: '${userId}',
-          gameId: '${gameId}',
-          score: score
-        })
-      });
-    };
-  </script>
-`;
-
-  const html = game.react_code.replace('</body>', `${injectedScript}</body>`);
-
-  console.log('html', html);
-
-  return new Response(html, {
-    headers: { 'Content-Type': 'text/html' },
-  });
 } 
