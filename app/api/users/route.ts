@@ -3,10 +3,7 @@ import { supabaseService } from '@/lib/supabase';
 
 export async function POST(request: Request) {
   try {
-    const userData = await request.json();
-
-    console.log('userData', userData);
-    
+    const userData = await request.json();    
     // Validate required fields
     if (!userData.fid || !userData.name || !userData.pfp || !userData.username) {
       return NextResponse.json(
