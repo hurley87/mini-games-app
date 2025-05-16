@@ -23,7 +23,7 @@ export async function generateMetadata({
   try {
     const frame = {
       version: 'next',
-      imageUrl: game.image,
+      imageUrl: game.image || `${appUrl}/logo.png`,
       button: {
         title: `Play ${game.name}`,
         action: {
