@@ -1,7 +1,6 @@
 import { publishCast } from '@/lib/neynar';
 import { taskHandlers } from '@/lib/task-handlers';
 import { NextResponse } from 'next/server';
-import { openaiService } from '@/lib/openai';
 
 // Route configuration
 export const dynamic = 'force-dynamic';
@@ -12,7 +11,6 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const {
-      toolCallId,
       runId,
       threadId,
       toolName,
@@ -55,8 +53,6 @@ export async function POST(request: Request) {
       default:
         throw new Error(`Unsupported tool: ${toolName}`);
     }
-
-    await openaiService.submitToolOutput(threadId, runId, toolCallId, JSON.stringify(result));
 
     return NextResponse.json(result);
   } catch (error) {
