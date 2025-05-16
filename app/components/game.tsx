@@ -9,7 +9,7 @@ interface GameProps {
   timeoutSeconds?: number; // Optional timeout in seconds
 }
 
-export function Game({ id, userId, timeoutSeconds = 1 }: GameProps) {
+export function Game({ id, userId, timeoutSeconds = 10 }: GameProps) {
   const [loading, setLoading] = useState(true);
   const [isGameOver, setIsGameOver] = useState(false);
   const { setFrameReady, isFrameReady } = useMiniKit();
@@ -49,7 +49,7 @@ export function Game({ id, userId, timeoutSeconds = 1 }: GameProps) {
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90">
         <div className="text-center">
           <h1 className="text-6xl font-bold text-white mb-4">Game Over</h1>
-          <p className="text-xl text-gray-300">Time's up!</p>
+          <p className="text-xl text-gray-300">{`Time's up!`}</p>
         </div>
       </div>
     );
