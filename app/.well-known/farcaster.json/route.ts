@@ -28,7 +28,7 @@ export async function GET() {
       subtitle: "Play Mini Games",
       description: "Play Mini Games",
       screenshotUrls: [],
-      iconUrl: "https://app.minigames.studio/favicon.ico",
+      iconUrl: "https://app.minigames.studio/icon.png",
       splashImageUrl: "https://app.minigames.studio/splash.png",
       splashBackgroundColor: "#000000",
       homeUrl: URL,
@@ -39,7 +39,7 @@ export async function GET() {
       tagline: "Play Mini Games",
       ogTitle: "Mini Games",
       ogDescription: "Play Mini Games",
-      ogImageUrl: "https://app.minigames.studio/og.png",
+      ogImageUrl: "https://app.minigames.studio/icon.png",
     }),
   });
 }

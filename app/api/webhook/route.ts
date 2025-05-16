@@ -20,6 +20,8 @@ export async function POST(request: Request) {
     const data = await parseWebhookEvent(body, verifyAppKeyWithNeynar);
     const event = data.event.event;
 
+    console.log('Event:', event);
+
     if (!isFrameEvent(data)) {
       throw new Error('Invalid event data');
     }
