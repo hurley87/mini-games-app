@@ -42,6 +42,7 @@ export async function POST(request: Request) {
           image,
           runId
         });
+        console.log('result', result);
         if (result.success && result.data && 'gameId' in result.data) {
           await publishCast(
             `Game created!`,
