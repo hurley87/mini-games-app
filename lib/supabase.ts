@@ -83,6 +83,18 @@ export const supabaseService = {
     }
   },
 
+  async incrementUserPoints(fid: number, points: number) {
+    const { error } = await supabase.rpc('increment_user_points', {
+      p_fid: fid,
+      p_points: points
+    });
+
+    if (error) {
+      console.error('Supabase RPC error (increment_user_points):', error);
+      throw new Error('Failed to increment user points');
+    }
+  },
+
   async upsertConversation(record: Conversation) {
     const { data, error } = await supabase
       .from('conversations')

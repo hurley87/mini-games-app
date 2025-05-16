@@ -81,10 +81,9 @@ export default async function GamePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const userId = '7988';
   return (
     <div className=''>
-      <Game id={id} userId={userId} />
+      <Game id={id} />
     </div>
   );
 }

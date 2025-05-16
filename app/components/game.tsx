@@ -5,14 +5,13 @@ import { useEffect, useState } from 'react';
 
 interface GameProps {
   id: string;
-  userId: string;
   timeoutSeconds?: number; // Optional timeout in seconds
 }
 
-export function Game({ id, userId, timeoutSeconds = 10 }: GameProps) {
+export function Game({ id, timeoutSeconds = 10 }: GameProps) {
   const [loading, setLoading] = useState(true);
   const [isGameOver, setIsGameOver] = useState(false);
-  const { setFrameReady, isFrameReady } = useMiniKit();
+  const { setFrameReady, isFrameReady, context } = useMiniKit();
 
   useEffect(() => {
     if (!isFrameReady) {
@@ -30,12 +29,15 @@ export function Game({ id, userId, timeoutSeconds = 10 }: GameProps) {
     return () => clearTimeout(timer);
   }, [timeoutSeconds]);
 
-  if (!userId) {
-    return <div>Please connect your wallet to play the game</div>;
-  }
 
   if(!id) {
     return <div>Please enter a game id</div>;
+  }
+
+  const userId = context?.user?.fid;
+
+  if(!userId) {
+    return <div>Please connect your wallet to play the game</div>;
   }
 
   // Debug logs

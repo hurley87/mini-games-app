@@ -26,8 +26,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // Save the score to the database
-    const { error } = await supabaseService
+    // First, save the score to the scores table
+    const { error: scoreError } = await supabaseService
       .from('scores')
       .insert([
         {
@@ -37,10 +37,21 @@ export async function POST(request: Request) {
         },
       ]);
 
-    if (error) {
-      console.error('Error saving score:', error);
+    if (scoreError) {
+      console.error('Error saving score:', scoreError);
       return NextResponse.json(
         { error: 'Failed to save score' },
+        { status: 500, headers }
+      );
+    }
+
+    // Then, increment the user's points
+    try {
+      await supabaseService.incrementUserPoints(Number(userId), 1);
+    } catch (error) {
+      console.error('Error updating points:', error);
+      return NextResponse.json(
+        { error: 'Failed to update points' },
         { status: 500, headers }
       );
     }
