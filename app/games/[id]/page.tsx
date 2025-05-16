@@ -18,7 +18,6 @@ export async function generateMetadata({
 }: TokenPageProps): Promise<Metadata> {
   const { id } = await params;
   const game = await supabaseService.getGameById(id);
-  console.log('game', game);
 
   try {
     const frame = {
