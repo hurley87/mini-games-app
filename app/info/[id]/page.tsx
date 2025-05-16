@@ -1,5 +1,6 @@
 import { supabaseService } from '@/lib/supabase';
 import { Metadata } from 'next';
+import Link from 'next/link';
 
 interface TokenPageProps {
   params: Promise<{
@@ -86,9 +87,9 @@ export default async function GamePage({
       <div className='flex flex-col items-center justify-center h-screen w-screen relative z-50 max-w-lg mx-auto gap-4 p-4'>
         <h1 className='text-2xl font-bold'>{game.name}</h1>
         <p className='text-sm text-gray-500 text-center'>{game.description}</p>
-        <a href={`/info/${id}`}>
+        <Link href="/games/d87ab2c1-94ca-49e1-8bd7-756bf848f2a6">
           <button className='bg-white text-black py-2 text-2xl rounded-full px-10'>Play</button>
-        </a>
+        </Link>
       </div>
     </div>
   );
