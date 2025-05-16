@@ -20,11 +20,37 @@ export default function App() {
   }, [setFrameReady, isFrameReady]);
 
   useEffect(() => {
-    if (context) {
-      console.log('context', context);
-      const user = context.user;
-      console.log('user', user);
-    }
+    const saveUser = async () => {
+      if (context) {
+        console.log('context', context);
+        const user = context.user;
+        console.log('user', user);
+        
+        // Only proceed if all required fields are present
+        if (user.fid && user.displayName && user.pfpUrl && user.username) {
+          const userData = {
+            fid: user.fid,
+            name: user.displayName,
+            pfp: user.pfpUrl,
+            username: user.username,
+          };
+          console.log('userData', userData);
+          
+          // Call the API endpoint to upsert user data
+          await fetch('/api/users', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(userData),
+          });
+        } else {
+          console.warn('Missing required user data fields');
+        }
+      }
+    };
+
+    saveUser();
   }, [context]);
 
   const handleAddFrame = useCallback(async () => {
