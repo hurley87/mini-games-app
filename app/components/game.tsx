@@ -29,7 +29,7 @@ export function Game({ id, userId }: GameProps) {
       {loading && <p>Loading game...</p>}
       <iframe
         src={iframeUrl}
-        sandbox="allow-scripts"
+        sandbox="allow-scripts allow-same-origin"
         style={{
           width: '100%',
           height: '100%',
