@@ -81,9 +81,12 @@ export default async function GamePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const game = await supabaseService.getGameById(id);
+  const coinAddress = game.coin_address;
+  
   return (
     <div className=''>
-      <Game id={id} />
+      <Game id={id} coinAddress={coinAddress} />
     </div>
   );
 }

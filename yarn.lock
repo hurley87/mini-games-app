@@ -143,14 +143,6 @@
     ox "^0.4.4"
     zod "^3.24.1"
 
-"@farcaster/frame-core@0.0.32":
-  version "0.0.32"
-  resolved "https://registry.npmjs.org/@farcaster/frame-core/-/frame-core-0.0.32.tgz"
-  integrity sha512-WkOa3Eq2cVQpHuykUn538SJNea7DZul+MqjjGjIZGjo0ScjRR09Ql9QmxG1twsRQrsp0jokpBCIMBBHnhwoaxQ==
-  dependencies:
-    ox "^0.4.4"
-    zod "^3.24.1"
-
 "@farcaster/frame-core@0.0.39":
   version "0.0.39"
   resolved "https://registry.yarnpkg.com/@farcaster/frame-core/-/frame-core-0.0.39.tgz#faa176d1852f6f9d7901b11685ce7ec00f66c511"
@@ -180,12 +172,12 @@
     eventemitter3 "^5.0.1"
     ox "^0.4.4"
 
-"@farcaster/frame-sdk@^0.0.35":
-  version "0.0.35"
-  resolved "https://registry.npmjs.org/@farcaster/frame-sdk/-/frame-sdk-0.0.35.tgz"
-  integrity sha512-AXRUNWjY6y5XwqzfnKuZVo5bBboq+nSDVLTOHGiJ6Ie2aU4SF+1nwu7U8ttB1JQl6Yzn3foe7Qjnr9Ij5VfccA==
+"@farcaster/frame-sdk@^0.0.44":
+  version "0.0.44"
+  resolved "https://registry.yarnpkg.com/@farcaster/frame-sdk/-/frame-sdk-0.0.44.tgz#3001117ff2cd943e99b2842baa367ebc64f62903"
+  integrity sha512-mRFRmHwl7WmFN4VCoXLRP2kPE70WNsyQwc2t6cMQAjpu7yQbjsxGthKBSkxxMxo2v/pchJmEyxjNl+aXzo/GSQ==
   dependencies:
-    "@farcaster/frame-core" "0.0.32"
+    "@farcaster/frame-core" "0.0.39"
     comlink "^4.4.2"
     eventemitter3 "^5.0.1"
     ox "^0.4.4"
