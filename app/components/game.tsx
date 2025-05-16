@@ -35,7 +35,7 @@ export function Game({ id, userId }: GameProps) {
   console.log('Iframe URL:', iframeUrl);
 
   return (
-    <div className='flex flex-col items-center justify-center h-screen w-screen relative z-50'>
+    <div className='fixed inset-0 z-50 top-0 left-0 w-full h-full'>
       {loading && <p>Loading game...</p>}
       <iframe
         src={iframeUrl}
