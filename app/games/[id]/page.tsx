@@ -8,7 +8,6 @@ interface TokenPageProps {
   }>;
 }
 
-
 export const dynamic = 'force-dynamic';
 
 const appUrl = 'https://app.minigames.studio';

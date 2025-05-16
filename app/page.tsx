@@ -54,7 +54,7 @@ export default function App() {
     <div className="flex flex-col min-h-screen font-sans text-[var(--app-foreground)] mini-app-theme from-[var(--app-background)] to-[var(--app-gray)]">
       Mini Games
       {saveFrameButton}
-      <Link href="/info/d87ab2c1-94ca-49e1-8bd7-756bf848f2a6">Game</Link>
+      <Link href="/info/d87ab2c1-94ca-49e1-8bd7-756bf848f2a6">Play Game</Link>
     </div>
   );
 }
