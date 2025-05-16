@@ -6,19 +6,29 @@ import { useEffect, useState } from 'react';
 interface GameProps {
   id: string;
   userId: string;
+  timeoutSeconds?: number; // Optional timeout in seconds
 }
 
-export function Game({ id, userId }: GameProps) {
+export function Game({ id, userId, timeoutSeconds = 1 }: GameProps) {
   const [loading, setLoading] = useState(true);
+  const [isGameOver, setIsGameOver] = useState(false);
   const { setFrameReady, isFrameReady } = useMiniKit();
 
   useEffect(() => {
-      if (!isFrameReady) {
-        setFrameReady({
-          disableNativeGestures: true
-        });
-      }
+    if (!isFrameReady) {
+      setFrameReady({
+        disableNativeGestures: true
+      });
+    }
   }, [setFrameReady, isFrameReady]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsGameOver(true);
+    }, timeoutSeconds * 1000);
+
+    return () => clearTimeout(timer);
+  }, [timeoutSeconds]);
 
   if (!userId) {
     return <div>Please connect your wallet to play the game</div>;
@@ -33,6 +43,17 @@ export function Game({ id, userId }: GameProps) {
 
   const iframeUrl = `/api/embed/${id}?userId=${userId}&gameId=${id}`;
   console.log('Iframe URL:', iframeUrl);
+
+  if (isGameOver) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90">
+        <div className="text-center">
+          <h1 className="text-6xl font-bold text-white mb-4">Game Over</h1>
+          <p className="text-xl text-gray-300">Time's up!</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className='fixed inset-0 z-50 top-0 left-0 w-full h-full'>

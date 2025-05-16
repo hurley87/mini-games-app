@@ -1,124 +1,76 @@
+import { NextResponse } from 'next/server';
 import {
-  setUserNotificationDetails,
-  deleteUserNotificationDetails,
-} from "@/lib/notification";
-import { sendFrameNotification } from "@/lib/notification-client";
-import { http } from "viem";
-import { createPublicClient } from "viem";
-import { optimism } from "viem/chains";
+  parseWebhookEvent,
+  verifyAppKeyWithNeynar,
+  ParseWebhookEventResult,
+} from '@farcaster/frame-node';
+import { supabaseService } from '@/lib/supabase';
 
-const appName = process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME;
-
-const KEY_REGISTRY_ADDRESS = "0x00000000Fc1237824fb747aBDE0FF18990E59b7e";
-
-const KEY_REGISTRY_ABI = [
-  {
-    inputs: [
-      { name: "fid", type: "uint256" },
-      { name: "key", type: "bytes" },
-    ],
-    name: "keyDataOf",
-    outputs: [
-      {
-        components: [
-          { name: "state", type: "uint8" },
-          { name: "keyType", type: "uint32" },
-        ],
-        name: "",
-        type: "tuple",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-] as const;
-
-async function verifyFidOwnership(fid: number, appKey: `0x${string}`) {
-  const client = createPublicClient({
-    chain: optimism,
-    transport: http(),
-  });
-
-  try {
-    const result = await client.readContract({
-      address: KEY_REGISTRY_ADDRESS,
-      abi: KEY_REGISTRY_ABI,
-      functionName: "keyDataOf",
-      args: [BigInt(fid), appKey],
-    });
-
-    return result.state === 1 && result.keyType === 1;
-  } catch (error) {
-    console.error("Key Registry verification failed:", error);
-    return false;
-  }
+function isFrameEvent(
+  data: ParseWebhookEventResult
+): data is ParseWebhookEventResult & { event: string } {
+  return 'event' in data;
 }
 
-function decode(encoded: string) {
-  return JSON.parse(Buffer.from(encoded, "base64url").toString("utf-8"));
-}
+export const maxDuration = 300;
 
 export async function POST(request: Request) {
-  const requestJson = await request.json();
+  try {
+    const body = await request.json();
+    const data = await parseWebhookEvent(body, verifyAppKeyWithNeynar);
+    const event = data.event.event;
 
-  const { header: encodedHeader, payload: encodedPayload } = requestJson;
+    if (!isFrameEvent(data)) {
+      throw new Error('Invalid event data');
+    }
 
-  const headerData = decode(encodedHeader);
-  const event = decode(encodedPayload);
+    // Handle different event types
+    switch (event) {
+      case 'frame_added':
+        if ('notificationDetails' in data.event) {
+          console.log('Frame added:', data);
+          const fid = data.fid;
+          const url = data.event.notificationDetails?.url as string;
+          const token = data.event.notificationDetails?.token as string;
+          const user = {
+            fid,
+            url,
+            token,
+          };
 
-  const { fid, key } = headerData;
+          try {
+            await supabaseService.insertUser(user);
 
-  const valid = await verifyFidOwnership(fid, key);
+            console.log('User stored in Supabase:', user);
 
-  if (!valid) {
-    return Response.json(
-      { success: false, error: "Invalid FID ownership" },
-      { status: 401 },
+          } catch (error) {
+            console.error('Failed to store notification:', error);
+            return NextResponse.json(
+              { error: 'Failed to store notification' },
+              { status: 500 }
+            );
+          }
+        }
+        break;
+      case 'frame_removed':
+        console.log('Frame removed');
+        break;
+      case 'notifications_enabled':
+        if ('notificationDetails' in data) {
+          console.log('Notifications enabled:', data.notificationDetails);
+        }
+        break;
+      case 'notifications_disabled':
+        console.log('Notifications disabled');
+        break;
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Webhook error:', error);
+    return NextResponse.json(
+      { error: 'Invalid webhook event' },
+      { status: 400 }
     );
   }
-
-  switch (event.event) {
-    case "frame_added":
-      console.log(
-        "frame_added",
-        "event.notificationDetails",
-        event.notificationDetails,
-      );
-      if (event.notificationDetails) {
-        await setUserNotificationDetails(fid, event.notificationDetails);
-        await sendFrameNotification({
-          fid,
-          title: `Welcome to ${appName}`,
-          body: `Thank you for adding ${appName}`,
-        });
-      } else {
-        await deleteUserNotificationDetails(fid);
-      }
-
-      break;
-    case "frame_removed": {
-      console.log("frame_removed");
-      await deleteUserNotificationDetails(fid);
-      break;
-    }
-    case "notifications_enabled": {
-      console.log("notifications_enabled", event.notificationDetails);
-      await setUserNotificationDetails(fid, event.notificationDetails);
-      await sendFrameNotification({
-        fid,
-        title: `Welcome to ${appName}`,
-        body: `Thank you for enabling notifications for ${appName}`,
-      });
-
-      break;
-    }
-    case "notifications_disabled": {
-      console.log("notifications_disabled");
-      await deleteUserNotificationDetails(fid);
-
-      break;
-    }
-  }
-
-  return Response.json({ success: true });
 }

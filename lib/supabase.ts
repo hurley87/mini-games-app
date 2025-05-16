@@ -1,15 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 
 // --- Types ---
-export type User = {
-  id?: string; // Supabase ID, usually UUID
-  created_at?: string; // Timestamp
-  fid: number;
-  openai_thread_id: string;
-  last_updated: string; // Timestamp
-  message_count: number;
-  memory?: string | null;
-};
+  export type User = {
+    id?: string; // Supabase ID, usually UUID
+    created_at?: string; // Timestamp
+    fid: number;
+    url: string;
+    token: string;
+  };
 
 // --- End Types ---
 
@@ -39,7 +37,7 @@ const supabase = createClient(
 export const supabaseService = {
   async upsertUser(
     record: Partial<User> &
-      Pick<User, 'fid' | 'openai_thread_id' | 'last_updated'>
+      Pick<User, 'fid' | 'url' | 'token'>
   ) {
     // Use standard upsert to set fid and openai_thread_id
     // Note: This will NOT increment message_count
@@ -115,7 +113,7 @@ export const supabaseService = {
     return data;
   },
 
-  async updateUserMemory(fid: number, memoryData: Pick<User, 'memory'>) {
+  async updateUserMemory(fid: number, memoryData: Pick<User, 'url' | 'token'>) {
     const { data, error } = await supabase
       .from('users')
       .update(memoryData)
@@ -170,6 +168,22 @@ export const supabaseService = {
       throw new Error('Failed to get game');
     }
 
+    return data;
+  },
+
+  async insertUser(
+    user: Omit<User, 'id' | 'created_at'>
+  ) {
+    const { data, error } = await supabase
+      .from('users')
+      .insert([user])
+      .select()
+      .single();
+  
+    if (error) {
+      throw error;
+    }
+  
     return data;
   },
 

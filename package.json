@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@coinbase/onchainkit": "latest",
+    "@farcaster/frame-node": "^0.0.28",
     "@farcaster/frame-sdk": "^0.0.35",
     "@neynar/nodejs-sdk": "^2.41.0",
     "@pinata/sdk": "^2.1.0",
