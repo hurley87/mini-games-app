@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useMiniKit } from '@coinbase/onchainkit/minikit';
+import { useEffect, useState } from 'react';
 
 interface GameProps {
   id: string;
@@ -9,6 +10,15 @@ interface GameProps {
 
 export function Game({ id, userId }: GameProps) {
   const [loading, setLoading] = useState(true);
+  const { setFrameReady, isFrameReady } = useMiniKit();
+
+  useEffect(() => {
+      if (!isFrameReady) {
+        setFrameReady({
+          disableNativeGestures: true
+        });
+      }
+  }, [setFrameReady, isFrameReady]);
 
   if (!userId) {
     return <div>Please connect your wallet to play the game</div>;
