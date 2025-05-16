@@ -161,7 +161,7 @@ export const supabaseService = {
   async getGameById(id: string) {
     const { data, error } = await supabase
       .from('games')
-      .select('code, name, image')
+      .select('code, name, image, description')
       .eq('id', id)
       .single();
 

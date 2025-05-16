@@ -203,7 +203,7 @@ export const taskHandlers = {
                         user_address: taskData.verifiedAddress,
                         name: taskData.name,
                         category: 'game',
-                        build_instructions: taskData.instructions,
+                        description: taskData.instructions,
                         code,
                         coin_address: coin.address as `0x${string}`,
                         image: taskData.image,
