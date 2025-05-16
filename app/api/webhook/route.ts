@@ -5,13 +5,6 @@ import {
   ParseWebhookEventResult,
 } from '@farcaster/frame-node';
 import { supabaseService } from '@/lib/supabase';
-import { NeynarAPIClient, Configuration } from '@neynar/nodejs-sdk';
-
-const config = new Configuration({
-  apiKey: process.env.NEYNAR_API_KEY || '',
-});
-
-const client = new NeynarAPIClient(config);
 
 function isFrameEvent(
   data: ParseWebhookEventResult
