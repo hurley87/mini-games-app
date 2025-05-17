@@ -6,13 +6,14 @@ import {
 } from "@coinbase/onchainkit/minikit";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import Link from "next/link";
-import { useAccount } from "wagmi";
+import { useAccount, useConnect } from "wagmi";
 
 export default function App() {
   const { setFrameReady, isFrameReady, context } = useMiniKit();
   const { address } = useAccount();
   const [frameAdded, setFrameAdded] = useState(false);
   const { isConnected } = useAccount();
+  const { connectors, connect } = useConnect()
 
   console.log('address', address);
   console.log('isConnected', isConnected);
@@ -95,6 +96,12 @@ export default function App() {
       Mini Games
       {saveFrameButton}
       <Link href="/info/d87ab2c1-94ca-49e1-8bd7-756bf848f2a6">Play Game</Link>
+
+      {
+        !isConnected && (
+          <button onClick={() => connect({ connector: connectors[0] })}>Connect</button>
+        )
+      }
     </div>
   );
 }
