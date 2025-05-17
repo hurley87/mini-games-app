@@ -3,6 +3,7 @@
 import { useMiniKit } from '@coinbase/onchainkit/minikit';
 import { useEffect, useState } from 'react';
 import { BuyCoinButton } from './BuyCoinButton';
+import { useAccount } from 'wagmi';
 
 interface GameProps {
   id: string;
@@ -14,6 +15,9 @@ export function Game({ id, timeoutSeconds = 10, coinAddress }: GameProps) {
   const [loading, setLoading] = useState(true);
   const [isGameOver, setIsGameOver] = useState(false);
   const { setFrameReady, isFrameReady, context } = useMiniKit();
+  const { address } = useAccount();
+
+  console.log('address', address);
 
   useEffect(() => {
     if (!isFrameReady) {

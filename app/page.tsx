@@ -6,10 +6,14 @@ import {
 } from "@coinbase/onchainkit/minikit";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import Link from "next/link";
+import { useAccount } from "wagmi";
 
 export default function App() {
   const { setFrameReady, isFrameReady, context } = useMiniKit();
   const [frameAdded, setFrameAdded] = useState(false);
+  const { address } = useAccount();
+
+  console.log('address', address);
 
   const addFrame = useAddFrame();
 

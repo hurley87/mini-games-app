@@ -2,7 +2,7 @@ import "./theme.css";
 import "@coinbase/onchainkit/styles.css";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import Provider from "./providers";
+import { Providers } from "./providers";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -10,7 +10,7 @@ export const viewport: Viewport = {
 };
 
 export async function generateMetadata(): Promise<Metadata> {
-  const URL = "https://app.minigames.studio";
+  const URL = process.env.NEXT_PUBLIC_URL;
   return {
     title: "Mini Games",
     description:
@@ -42,7 +42,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="bg-background antialiased h-screen w-screen relative">
-        <Provider>{children}</Provider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
