@@ -56,7 +56,6 @@ export function Game({ id, timeoutSeconds = 10, coinAddress }: GameProps) {
           <div className="space-y-4">
             <BuyCoinButton 
               coinAddress={coinAddress} 
-              amount="0.01" 
               onSuccess={() => setIsGameOver(false)}
             />
             <button
