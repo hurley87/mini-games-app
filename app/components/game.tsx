@@ -50,17 +50,20 @@ export function Game({ id, timeoutSeconds = 10, coinAddress }: GameProps) {
 
   if (isGameOver) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90">
-        <div className="text-center">
-          <h1 className="text-6xl font-bold text-white mb-4">Game Over</h1>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm">
+        <div className="text-center p-8 rounded-2xl bg-gray-800/50 border border-gray-700/50 max-w-md w-full mx-4">
+          <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500 mb-4">
+            Game Over
+          </h1>
           <p className="text-xl text-gray-300 mb-8">{`Time's up!`}</p>
           {!isConnected ? (
             <div>
               <button
                 onClick={() => connect({ connector: connectors[0] })}
-                className="px-4 py-2 bg-[var(--app-accent)] text-white rounded-lg hover:bg-opacity-90 transition-all"
+                className="group relative px-8 py-4 text-lg font-semibold rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
               >
-                Connect Wallet
+                <span className="relative z-10">Connect Wallet</span>
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 blur-sm"></div>
               </button>
             </div>
           ) : (
