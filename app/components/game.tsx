@@ -2,8 +2,7 @@
 
 import { useMiniKit } from '@coinbase/onchainkit/minikit';
 import { useEffect, useState } from 'react';
-import { sdk } from '@farcaster/frame-sdk'
-
+import { BuyCoinButton } from './BuyCoinButton';
 
 interface GameProps {
   id: string;
@@ -32,16 +31,11 @@ export function Game({ id, timeoutSeconds = 10, coinAddress }: GameProps) {
     return () => clearTimeout(timer);
   }, [timeoutSeconds]);
 
-
   if(!id) {
     return <div>Please enter a game id</div>;
   }
 
   const userId = context?.user?.fid;
-
-  // if(!userId) {
-  //   return <div>Please connect your wallet to play the game</div>;
-  // }
 
   // Debug logs
   console.log('Game ID:', id);
@@ -49,30 +43,25 @@ export function Game({ id, timeoutSeconds = 10, coinAddress }: GameProps) {
   const iframeUrl = `/api/embed/${id}?userId=${userId}&gameId=${id}`;
   console.log('Iframe URL:', iframeUrl);
 
-  
-
-  const handleSwapToken = async () => {
-    console.log('Coin Address:', coinAddress);
-    await sdk.actions.swapToken({ 
-      sellToken: '0x0000000000000000000000000000000000000000',
-      buyToken: coinAddress,
-      sellAmount: '1000000000000000000',
-    })
-
-  };
-
   if (isGameOver) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90">
         <div className="text-center">
           <h1 className="text-6xl font-bold text-white mb-4">Game Over</h1>
-          <p className="text-xl text-gray-300">{`Time's up!`}</p>
-          <button
-            className="bg-blue-500 text-white px-4 py-2 rounded-md"
-            onClick={handleSwapToken}
-          >
-            Post to Farcaster
-          </button>
+          <p className="text-xl text-gray-300 mb-8">{`Time's up!`}</p>
+          <div className="space-y-4">
+            <BuyCoinButton 
+              coinAddress={coinAddress} 
+              amount="0.01" 
+              onSuccess={() => setIsGameOver(false)}
+            />
+            <button
+              className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors"
+              onClick={() => window.location.reload()}
+            >
+              Play Again
+            </button>
+          </div>
         </div>
       </div>
     );
