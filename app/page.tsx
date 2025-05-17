@@ -10,10 +10,12 @@ import { useAccount } from "wagmi";
 
 export default function App() {
   const { setFrameReady, isFrameReady, context } = useMiniKit();
-  const [frameAdded, setFrameAdded] = useState(false);
   const { address } = useAccount();
+  const [frameAdded, setFrameAdded] = useState(false);
+  const { isConnected } = useAccount();
 
   console.log('address', address);
+  console.log('isConnected', isConnected);
 
   const addFrame = useAddFrame();
 
