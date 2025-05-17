@@ -232,6 +232,7 @@ export const taskHandlers = {
                         code,
                         coin_address: coin.address as `0x${string}`,
                         image: taskData.image,
+                        user_fid: taskData.fid,
                       },
                     ])
                     .select('*');
