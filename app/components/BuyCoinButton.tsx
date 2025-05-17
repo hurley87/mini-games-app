@@ -1,9 +1,10 @@
 'use client';
 
 import { tradeCoinCall } from "@zoralabs/coins-sdk";
-import { useSimulateContract, useWriteContract } from "wagmi";
+import { useSimulateContract, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { Address, parseEther } from "viem";
 import { useAccount } from "wagmi";
+import { useEffect } from "react";
 
 interface BuyCoinButtonProps {
   coinAddress: string;
@@ -34,7 +35,17 @@ export function BuyCoinButton({ coinAddress, amount = "0.001", onSuccess }: BuyC
     value: tradeParams.args.orderSize,
   });
 
-  const { writeContract, isPending } = useWriteContract()
+  const { writeContract, isPending, data: hash } = useWriteContract();
+
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash
+  });
+
+  useEffect(() => {
+    if (isSuccess) {
+      onSuccess?.();
+    }
+  }, [isSuccess, onSuccess]);
 
   return (
     <div className="flex flex-col gap-2">
@@ -50,7 +61,7 @@ export function BuyCoinButton({ coinAddress, amount = "0.001", onSuccess }: BuyC
           text-white transition-colors
         `}
       >
-        {isPending ? 'Buying...' : `Buy ${amount} ETH`}
+        {isPending ? 'Buying...' : isConfirming ? 'Confirming...' : `Buy ${amount} ETH`}
       </button>
     
     </div>
