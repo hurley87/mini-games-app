@@ -15,6 +15,8 @@ interface BuyCoinButtonProps {
 export function BuyCoinButton({ coinAddress, amount = "0.001", onSuccess }: BuyCoinButtonProps) {
   const { address } = useAccount();
 
+  console.log('address', address);
+
   // Create trade parameters
   const tradeParams = {
     direction: "buy" as const,
