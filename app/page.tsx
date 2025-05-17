@@ -3,6 +3,7 @@
 import { useMiniKit, useAddFrame } from '@coinbase/onchainkit/minikit';
 import { useEffect } from 'react';
 import { useAccount, useConnect } from 'wagmi';
+import { GamesView } from './components/GamesView';
 
 export default function App() {
   const { setFrameReady, isFrameReady, context } = useMiniKit();
@@ -65,7 +66,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 text-white">
-      <div className="container mx-auto px-4 py-16">
+      <div className="container mx-auto px-4 py-8">
         {!isConnected ? (
           <div className="flex flex-col items-center justify-center space-y-8 text-center">
             <div className="space-y-4">
@@ -107,11 +108,8 @@ export default function App() {
             </div>
           </div>
         ) : (
-          <div className="text-center">
-            <h2 className="text-3xl font-bold mb-4">Welcome to the Game!</h2>
-            <p className="text-gray-300">
-              Your wallet is connected. Ready to play?
-            </p>
+          <div className="space-y-8">
+            <GamesView />
           </div>
         )}
       </div>

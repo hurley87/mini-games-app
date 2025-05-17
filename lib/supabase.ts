@@ -192,6 +192,16 @@ export const supabaseService = {
     return data;
   },
 
+  async getGames() {
+    const { data, error } = await supabase.from('games').select('*');
+
+    if (error) {
+      throw error;
+    }
+
+    return data;
+  },
+
   // Add direct access to supabase client
   from: supabase.from.bind(supabase),
 };
