@@ -1,19 +1,16 @@
-"use client";
+'use client';
 
-import {
-  useMiniKit,
-  useAddFrame,
-} from "@coinbase/onchainkit/minikit";
-import { useEffect, useMemo, useState, useCallback } from "react";
-import Link from "next/link";
-import { useAccount, useConnect } from "wagmi";
+import { useMiniKit, useAddFrame } from '@coinbase/onchainkit/minikit';
+import { useEffect, useMemo, useState, useCallback } from 'react';
+import Link from 'next/link';
+import { useAccount, useConnect } from 'wagmi';
 
 export default function App() {
   const { setFrameReady, isFrameReady, context } = useMiniKit();
   const { address } = useAccount();
   const [frameAdded, setFrameAdded] = useState(false);
   const { isConnected } = useAccount();
-  const { connectors, connect } = useConnect()
+  const { connectors, connect } = useConnect();
 
   console.log('address', address);
   console.log('isConnected', isConnected);
@@ -32,7 +29,7 @@ export default function App() {
         console.log('context', context);
         const user = context.user;
         console.log('user', user);
-        
+
         // Only proceed if all required fields are present
         if (user.fid && user.displayName && user.pfpUrl && user.username) {
           const userData = {
@@ -42,7 +39,7 @@ export default function App() {
             username: user.username,
           };
           console.log('userData', userData);
-          
+
           // Call the API endpoint to upsert user data
           await fetch('/api/users', {
             method: 'POST',
@@ -88,7 +85,7 @@ export default function App() {
     return null;
   }, [context, frameAdded, handleAddFrame]);
 
-  console.log("context", context);
+  console.log('context', context);
   // const userId = context?.user?.fid?.toString() || "";
 
   return (
@@ -96,12 +93,11 @@ export default function App() {
       Mini Games
       {saveFrameButton}
       <Link href="/info/d87ab2c1-94ca-49e1-8bd7-756bf848f2a6">Play Game</Link>
-
-      {
-        !isConnected && (
-          <button onClick={() => connect({ connector: connectors[0] })}>Connect</button>
-        )
-      }
+      {!isConnected && (
+        <button onClick={() => connect({ connector: connectors[0] })}>
+          Connect
+        </button>
+      )}
     </div>
   );
 }

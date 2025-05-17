@@ -41,10 +41,8 @@ export async function POST(request: Request) {
             token,
           };
 
-
           try {
             await supabaseService.insertNotification(notification);
-
           } catch (error) {
             console.error('Failed to store notification:', error);
             return NextResponse.json(

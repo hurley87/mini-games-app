@@ -83,9 +83,9 @@ export default async function GamePage({
   const { id } = await params;
   const game = await supabaseService.getGameById(id);
   const coinAddress = game.coin_address;
-  
+
   return (
-    <div className=''>
+    <div className="">
       <Game id={id} coinAddress={coinAddress} />
     </div>
   );

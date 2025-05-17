@@ -7,7 +7,7 @@ import { useAccount, useConnect } from 'wagmi';
 
 interface GameProps {
   id: string;
-  timeoutSeconds?: number; 
+  timeoutSeconds?: number;
   coinAddress: string;
 }
 
@@ -23,7 +23,7 @@ export function Game({ id, timeoutSeconds = 10, coinAddress }: GameProps) {
   useEffect(() => {
     if (!isFrameReady) {
       setFrameReady({
-        disableNativeGestures: true
+        disableNativeGestures: true,
       });
     }
   }, [setFrameReady, isFrameReady]);
@@ -36,7 +36,7 @@ export function Game({ id, timeoutSeconds = 10, coinAddress }: GameProps) {
     return () => clearTimeout(timer);
   }, [timeoutSeconds]);
 
-  if(!id) {
+  if (!id) {
     return <div>Please enter a game id</div>;
   }
 
@@ -54,29 +54,30 @@ export function Game({ id, timeoutSeconds = 10, coinAddress }: GameProps) {
         <div className="text-center">
           <h1 className="text-6xl font-bold text-white mb-4">Game Over</h1>
           <p className="text-xl text-gray-300 mb-8">{`Time's up!`}</p>
-          <div className="space-y-4">
-            <BuyCoinButton 
-              coinAddress={coinAddress} 
-              onSuccess={() => setIsGameOver(false)}
-            />
-          </div>
+          {!isConnected ? (
+            <div>
+              <button
+                onClick={() => connect({ connector: connectors[0] })}
+                className="px-4 py-2 bg-[var(--app-accent)] text-white rounded-lg hover:bg-opacity-90 transition-all"
+              >
+                Connect Wallet
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <BuyCoinButton
+                coinAddress={coinAddress}
+                onSuccess={() => setIsGameOver(false)}
+              />
+            </div>
+          )}
         </div>
       </div>
     );
   }
 
   return (
-    <div className='fixed inset-0 z-50 top-0 left-0 w-full h-full'>
-      {!isConnected && (
-        <div className="absolute top-4 right-4 z-50">
-          <button 
-            onClick={() => connect({ connector: connectors[0] })}
-            className="px-4 py-2 bg-[var(--app-accent)] text-white rounded-lg hover:bg-opacity-90 transition-all"
-          >
-            Connect Wallet
-          </button>
-        </div>
-      )}
+    <div className="fixed inset-0 z-50 top-0 left-0 w-full h-full">
       {loading && <p>Loading game...</p>}
       <iframe
         src={iframeUrl}

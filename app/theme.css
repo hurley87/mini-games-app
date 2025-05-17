@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -35,7 +35,7 @@
 }
 
 .mini-app-theme {
-  --ock-font-family: "Geist", sans-serif;
+  --ock-font-family: 'Geist', sans-serif;
   --ock-border-radius: 0.75rem;
   --ock-border-radius-inner: 0.5rem;
 

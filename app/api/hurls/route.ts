@@ -183,9 +183,8 @@ const handleToolCalls = (
         parent,
         verifiedAddress,
         fid,
-        image
+        image,
       };
-      
 
       // Use void operator to explicitly ignore the promise
       void fetch(`${process.env.BASE_URL}/api/handle-tool.background`, {
@@ -317,12 +316,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         type: 'text',
         text,
       },
-      ...(image ? [{
-        type: 'image_url' as const,
-        image_url: {
-          url: image,
-        },
-      }] : []),
+      ...(image
+        ? [
+            {
+              type: 'image_url' as const,
+              image_url: {
+                url: image,
+              },
+            },
+          ]
+        : []),
     ];
 
     // --- Conversation Thread Handling ---

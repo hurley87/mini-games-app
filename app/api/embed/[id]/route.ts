@@ -6,7 +6,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  
+
   // Parse URL manually
   const url = new URL(request.url);
   const userId = url.searchParams.get('userId');
@@ -66,6 +66,9 @@ export async function GET(
     });
   } catch (error) {
     console.error('Error fetching game:', error);
-    return NextResponse.json({ error: 'Failed to fetch game' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to fetch game' },
+      { status: 500 }
+    );
   }
-} 
+}

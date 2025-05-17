@@ -182,7 +182,9 @@ export async function sendBatchNotifications(
  * @returns Array of user FIDs
  */
 export async function getAllNotifications(): Promise<Notification[]> {
-  const { data, error } = await supabaseService.from('notifications').select('*');
+  const { data, error } = await supabaseService
+    .from('notifications')
+    .select('*');
 
   if (error) {
     console.error('Error fetching notifications:', error);
@@ -198,7 +200,11 @@ export async function getAllNotifications(): Promise<Notification[]> {
  * @param body - The notification body text
  * @returns Summary of notification results
  */
-export async function notifyAllUsers(title: string, body: string, gameId: string) {
+export async function notifyAllUsers(
+  title: string,
+  body: string,
+  gameId: string
+) {
   const notifications = await getAllNotifications();
 
   if (notifications.length === 0) {
@@ -212,7 +218,12 @@ export async function notifyAllUsers(title: string, body: string, gameId: string
     };
   }
 
-  const result = await sendBatchNotifications(notifications, title, body, gameId);
+  const result = await sendBatchNotifications(
+    notifications,
+    title,
+    body,
+    gameId
+  );
 
   return {
     ...result,

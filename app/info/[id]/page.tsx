@@ -7,7 +7,7 @@ interface TokenPageProps {
     id: string;
   }>;
 }
- 
+
 export const dynamic = 'force-dynamic';
 
 const appUrl = 'https://app.minigames.studio';
@@ -82,7 +82,5 @@ export default async function GamePage({
 }) {
   const { id } = await params;
   const game = await supabaseService.getGameById(id);
-  return (
-    <Info name={game.name} description={game.description} id={id} />
-  );
+  return <Info name={game.name} description={game.description} id={id} />;
 }

@@ -24,7 +24,10 @@ export const openaiService = {
       const messages = await openai.beta.threads.messages.list(threadId);
       return messages.data.map((message) => ({
         id: message.id,
-        content: message.content[0]?.type === 'text' ? message.content[0].text.value : '',
+        content:
+          message.content[0]?.type === 'text'
+            ? message.content[0].text.value
+            : '',
         role: message.role,
         created_at: message.created_at,
       }));
@@ -49,4 +52,4 @@ export const openaiService = {
       throw new Error('Failed to submit tool output');
     }
   },
-}; 
+};

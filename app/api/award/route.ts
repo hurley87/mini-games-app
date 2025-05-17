@@ -27,15 +27,13 @@ export async function POST(request: Request) {
     }
 
     // First, save the score to the scores table
-    const { error: scoreError } = await supabaseService
-      .from('scores')
-      .insert([
-        {
-          user_id: userId,
-          game_id: gameId,
-          score: 1,
-        },
-      ]);
+    const { error: scoreError } = await supabaseService.from('scores').insert([
+      {
+        user_id: userId,
+        game_id: gameId,
+        score: 1,
+      },
+    ]);
 
     if (scoreError) {
       console.error('Error saving score:', scoreError);
@@ -64,4 +62,4 @@ export async function POST(request: Request) {
       { status: 500, headers }
     );
   }
-} 
+}

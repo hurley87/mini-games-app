@@ -65,7 +65,6 @@ export const taskHandlers = {
     taskData: CreateTaskData
   ): Promise<TaskResponse<{ gameId: string }>> {
     try {
-
       console.log('taskData', taskData);
       // Validate input
       const validatedData = createGameSchema.parse(taskData);
@@ -107,19 +106,19 @@ export const taskHandlers = {
             const runId = taskData.runId;
             if (runId) {
               try {
-                await openai.beta.threads.runs.cancel(taskData.threadId, runId)
+                await openai.beta.threads.runs.cancel(taskData.threadId, runId);
                 console.log('Run cancelled');
               } catch (e) {
-                console.warn('Could not cancel active run:', e)
+                console.warn('Could not cancel active run:', e);
               }
             }
-        
+
             // Here you would typically save the code to your database or storage
             // For now, we'll just log it
             console.log('address:', taskData.verifiedAddress);
             console.log('gameName:', taskData.name);
             console.log('Saving code for thread:', taskData.threadId);
-        
+
             const instructions = `
 
         Use image in this thread to generate style of the game.
@@ -170,34 +169,48 @@ export const taskHandlers = {
         Use simple colors and shapes. Interactions should be simple - just taps and clicks (no swipes or complex gestures). Don't use any external packacges. dont follow the users cursor.
         
         Return only the full code — no explanation or extra text.
-                `
-        
+                `;
+
             console.log('instructions:', instructions);
-        
+
             // Generate code in this thread to retain full conversation context
-            const run = await openai.beta.threads.runs.create(taskData.threadId, {
-              assistant_id: process.env.ASSISTANT_ID!,
-              instructions,
-            })
-        
+            const run = await openai.beta.threads.runs.create(
+              taskData.threadId,
+              {
+                assistant_id: process.env.ASSISTANT_ID!,
+                instructions,
+              }
+            );
+
             console.log('NEW run:', run);
-        
+
             // Poll for run completion
-            let runResult = await openai.beta.threads.runs.retrieve(taskData.threadId, run.id);
-            while (runResult.status === 'in_progress' || runResult.status === 'queued') {
-              await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second between polls
-              runResult = await openai.beta.threads.runs.retrieve(taskData.threadId, run.id);
+            let runResult = await openai.beta.threads.runs.retrieve(
+              taskData.threadId,
+              run.id
+            );
+            while (
+              runResult.status === 'in_progress' ||
+              runResult.status === 'queued'
+            ) {
+              await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second between polls
+              runResult = await openai.beta.threads.runs.retrieve(
+                taskData.threadId,
+                run.id
+              );
             }
-        
+
             console.log('runResult:', runResult);
-                
+
             console.log('coin:', coin);
-        
+
             if (runResult.status === 'completed') {
               // Get the latest message which should contain our code
-              const messages = await openai.beta.threads.messages.list(taskData.threadId);
+              const messages = await openai.beta.threads.messages.list(
+                taskData.threadId
+              );
               const latestMessage = messages.data[0];
-              
+
               if (latestMessage) {
                 const content = latestMessage.content[0];
                 console.log('content:', content);
@@ -219,25 +232,25 @@ export const taskHandlers = {
                         code,
                         coin_address: coin.address as `0x${string}`,
                         image: taskData.image,
-                      }
+                      },
                     ])
                     .select('*');
-        
+
                   if (error) {
                     console.error('Error inserting into Supabase:', error);
                     return {
                       success: false,
-                      error: 'Database insert failed'
-                    }
+                      error: 'Database insert failed',
+                    };
                   }
-        
+
                   console.log('data:', data);
-        
+
                   if (data && data[0] && data[0].id) {
                     return {
                       success: true,
-                      data: { gameId: data[0].id }
-                    }
+                      data: { gameId: data[0].id },
+                    };
                   }
                 }
               }
@@ -245,8 +258,8 @@ export const taskHandlers = {
               console.error('Run failed or was cancelled:', runResult.status);
               return {
                 success: false,
-                error: 'Failed to generate code'
-              }
+                error: 'Failed to generate code',
+              };
             }
           }
         } catch (dbError) {
@@ -313,4 +326,4 @@ export const taskHandlers = {
       };
     }
   },
-}; 
+};

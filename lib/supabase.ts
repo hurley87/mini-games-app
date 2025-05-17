@@ -6,20 +6,19 @@ export type Notification = {
   url?: string;
   token?: string;
   created_at: string;
-}
-
+};
 
 // --- Types ---
-  export type User = {
-    id?: string; // Supabase ID, usually UUID
-    created_at?: string; // Timestamp
-    fid: number;
-    name?: string;
-    pfp?: string;
-    username: string;
-    url?: string;
-    token?: string;
-  };
+export type User = {
+  id?: string; // Supabase ID, usually UUID
+  created_at?: string; // Timestamp
+  fid: number;
+  name?: string;
+  pfp?: string;
+  username: string;
+  url?: string;
+  token?: string;
+};
 
 // --- End Types ---
 
@@ -48,8 +47,7 @@ const supabase = createClient(
 
 export const supabaseService = {
   async upsertUser(
-    record: Partial<User> &
-      Pick<User, 'fid' | 'name' | 'pfp' | 'username'>
+    record: Partial<User> & Pick<User, 'fid' | 'name' | 'pfp' | 'username'>
   ) {
     // Use standard upsert to set fid and openai_thread_id
     // Note: This will NOT increment message_count
@@ -86,7 +84,7 @@ export const supabaseService = {
   async incrementUserPoints(fid: number, points: number) {
     const { error } = await supabase.rpc('increment_user_points', {
       p_fid: fid,
-      p_points: points
+      p_points: points,
     });
 
     if (error) {
@@ -182,15 +180,15 @@ export const supabaseService = {
     const { data, error } = await supabase
       .from('notifications')
       .upsert(notification, {
-        onConflict: 'fid'
+        onConflict: 'fid',
       })
       .select()
       .single();
-  
+
     if (error) {
       throw error;
     }
-  
+
     return data;
   },
 

@@ -3,9 +3,14 @@ import { supabaseService } from '@/lib/supabase';
 
 export async function POST(request: Request) {
   try {
-    const userData = await request.json();    
+    const userData = await request.json();
     // Validate required fields
-    if (!userData.fid || !userData.name || !userData.pfp || !userData.username) {
+    if (
+      !userData.fid ||
+      !userData.name ||
+      !userData.pfp ||
+      !userData.username
+    ) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -21,4 +26,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-} 
+}

@@ -19,7 +19,7 @@ export async function POST(request: Request) {
       parent,
       verifiedAddress,
       fid,
-      image
+      image,
     } = body;
 
     let result;
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
           fid,
           threadId,
           image,
-          runId
+          runId,
         });
         console.log('result', result);
         if (result.success && result.data && 'gameId' in result.data) {
