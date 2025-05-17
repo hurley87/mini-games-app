@@ -7,7 +7,7 @@ const nextConfig = {
     return config;
   },
   images: {
-    domains: ['imagedelivery.net'],
+    domains: ['imagedelivery.net', 'i.imgur.com'],
   },
 };
 

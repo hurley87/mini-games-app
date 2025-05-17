@@ -4,6 +4,7 @@ import { useMiniKit, useAddFrame } from '@coinbase/onchainkit/minikit';
 import { useEffect } from 'react';
 import { useAccount, useConnect } from 'wagmi';
 import { GamesView } from './components/GamesView';
+import { Nav } from './components/Nav';
 
 export default function App() {
   const { setFrameReady, isFrameReady, context } = useMiniKit();
@@ -66,6 +67,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 text-white">
+      <Nav />
       <div className="container mx-auto px-4 py-8">
         {!isConnected ? (
           <div className="flex flex-col items-center justify-center space-y-8 text-center">

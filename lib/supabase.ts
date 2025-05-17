@@ -18,6 +18,7 @@ export type User = {
   username: string;
   url?: string;
   token?: string;
+  points?: number;
 };
 
 // --- End Types ---
@@ -194,6 +195,19 @@ export const supabaseService = {
 
   async getGames() {
     const { data, error } = await supabase.from('games').select('*');
+
+    if (error) {
+      throw error;
+    }
+
+    return data;
+  },
+
+  async getUsers() {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .order('points', { ascending: false });
 
     if (error) {
       throw error;
