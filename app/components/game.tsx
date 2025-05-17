@@ -3,7 +3,7 @@
 import { useMiniKit } from '@coinbase/onchainkit/minikit';
 import { useEffect, useState } from 'react';
 import { BuyCoinButton } from './BuyCoinButton';
-import { useAccount } from 'wagmi';
+import { useAccount, useConnect } from 'wagmi';
 
 interface GameProps {
   id: string;
@@ -15,7 +15,8 @@ export function Game({ id, timeoutSeconds = 10, coinAddress }: GameProps) {
   const [loading, setLoading] = useState(true);
   const [isGameOver, setIsGameOver] = useState(false);
   const { setFrameReady, isFrameReady, context } = useMiniKit();
-  const { address } = useAccount();
+  const { address, isConnected } = useAccount();
+  const { connectors, connect } = useConnect();
 
   console.log('address', address);
 
@@ -58,12 +59,6 @@ export function Game({ id, timeoutSeconds = 10, coinAddress }: GameProps) {
               coinAddress={coinAddress} 
               onSuccess={() => setIsGameOver(false)}
             />
-            <button
-              className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors"
-              onClick={() => window.location.reload()}
-            >
-              Play Again
-            </button>
           </div>
         </div>
       </div>
@@ -72,6 +67,16 @@ export function Game({ id, timeoutSeconds = 10, coinAddress }: GameProps) {
 
   return (
     <div className='fixed inset-0 z-50 top-0 left-0 w-full h-full'>
+      {!isConnected && (
+        <div className="absolute top-4 right-4 z-50">
+          <button 
+            onClick={() => connect({ connector: connectors[0] })}
+            className="px-4 py-2 bg-[var(--app-accent)] text-white rounded-lg hover:bg-opacity-90 transition-all"
+          >
+            Connect Wallet
+          </button>
+        </div>
+      )}
       {loading && <p>Loading game...</p>}
       <iframe
         src={iframeUrl}
