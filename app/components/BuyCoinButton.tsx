@@ -12,7 +12,7 @@ interface BuyCoinButtonProps {
   onSuccess?: () => void;
 }
 
-export function BuyCoinButton({ coinAddress, amount = "0.001", onSuccess }: BuyCoinButtonProps) {
+export function BuyCoinButton({ coinAddress, amount = "0.0001", onSuccess }: BuyCoinButtonProps) {
   const { address } = useAccount();
 
   console.log('address', address);
