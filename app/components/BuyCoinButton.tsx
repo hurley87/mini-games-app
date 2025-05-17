@@ -34,8 +34,9 @@ export function BuyCoinButton({ coinAddress, amount = "0.001", onSuccess }: BuyC
 
   const { data } = useSimulateContract({
     ...contractCallParams,
-    value: tradeParams.args.orderSize,
   });
+
+  console.log('data', data);
 
   const { writeContract, isPending, data: hash } = useWriteContract();
 
