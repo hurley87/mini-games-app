@@ -23,7 +23,7 @@ export function BuyCoinButton({ coinAddress, amount = "0.001", onSuccess }: BuyC
       recipient: address as Address,
       orderSize: parseEther(amount),
       minAmountOut: BigInt(0),
-      tradeReferrer: process.env.PLATFORM_REFERRER as Address,
+      tradeReferrer: "0xbD78783a26252bAf756e22f0DE764dfDcDa7733c" as Address,
     }
   };
 
@@ -32,11 +32,15 @@ export function BuyCoinButton({ coinAddress, amount = "0.001", onSuccess }: BuyC
   // Create configuration for wagmi
   const contractCallParams = tradeCoinCall(tradeParams);
 
-  const { data } = useSimulateContract({
+  const { data, error } = useSimulateContract({
     ...contractCallParams,
+    query: {
+      enabled: Boolean(address && coinAddress),
+    }
   });
 
-  console.log('data', data);
+  console.log('simulation data:', data);
+  console.log('simulation error:', error);
 
   const { writeContract, isPending, data: hash } = useWriteContract();
 
@@ -54,10 +58,10 @@ export function BuyCoinButton({ coinAddress, amount = "0.001", onSuccess }: BuyC
     <div className="flex flex-col gap-2">
       <button
         onClick={() => writeContract(data!.request)}
-        // disabled={Boolean(data?.request)}
+        disabled={!data?.request || isPending || isConfirming}
         className={`
           px-4 py-2 rounded-md font-medium
-          ${Boolean(data?.request) 
+          ${!data?.request || isPending || isConfirming
             ? 'bg-gray-400 cursor-not-allowed' 
             : 'bg-blue-500 hover:bg-blue-600'
           }
