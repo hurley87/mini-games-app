@@ -2,7 +2,6 @@
 
 import { tradeCoin } from "@zoralabs/coins-sdk";
 import { parseEther } from "viem";
-import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { useState } from "react";
 import { getWalletClients } from "@/lib/clients";
 import { useAccount } from "wagmi";
