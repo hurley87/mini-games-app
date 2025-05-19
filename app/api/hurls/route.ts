@@ -38,6 +38,33 @@ interface WebhookRequest {
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
+// Add this helper function at the top level
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000; // 1 second
+
+async function retryFetch(
+  url: string,
+  options: RequestInit,
+  retries = MAX_RETRIES
+): Promise<Response> {
+  try {
+    const response = await fetch(url, options);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response;
+  } catch (error) {
+    if (retries > 0) {
+      console.log(
+        `Retrying fetch to ${url}. Attempts remaining: ${retries - 1}`
+      );
+      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
+      return retryFetch(url, options, retries - 1);
+    }
+    throw error;
+  }
+}
+
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     // --- Request Parsing and Validation ---
@@ -127,23 +154,51 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     console.log('conversationThreadId', conversationThreadId);
 
     // --- Process OpenAI Interaction using the background route ---
-    void fetch(`${process.env.BASE_URL}/api/handle-openai.background`, {
-      method: 'POST',
-      body: JSON.stringify({
-        threadId: conversationThreadId,
-        content,
-        parent,
-        verifiedAddress,
-        fid,
-        image,
-      }),
-      headers: { 'Content-Type': 'application/json' },
-    }).catch((error) => {
-      console.error('Error initiating OpenAI background task:', error);
-    });
+    // Fire and forget the background task
+    void (async () => {
+      try {
+        // Wait for thread creation to be fully complete
+        await new Promise((resolve) => setTimeout(resolve, 500));
 
-    // --- Respond ---
-    return NextResponse.json({ status: 'PROCESSING_INITIATED' });
+        const response = await retryFetch(
+          `${process.env.BASE_URL}/api/handle-openai.background`,
+          {
+            method: 'POST',
+            body: JSON.stringify({
+              threadId: conversationThreadId,
+              content,
+              parent,
+              verifiedAddress,
+              fid,
+              image,
+            }),
+            headers: { 'Content-Type': 'application/json' },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            `Background task failed with status: ${response.status}`
+          );
+        }
+
+        const result = await response.json();
+        if (!result.success) {
+          throw new Error(
+            `Background task failed: ${result.error || 'Unknown error'}`
+          );
+        }
+      } catch (error) {
+        console.error('Error in OpenAI background task:', error);
+        // Log the error but don't throw since this is a background operation
+      }
+    })();
+
+    // --- Respond immediately ---
+    return NextResponse.json({
+      status: 'PROCESSING_INITIATED',
+      threadId: conversationThreadId,
+    });
   } catch (error) {
     console.error('Error in Webhook API route:', error);
     const message =

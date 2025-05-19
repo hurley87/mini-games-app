@@ -7,6 +7,8 @@ import { Run } from 'openai/resources/beta/threads/runs/runs';
 const ASSISTANT_ID = process.env.ASSISTANT_ID as string;
 const POLLING_INTERVAL = 1000; // ms
 const NEYNAR_CAST_CHAR_LIMIT = 320; // Max characters for a Farcaster cast
+const MAX_TOOL_RETRIES = 3;
+const TOOL_RETRY_DELAY = 1000; // 1 second
 
 type MessageContentPartParam = {
   type: 'text' | 'image_url';
@@ -107,6 +109,29 @@ const handleCompletedRun = async (
   }
 };
 
+async function retryToolCall(
+  url: string,
+  options: RequestInit,
+  retries = MAX_TOOL_RETRIES
+): Promise<Response> {
+  try {
+    const response = await fetch(url, options);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response;
+  } catch (error) {
+    if (retries > 0) {
+      console.log(
+        `Retrying tool call to ${url}. Attempts remaining: ${retries - 1}`
+      );
+      await new Promise((resolve) => setTimeout(resolve, TOOL_RETRY_DELAY));
+      return retryToolCall(url, options, retries - 1);
+    }
+    throw error;
+  }
+}
+
 /**
  * Main API route handler
  */
@@ -144,7 +169,7 @@ export async function POST(request: Request) {
         runStatus.required_action?.submit_tool_outputs?.tool_calls;
       if (toolCalls && toolCalls.length > 0) {
         // Forward tool calls to the tool handler
-        for (const call of toolCalls) {
+        const toolPromises = toolCalls.map(async (call) => {
           try {
             const args = JSON.parse(call.function.arguments);
             const toolRequest = {
@@ -159,26 +184,43 @@ export async function POST(request: Request) {
               image,
             };
 
-            void fetch(`${process.env.BASE_URL}/api/handle-tool.background`, {
-              method: 'POST',
-              body: JSON.stringify(toolRequest),
-              headers: { 'Content-Type': 'application/json' },
-            }).catch((fetchError) => {
-              console.error(
-                `Error initiating background task for tool ${call.function.name} (call ID: ${call.id}):`,
-                fetchError
+            try {
+              const response = await retryToolCall(
+                `${process.env.BASE_URL}/api/handle-tool.background`,
+                {
+                  method: 'POST',
+                  body: JSON.stringify(toolRequest),
+                  headers: { 'Content-Type': 'application/json' },
+                }
               );
-            });
-            console.log(
-              `Dispatched background task for tool: ${call.function.name}`
-            );
+
+              const result = await response.json();
+              if (!result.success) {
+                throw new Error(
+                  `Tool call failed: ${result.error || 'Unknown error'}`
+                );
+              }
+
+              console.log(
+                `Successfully completed tool call: ${call.function.name}`
+              );
+            } catch (toolError) {
+              console.error(
+                `Failed to execute tool ${call.function.name} (call ID: ${call.id}) after retries:`,
+                toolError
+              );
+              // We don't throw here to allow other tool calls to proceed
+            }
           } catch (parseError) {
             console.error(
               `Error parsing arguments for tool ${call.function.name} (call ID: ${call.id}):`,
               parseError
             );
           }
-        }
+        });
+
+        // Wait for all tool calls to complete
+        await Promise.allSettled(toolPromises);
       } else {
         console.warn(`Run ${run.id} requires action but has no tool calls.`);
       }
