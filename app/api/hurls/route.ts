@@ -299,6 +299,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const fid = author?.fid;
     const image = embeds?.[0]?.url;
 
+    const combinedText = image ? `${text} ${image}` : text;
+
     console.log('Request data:', data);
 
     if (!fid) {
@@ -314,18 +316,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const content: MessageContentPartParam[] = [
       {
         type: 'text',
-        text,
+        text: combinedText,
       },
-      ...(image
-        ? [
-            {
-              type: 'image_url' as const,
-              image_url: {
-                url: image,
-              },
-            },
-          ]
-        : []),
     ];
 
     // --- Conversation Thread Handling ---

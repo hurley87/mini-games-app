@@ -19,7 +19,6 @@ export async function POST(request: Request) {
       parent,
       verifiedAddress,
       fid,
-      image,
     } = body;
 
     let result;
@@ -38,7 +37,6 @@ export async function POST(request: Request) {
           verifiedAddress,
           fid,
           threadId,
-          image,
           runId,
         });
         console.log('result', result);

@@ -13,7 +13,7 @@ const PLATFORM_REFERRER = process.env.PLATFORM_REFERRER as `0x${string}`;
 export type CreateTaskData = {
   name: string;
   instructions: string;
-  image: string;
+  image_url: string;
   ticker: string;
   parent: string;
   reply: string;
@@ -42,7 +42,7 @@ export type TaskResponse<T> = {
 const createGameSchema = z.object({
   name: z.string().min(1),
   instructions: z.string().min(1),
-  image: z.string().url(),
+  image_url: z.string().url(),
   ticker: z.string().min(1),
   parent: z.string().min(1),
   verifiedAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
@@ -73,7 +73,7 @@ export const taskHandlers = {
       const uri = await ipfsService.pinMetadata(
         validatedData.name,
         validatedData.instructions,
-        validatedData.image
+        validatedData.image_url
       );
 
       // Get wallet clients
@@ -231,7 +231,7 @@ export const taskHandlers = {
                         description: taskData.instructions,
                         code,
                         coin_address: coin.address as `0x${string}`,
-                        image: taskData.image,
+                        image: taskData.image_url,
                         user_fid: taskData.fid,
                       },
                     ])
