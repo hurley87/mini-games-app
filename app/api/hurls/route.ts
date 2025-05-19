@@ -135,7 +135,6 @@ const handleCompletedRun = async (
         await publishCast(truncatedResponse, parent);
         return; // Don't publish oversized casts (or publish truncated)
       }
-      // --- End Validation ---
 
       await publishCast(assistantResponse, parent);
       console.log(`Published cast reply to ${parent}`);
