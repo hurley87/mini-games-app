@@ -3,15 +3,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { queueService } from '@/lib/queue';
 
+// Ensure this route is always dynamic and has a longer timeout
+export const dynamic = 'force-dynamic';
+export const maxDuration = 300;
+export const runtime = 'nodejs';
+
+// Types
 type MessageContentPartParam = {
   type: 'text' | 'image_url';
-  text?: string; // Make text optional since it's not needed for image_url
+  text?: string;
   image_url?: {
     url: string;
   };
 };
 
-// Types
 interface WebhookRequestData {
   text: string;
   thread_hash: string;
@@ -32,12 +37,10 @@ interface WebhookRequestData {
     url?: string;
   }>;
 }
+
 interface WebhookRequest {
   data: WebhookRequestData;
 }
-
-export const dynamic = 'force-dynamic';
-export const maxDuration = 300;
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
@@ -153,10 +156,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const message =
       error instanceof Error ? error.message : 'An unexpected error occurred.';
 
-    return NextResponse.json({
-      success: false,
-      message: `Failed to process request: ${message}`,
-      error: String(error),
-    });
+    return NextResponse.json(
+      {
+        success: false,
+        message: `Failed to process request: ${message}`,
+        error: String(error),
+      },
+      { status: 500 }
+    );
   }
 }
