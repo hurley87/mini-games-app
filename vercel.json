@@ -2,15 +2,15 @@
   "crons": [
     {
       "path": "/api/handle-openai.background",
-      "schedule": "* * * * *"
+      "schedule": "*/1 * * * *"
     },
     {
       "path": "/api/handle-tool.background",
-      "schedule": "* * * * *"
+      "schedule": "*/1 * * * *"
     },
     {
       "path": "/api/hurls",
-      "schedule": "* * * * *"
+      "schedule": "*/2 * * * *"
     }
   ]
 }
