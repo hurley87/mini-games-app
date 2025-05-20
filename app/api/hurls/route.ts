@@ -39,33 +39,6 @@ interface WebhookRequest {
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
-// Add this helper function at the top level
-const MAX_RETRIES = 3;
-const RETRY_DELAY = 1000; // 1 second
-
-async function retryFetch(
-  url: string,
-  options: RequestInit,
-  retries = MAX_RETRIES
-): Promise<Response> {
-  try {
-    const response = await fetch(url, options);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return response;
-  } catch (error) {
-    if (retries > 0) {
-      console.log(
-        `Retrying fetch to ${url}. Attempts remaining: ${retries - 1}`
-      );
-      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
-      return retryFetch(url, options, retries - 1);
-    }
-    throw error;
-  }
-}
-
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     // --- Request Parsing and Validation ---
