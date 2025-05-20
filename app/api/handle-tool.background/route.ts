@@ -4,6 +4,7 @@ import { taskHandlers } from '@/lib/task-handlers';
 import { NextResponse } from 'next/server';
 
 // Route configuration
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
@@ -11,15 +12,8 @@ export const maxDuration = 300;
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const {
-      runId,
-      threadId,
-      toolName,
-      args,
-      parent,
-      verifiedAddress,
-      fid,
-    } = body;
+    const { runId, threadId, toolName, args, parent, verifiedAddress, fid } =
+      body;
 
     let result;
 

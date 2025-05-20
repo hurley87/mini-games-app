@@ -3,6 +3,18 @@
     {
       "path": "/api/process-queue",
       "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/handle-openai.background",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/handle-tool.background",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/hurls",
+      "schedule": "*/5 * * * *"
     }
   ]
 }

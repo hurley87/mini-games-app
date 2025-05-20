@@ -1,22 +1,16 @@
 import { supabaseService } from '@/lib/supabase';
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
-import { queueService } from '@/lib/queue';
 
-// Ensure this route is always dynamic and has a longer timeout
-export const dynamic = 'force-dynamic';
-export const maxDuration = 300;
-export const runtime = 'nodejs';
-
-// Types
 type MessageContentPartParam = {
   type: 'text' | 'image_url';
-  text?: string;
+  text?: string; // Make text optional since it's not needed for image_url
   image_url?: {
     url: string;
   };
 };
 
+// Types
 interface WebhookRequestData {
   text: string;
   thread_hash: string;
@@ -37,10 +31,13 @@ interface WebhookRequestData {
     url?: string;
   }>;
 }
-
 interface WebhookRequest {
   data: WebhookRequestData;
 }
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const maxDuration = 300;
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
@@ -130,39 +127,33 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     console.log('conversationThreadId', conversationThreadId);
 
-    // --- Enqueue OpenAI Interaction ---
-    try {
-      await queueService.enqueueOpenAI({
+    // --- Process OpenAI Interaction using the background route ---
+    void fetch(`${process.env.BASE_URL}/api/handle-openai.background`, {
+      method: 'POST',
+      body: JSON.stringify({
         threadId: conversationThreadId,
         content,
         parent,
         verifiedAddress,
         fid,
         image,
-      });
-    } catch (error) {
-      console.error('Error enqueuing OpenAI task:', error);
-      // Don't throw here, just log the error
-      // The queue processor will handle retries
-    }
-
-    // --- Respond immediately ---
-    return NextResponse.json({
-      status: 'PROCESSING_INITIATED',
-      threadId: conversationThreadId,
+      }),
+      headers: { 'Content-Type': 'application/json' },
+    }).catch((error) => {
+      console.error('Error initiating OpenAI background task:', error);
     });
+
+    // --- Respond ---
+    return NextResponse.json({ status: 'PROCESSING_INITIATED' });
   } catch (error) {
     console.error('Error in Webhook API route:', error);
     const message =
       error instanceof Error ? error.message : 'An unexpected error occurred.';
 
-    return NextResponse.json(
-      {
-        success: false,
-        message: `Failed to process request: ${message}`,
-        error: String(error),
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      success: false,
+      message: `Failed to process request: ${message}`,
+      error: String(error),
+    });
   }
 }
