@@ -1,6 +1,7 @@
 import { supabaseService } from '@/lib/supabase';
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { queueService } from '@/lib/queue';
 
 type MessageContentPartParam = {
   type: 'text' | 'image_url';
@@ -153,46 +154,21 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     console.log('conversationThreadId', conversationThreadId);
 
-    // --- Process OpenAI Interaction using the background route ---
-    // Fire and forget the background task
-    void (async () => {
-      try {
-        // Wait for thread creation to be fully complete
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
-        const response = await retryFetch(
-          `${process.env.BASE_URL}/api/handle-openai.background`,
-          {
-            method: 'POST',
-            body: JSON.stringify({
-              threadId: conversationThreadId,
-              content,
-              parent,
-              verifiedAddress,
-              fid,
-              image,
-            }),
-            headers: { 'Content-Type': 'application/json' },
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(
-            `Background task failed with status: ${response.status}`
-          );
-        }
-
-        const result = await response.json();
-        if (!result.success) {
-          throw new Error(
-            `Background task failed: ${result.error || 'Unknown error'}`
-          );
-        }
-      } catch (error) {
-        console.error('Error in OpenAI background task:', error);
-        // Log the error but don't throw since this is a background operation
-      }
-    })();
+    // --- Enqueue OpenAI Interaction ---
+    try {
+      await queueService.enqueueOpenAI({
+        threadId: conversationThreadId,
+        content,
+        parent,
+        verifiedAddress,
+        fid,
+        image,
+      });
+    } catch (error) {
+      console.error('Error enqueuing OpenAI task:', error);
+      // Don't throw here, just log the error
+      // The queue processor will handle retries
+    }
 
     // --- Respond immediately ---
     return NextResponse.json({
