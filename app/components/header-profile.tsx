@@ -11,27 +11,12 @@ import { Button } from '@/app/components/ui/button';
 import Image from 'next/image';
 import { List, LogOut, Settings, Trophy, UserPlus, Wallet } from 'lucide-react';
 import { sdk } from '@farcaster/frame-sdk';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useFarcasterContext } from '@/hooks/useFarcasterContext';
 
 export function HeaderProfile() {
-  const [context, setContext] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { context, isLoading } = useFarcasterContext();
   const [isConnecting, setIsConnecting] = useState(false);
-
-  useEffect(() => {
-    const initializeContext = async () => {
-      try {
-        const frameContext = sdk.context;
-        setContext(frameContext);
-      } catch (error) {
-        console.error('Failed to get Farcaster context:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    initializeContext();
-  }, []);
 
   const handleConnect = async () => {
     setIsConnecting(true);

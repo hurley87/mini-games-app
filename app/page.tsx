@@ -1,51 +1,19 @@
 'use client';
 
-import { sdk } from '@farcaster/frame-sdk';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { Header } from './components/header';
 import { BuildsView } from './components/BuildsView';
+import { useFarcasterContext } from '@/hooks/useFarcasterContext';
 
 export default function App() {
-  const [isReady, setIsReady] = useState(false);
-  const [context, setContext] = useState<any>(null);
-  const { address } = useAccount();
-  const { isConnected } = useAccount();
+  const { context, isReady } = useFarcasterContext({
+    autoAddFrame: true,
+  });
+  const { address, isConnected } = useAccount();
 
   console.log('address', address);
   console.log('isConnected', isConnected);
-
-  useEffect(() => {
-    const initializeFrame = async () => {
-      try {
-        // Get context from SDK
-        const frameContext = sdk.context;
-        setContext(frameContext);
-
-        // Mark frame as ready
-        await sdk.actions.ready();
-        setIsReady(true);
-      } catch (error) {
-        console.error('Failed to initialize frame:', error);
-      }
-    };
-
-    initializeFrame();
-  }, []);
-
-  useEffect(() => {
-    const handleAddFrame = async () => {
-      if (context && !context.client?.added) {
-        try {
-          await sdk.actions.addFrame();
-        } catch (error) {
-          console.error('Failed to add frame:', error);
-        }
-      }
-    };
-
-    handleAddFrame();
-  }, [context]);
 
   useEffect(() => {
     const saveUser = async () => {
@@ -54,8 +22,14 @@ export default function App() {
         const user = context.user;
         console.log('user', user);
 
-        // Only proceed if all required fields are present
-        if (user.fid && user.displayName && user.pfpUrl && user.username) {
+        // Only proceed if user exists and all required fields are present
+        if (
+          user &&
+          user.fid &&
+          user.displayName &&
+          user.pfpUrl &&
+          user.username
+        ) {
           const userData = {
             fid: user.fid,
             name: user.displayName,

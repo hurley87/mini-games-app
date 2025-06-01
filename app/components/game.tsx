@@ -1,9 +1,9 @@
 'use client';
 
-import { sdk } from '@farcaster/frame-sdk';
 import { useEffect, useState } from 'react';
 import { BuyCoinButton } from './BuyCoinButton';
 import { useAccount, useConnect } from 'wagmi';
+import { useFarcasterContext } from '@/hooks/useFarcasterContext';
 
 interface GameProps {
   id: string;
@@ -14,32 +14,13 @@ interface GameProps {
 export function Game({ id, timeoutSeconds = 10, coinAddress }: GameProps) {
   const [loading, setLoading] = useState(true);
   const [isGameOver, setIsGameOver] = useState(false);
-  const [isReady, setIsReady] = useState(false);
-  const [context, setContext] = useState<any>(null);
+  const { context, isReady } = useFarcasterContext({
+    disableNativeGestures: true,
+  });
   const { address, isConnected } = useAccount();
   const { connectors, connect } = useConnect();
 
   console.log('address', address);
-
-  useEffect(() => {
-    const initializeFrame = async () => {
-      try {
-        // Get context from SDK
-        const frameContext = sdk.context;
-        setContext(frameContext);
-
-        // Mark frame as ready with disabled native gestures for gaming
-        await sdk.actions.ready({
-          disableNativeGestures: true,
-        });
-        setIsReady(true);
-      } catch (error) {
-        console.error('Failed to initialize frame:', error);
-      }
-    };
-
-    initializeFrame();
-  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -60,6 +41,10 @@ export function Game({ id, timeoutSeconds = 10, coinAddress }: GameProps) {
 
   const iframeUrl = `/api/embed/${id}?userId=${userId}&gameId=${id}`;
   console.log('Iframe URL:', iframeUrl);
+
+  if (!isReady) {
+    return <div>Loading...</div>;
+  }
 
   if (isGameOver) {
     return (

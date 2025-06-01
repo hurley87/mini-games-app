@@ -1,8 +1,7 @@
 'use client';
 
-import { sdk } from '@farcaster/frame-sdk';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useFarcasterContext } from '@/hooks/useFarcasterContext';
 
 interface InfoProps {
   name: string;
@@ -11,26 +10,7 @@ interface InfoProps {
 }
 
 export function Info({ name, description, id }: InfoProps) {
-  const [isReady, setIsReady] = useState(false);
-  const [context, setContext] = useState<any>(null);
-
-  useEffect(() => {
-    const initializeFrame = async () => {
-      try {
-        // Get context from SDK
-        const frameContext = sdk.context;
-        setContext(frameContext);
-
-        // Mark frame as ready
-        await sdk.actions.ready();
-        setIsReady(true);
-      } catch (error) {
-        console.error('Failed to initialize frame:', error);
-      }
-    };
-
-    initializeFrame();
-  }, []);
+  const { context, isReady } = useFarcasterContext();
 
   if (!name) {
     return <div>Please enter a game name</div>;
@@ -41,6 +21,10 @@ export function Info({ name, description, id }: InfoProps) {
   }
 
   console.log('context', context);
+
+  if (!isReady) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="flex flex-col items-center justify-center h-screen w-screen relative z-50">
