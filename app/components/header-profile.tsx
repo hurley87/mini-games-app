@@ -4,24 +4,12 @@ import {
   Drawer,
   DrawerClose,
   DrawerContent,
-  DrawerDescription,
   DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
   DrawerTrigger,
 } from '@/app/components/ui/drawer';
 import { Button } from '@/app/components/ui/button';
 import Image from 'next/image';
-import {
-  Circle,
-  List,
-  LogOut,
-  Settings,
-  Trophy,
-  UserPlus,
-  Zap,
-} from 'lucide-react';
-import { ChevronRight } from 'lucide-react';
+import { List, LogOut, Settings, Trophy, UserPlus } from 'lucide-react';
 
 export function HeaderProfile() {
   return (
