@@ -16,17 +16,17 @@ export async function generateMetadata({
   params,
 }: TokenPageProps): Promise<Metadata> {
   const { id } = await params;
-  const game = await supabaseService.getGameById(id);
+  const build = await supabaseService.getBuildById(id);
 
   try {
     const frame = {
       version: 'next',
-      imageUrl: game.image || `${appUrl}/logo.png`,
+      imageUrl: build.image || `${appUrl}/logo.png`,
       button: {
-        title: `Play ${game.name}`,
+        title: `Play ${build.name}`,
         action: {
           type: 'launch_frame',
-          name: game.name,
+          name: build.name,
           url: `${appUrl}/info/${id}`,
           splashImageUrl: `${appUrl}/splash.jpg`,
           splashBackgroundColor: '#000000',
@@ -35,9 +35,9 @@ export async function generateMetadata({
     };
 
     return {
-      title: `${game.name}`,
+      title: `${build.name}`,
       openGraph: {
-        title: `${game.name}`,
+        title: `${build.name}`,
         description: 'View your game details.',
       },
       other: {
@@ -81,6 +81,6 @@ export default async function GamePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const game = await supabaseService.getGameById(id);
-  return <Info name={game.name} description={game.description} id={id} />;
+  const build = await supabaseService.getBuildById(id);
+  return <Info name={build.name} description={build.description} id={id} />;
 }
