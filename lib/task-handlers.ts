@@ -120,33 +120,41 @@ export const taskHandlers = {
             console.log('Saving code for thread:', taskData.threadId);
 
             const instructions = `
+You are now generating the implementation of a simple, fun browser-based 3D game using Three.js.
 
-        Use image in this thread to generate style of the game.
+You are a game generator. Create a complete HTML file that contains a Three.js-based 3D game.
 
-        You are now generating the implementation of a simple, fun browser-based game.
-        
-        You are a game generator. Create a complete HTML file that contains a canvas-based game using vanilla JS or Three.js. 
-        Wrap everything in <html><body><script> and avoid using external packages.
-        The code will be sandboxed in an iframe, so it must not rely on imports.
-        The game must be interactive and playable with simple mouse input only.
-        The canvas element must fill the entire screen at all times.
-        
-        IMPORTANT CODE QUALITY REQUIREMENTS:
-        1. Use descriptive variable names that clearly indicate their purpose
-        2. Never use single-letter variable names (like 'r', 'x', 'y') unless they are loop counters in a very short scope
-        3. Always declare variables before use with 'let', 'const', or 'var'
-        4. Use consistent naming conventions throughout the code
-        5. For array iterations, use descriptive parameter names (e.g., 'ripple' instead of 'r')
-        6. Ensure all variables used in callbacks and event handlers are properly scoped
-        7. Add error handling for any potential undefined states
-        8. Use strict equality checks (=== and !==) instead of loose equality
-        9. Initialize all variables with default values where appropriate
-        
-        At the appropriate moment (such as when the game ends or points are earned), you must call:
-        
-        window.awardPoints(score);
+Wrap everything in <html><body><script> and include Three.js via CDN:
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
-        Do not call window.awardPoints(score) directly. Instead, check if it exists first. Use this helper function:
+The code will be sandboxed in an iframe, so it must not rely on any other external packages.
+The game must be interactive and playable with simple mouse input only.
+The Three.js canvas must fill the entire screen at all times.
+The game must last 30 seconds before resetting.
+
+⸻
+
+Gameplay & Style Guidelines:
+	•	Use the image in the thread as visual inspiration.
+	•	Use simple 3D shapes (like boxes, spheres) and materials.
+	•	Interactions should be simple
+	•	Don’t follow the user’s cursor.
+	•	The game should be fast, clear, and playable in the browser.
+
+⸻
+
+Functional Requirements:
+	•	Set up a Three.js scene, camera, and renderer.
+	•	Use ambient and directional lighting for clear 3D visibility.
+	•	Use appropriate geometries and materials.
+	•	Implement camera controls and perspective (if relevant).
+	•	Handle window resize events to maintain aspect ratio.
+
+⸻
+
+Scoring System:
+
+At the appropriate moment (such as when the game ends or points are earned), call:
 
         function tryAwardPoints(score) {
           if (typeof window.awardPoints === 'function') {
@@ -156,19 +164,29 @@ export const taskHandlers = {
           }
         }
 
-        When the player earns points, call tryAwardPoints(score) instead of calling window.awardPoints(score) directly.
-        
-        Pass the player's score as a number. Do not define or modify this function — it is already provided by the environment.
+Call tryAwardPoints(score) whenever the player earns points.
+Do not define or modify awardPoints. It is already provided by the environment.
+Show the player’s score in the top-left corner using Three.js TextGeometry or an HTML overlay.
+Only update score 1 point at a time.
 
-        Show the players score in the top left corner of the screen. Only update score but 1 point at a time.
+⸻
 
-        All games must be playable in the browser.
+Code Quality Requirements:
+	1.	Use descriptive variable names
+	2.	Never use single-letter variable names (unless for loop counters in short scopes)
+	3.	Always declare variables before use with let, const, or var
+	4.	Use consistent naming conventions throughout the code
+	5.	Use descriptive parameter names (e.g. target, not t)
+	6.	Ensure variables used in callbacks are properly scoped
+	7.	Add error handling for undefined or missing data
+	8.	Use strict equality checks (=== and !==)
+	9.	Initialize all variables with default values where appropriate
 
-        All game must last 30 seconds before they reset.
+⸻
 
-        Use simple colors and shapes. Interactions should be simple - just taps and clicks (no swipes or complex gestures). Don't use any external packacges. dont follow the users cursor.
-        
-        Return only the full code — no explanation or extra text.
+Output Rules:
+
+Return only the complete HTML code — no explanation, no comments, and no markdown formatting.
                 `;
 
             console.log('instructions:', instructions);
