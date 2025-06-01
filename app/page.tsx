@@ -3,8 +3,8 @@
 import { useMiniKit, useAddFrame } from '@coinbase/onchainkit/minikit';
 import { useEffect } from 'react';
 import { useAccount, useConnect } from 'wagmi';
-import { GamesView } from './components/GamesView';
-import { Nav } from './components/Nav';
+import { Header } from './components/header';
+import { BuildsView } from './components/BuildsView';
 
 export default function App() {
   const { setFrameReady, isFrameReady, context } = useMiniKit();
@@ -66,53 +66,50 @@ export default function App() {
   }, [context]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 text-white">
-      <Nav />
-      <div className="container mx-auto px-4 py-8">
+    <div className="max-w-md mx-auto bg-white min-h-screen flex flex-col">
+      <Header />
+      <div className="container mx-auto px-4 py-12 max-w-6xl pt-20">
         {!isConnected ? (
-          <div className="flex flex-col items-center justify-center space-y-8 text-center">
-            <div className="space-y-4">
-              <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500 animate-pulse">
+          <div className="flex flex-col items-center justify-center space-y-12">
+            <div className="space-y-4 text-center">
+              <h1 className="text-5xl font-light tracking-tight">
                 Play Mini Games
               </h1>
-              <p className="text-xl text-gray-300 max-w-2xl">
+              <p className="text-xl text-gray-600 max-w-2xl font-light">
                 Connect your wallet to start your gaming adventure
               </p>
             </div>
 
             <button
               onClick={() => connect({ connector: connectors[0] })}
-              className="group relative px-8 py-4 text-lg font-semibold rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+              className="px-8 py-4 text-base font-medium bg-gray-900 text-white rounded-full hover:bg-gray-800 transition-colors duration-200 shadow-sm hover:shadow-md"
             >
-              <span className="relative z-10">Connect Wallet</span>
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 blur-sm"></div>
+              Connect Wallet
             </button>
 
-            <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl">
-              <div className="p-6 rounded-xl bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 hover:border-purple-500/50 transition-all duration-300">
-                <h3 className="text-xl font-semibold mb-2">Play Games</h3>
-                <p className="text-gray-400">
+            <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
+              <div className="p-8 rounded-2xl bg-white border border-gray-200 hover:border-gray-300 transition-all duration-300 shadow-sm hover:shadow-md">
+                <h3 className="text-xl font-medium mb-3">Play Games</h3>
+                <p className="text-gray-600 leading-relaxed">
                   Access exclusive mini-games in the Farcaster ecosystem
                 </p>
               </div>
-              <div className="p-6 rounded-xl bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 hover:border-purple-500/50 transition-all duration-300">
-                <h3 className="text-xl font-semibold mb-2">Earn Rewards</h3>
-                <p className="text-gray-400">
+              <div className="p-8 rounded-2xl bg-white border border-gray-200 hover:border-gray-300 transition-all duration-300 shadow-sm hover:shadow-md">
+                <h3 className="text-xl font-medium mb-3">Earn Rewards</h3>
+                <p className="text-gray-600 leading-relaxed">
                   Win prizes and collect unique digital assets
                 </p>
               </div>
-              <div className="p-6 rounded-xl bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 hover:border-purple-500/50 transition-all duration-300">
-                <h3 className="text-xl font-semibold mb-2">Join Community</h3>
-                <p className="text-gray-400">
+              <div className="p-8 rounded-2xl bg-white border border-gray-200 hover:border-gray-300 transition-all duration-300 shadow-sm hover:shadow-md">
+                <h3 className="text-xl font-medium mb-3">Join Community</h3>
+                <p className="text-gray-600 leading-relaxed">
                   Connect with other players and share your achievements
                 </p>
               </div>
             </div>
           </div>
         ) : (
-          <div className="space-y-8">
-            <GamesView />
-          </div>
+          <BuildsView />
         )}
       </div>
     </div>

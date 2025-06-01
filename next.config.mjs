@@ -7,7 +7,11 @@ const nextConfig = {
     return config;
   },
   images: {
-    domains: ['imagedelivery.net', 'i.imgur.com'],
+    domains: [
+      'imagedelivery.net',
+      'i.imgur.com',
+      'rsfssrynojzntsjomqny.supabase.co',
+    ],
   },
 };
 

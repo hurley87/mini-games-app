@@ -9,7 +9,6 @@
   "prettier.configPath": ".prettierrc.js",
   "files.exclude": {
     "dist": true,
-    "build": true,
-    ".next": true
+    "build": true
   }
 }

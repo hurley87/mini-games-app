@@ -40,7 +40,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="bg-background antialiased h-screen w-screen relative">
+      <body className="antialiased">
         <Providers>{children}</Providers>
       </body>
     </html>
