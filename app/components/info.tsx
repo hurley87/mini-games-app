@@ -1,8 +1,8 @@
 'use client';
 
-import { useMiniKit } from '@coinbase/onchainkit/minikit';
+import { sdk } from '@farcaster/frame-sdk';
 import Link from 'next/link';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 interface InfoProps {
   name: string;
@@ -11,13 +11,26 @@ interface InfoProps {
 }
 
 export function Info({ name, description, id }: InfoProps) {
-  const { setFrameReady, isFrameReady, context } = useMiniKit();
+  const [isReady, setIsReady] = useState(false);
+  const [context, setContext] = useState<any>(null);
 
   useEffect(() => {
-    if (!isFrameReady) {
-      setFrameReady();
-    }
-  }, [setFrameReady, isFrameReady]);
+    const initializeFrame = async () => {
+      try {
+        // Get context from SDK
+        const frameContext = sdk.context;
+        setContext(frameContext);
+
+        // Mark frame as ready
+        await sdk.actions.ready();
+        setIsReady(true);
+      } catch (error) {
+        console.error('Failed to initialize frame:', error);
+      }
+    };
+
+    initializeFrame();
+  }, []);
 
   if (!name) {
     return <div>Please enter a game name</div>;

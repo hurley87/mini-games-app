@@ -1,6 +1,6 @@
 'use client';
 
-import { useMiniKit } from '@coinbase/onchainkit/minikit';
+import { sdk } from '@farcaster/frame-sdk';
 import { useEffect, useState } from 'react';
 import { BuyCoinButton } from './BuyCoinButton';
 import { useAccount, useConnect } from 'wagmi';
@@ -14,19 +14,32 @@ interface GameProps {
 export function Game({ id, timeoutSeconds = 10, coinAddress }: GameProps) {
   const [loading, setLoading] = useState(true);
   const [isGameOver, setIsGameOver] = useState(false);
-  const { setFrameReady, isFrameReady, context } = useMiniKit();
+  const [isReady, setIsReady] = useState(false);
+  const [context, setContext] = useState<any>(null);
   const { address, isConnected } = useAccount();
   const { connectors, connect } = useConnect();
 
   console.log('address', address);
 
   useEffect(() => {
-    if (!isFrameReady) {
-      setFrameReady({
-        disableNativeGestures: true,
-      });
-    }
-  }, [setFrameReady, isFrameReady]);
+    const initializeFrame = async () => {
+      try {
+        // Get context from SDK
+        const frameContext = sdk.context;
+        setContext(frameContext);
+
+        // Mark frame as ready with disabled native gestures for gaming
+        await sdk.actions.ready({
+          disableNativeGestures: true,
+        });
+        setIsReady(true);
+      } catch (error) {
+        console.error('Failed to initialize frame:', error);
+      }
+    };
+
+    initializeFrame();
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {

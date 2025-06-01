@@ -9,7 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@coinbase/onchainkit": "latest",
     "@farcaster/frame-node": "^0.0.28",
     "@farcaster/frame-sdk": "^0.0.44",
     "@farcaster/frame-wagmi-connector": "^0.0.33",

@@ -9,22 +9,91 @@ import {
 } from '@/app/components/ui/drawer';
 import { Button } from '@/app/components/ui/button';
 import Image from 'next/image';
-import { List, LogOut, Settings, Trophy, UserPlus } from 'lucide-react';
+import { List, LogOut, Settings, Trophy, UserPlus, Wallet } from 'lucide-react';
+import { sdk } from '@farcaster/frame-sdk';
+import { useEffect, useState } from 'react';
 
 export function HeaderProfile() {
+  const [context, setContext] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isConnecting, setIsConnecting] = useState(false);
+
+  useEffect(() => {
+    const initializeContext = async () => {
+      try {
+        const frameContext = sdk.context;
+        setContext(frameContext);
+      } catch (error) {
+        console.error('Failed to get Farcaster context:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initializeContext();
+  }, []);
+
+  const handleConnect = async () => {
+    setIsConnecting(true);
+    try {
+      // Trigger Farcaster connection
+      await sdk.actions.openUrl('https://warpcast.com');
+      // You might need to implement specific connection logic here
+      // depending on your Farcaster Frame setup
+    } catch (error) {
+      console.error('Failed to connect:', error);
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  // Check if user is connected
+  const isConnected =
+    context?.user && (context.user.fid || context.user.username);
+
+  // Extract user data with fallbacks
+  const userDisplayName =
+    context?.user?.displayName || context?.user?.username || 'Anonymous';
+  const userPfp = context?.user?.pfpUrl;
+
+  // Show connect button if not connected
+  if (!isLoading && !isConnected) {
+    return (
+      <Button
+        onClick={handleConnect}
+        disabled={isConnecting}
+        className="flex items-center gap-2"
+        variant="outline"
+      >
+        <Wallet className="w-4 h-4" />
+        {isConnecting ? 'Connecting...' : 'Connect'}
+      </Button>
+    );
+  }
+
+  // Show profile drawer if connected
   return (
     <Drawer>
       <DrawerTrigger asChild>
         <button className="flex items-center gap-2 hover:bg-gray-50 rounded-lg px-2 py-1 transition-colors">
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 overflow-hidden">
-            <Image
-              src="/placeholder.svg?height=32&width=32"
-              alt="User avatar"
-              width={32}
-              height={32}
-              className="object-cover"
-            />
+            {userPfp ? (
+              <Image
+                src={userPfp}
+                alt={`${userDisplayName} avatar`}
+                width={32}
+                height={32}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-white font-semibold text-xs">
+                {isLoading ? '...' : userDisplayName.charAt(0).toUpperCase()}
+              </div>
+            )}
           </div>
+          <span className="text-sm font-medium">
+            {isLoading ? 'Loading...' : userDisplayName}
+          </span>
         </button>
       </DrawerTrigger>
       <DrawerContent>
