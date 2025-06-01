@@ -161,9 +161,9 @@ export const supabaseService = {
     return data;
   },
 
-  async getGameById(id: string) {
+  async getBuildById(id: string) {
     const { data, error } = await supabase
-      .from('games')
+      .from('builds')
       .select('code, name, image, description, coin_address')
       .eq('id', id)
       .single();
@@ -193,8 +193,8 @@ export const supabaseService = {
     return data;
   },
 
-  async getGames() {
-    const { data, error } = await supabase.from('games').select('*');
+  async getBuilds() {
+    const { data, error } = await supabase.from('builds').select('*');
 
     if (error) {
       throw error;

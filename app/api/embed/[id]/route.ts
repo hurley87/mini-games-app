@@ -28,10 +28,10 @@ export async function GET(
   }
 
   try {
-    const game = await supabaseService.getGameById(id);
+    const build = await supabaseService.getBuildById(id);
 
-    if (!game) {
-      return NextResponse.json({ error: 'Game not found' }, { status: 404 });
+    if (!build) {
+      return NextResponse.json({ error: 'Build not found' }, { status: 404 });
     }
 
     const injectedScript = `
@@ -57,7 +57,7 @@ export async function GET(
     </script>
   `;
 
-    const html = game.code.replace('<head>', `<head>${injectedScript}`);
+    const html = build.code.replace('<head>', `<head>${injectedScript}`);
 
     console.log('html', html);
 
