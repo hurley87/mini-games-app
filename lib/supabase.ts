@@ -40,20 +40,6 @@ export type Coin = {
   parent: string;
 };
 
-type Creators = {
-  fid: number;
-  bio: string;
-  username: string;
-  pfp: string;
-  created_at: string;
-  updated_at: string;
-  score: number;
-  primary_address: string;
-  follower_count: number;
-  following_count: number;
-  power_badge: boolean;
-};
-
 // Initialize Supabase client
 const supabase = createClient(
   process.env.SUPABASE_URL!,

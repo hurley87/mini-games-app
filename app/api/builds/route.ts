@@ -1,6 +1,6 @@
 import { supabaseService } from '@/lib/supabase';
 import { NextResponse } from 'next/server';
-import { Build, Creator, BuildWithCreator } from '@/lib/types';
+import { Build, BuildWithCreator } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
