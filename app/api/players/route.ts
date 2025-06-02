@@ -17,7 +17,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const data = await supabaseService.upsertUser(userData);
+    const data = await supabaseService.upsertPlayer(userData);
     return NextResponse.json(data);
   } catch (error) {
     console.error('Error upserting user:', error);
