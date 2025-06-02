@@ -45,7 +45,7 @@ export async function POST(request: Request) {
 
     // Then, increment the user's points
     try {
-      await supabaseService.incrementUserPoints(Number(userId), 1);
+      await supabaseService.incrementPlayerPoints(Number(userId), 1);
     } catch (error) {
       console.error('Error updating points:', error);
       return NextResponse.json(
