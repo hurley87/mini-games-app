@@ -3,8 +3,8 @@
 import { useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { Header } from './components/header';
-import { BuildsView } from './components/BuildsView';
 import { useFarcasterContext } from '@/hooks/useFarcasterContext';
+import { CoinsList } from './components/coins-list';
 
 export default function App() {
   const { context, isReady } = useFarcasterContext({
@@ -39,7 +39,7 @@ export default function App() {
           console.log('userData', userData);
 
           // Call the API endpoint to upsert user data
-          await fetch('/api/users', {
+          await fetch('/api/players', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -63,7 +63,7 @@ export default function App() {
     <div className="max-w-md mx-auto bg-white min-h-screen flex flex-col">
       <Header />
       <div className="container mx-auto px-4 py-12 max-w-6xl pt-20">
-        <BuildsView />
+        <CoinsList />
       </div>
     </div>
   );

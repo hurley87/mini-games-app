@@ -3,8 +3,15 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ExternalLink, Copy, MoreHorizontal } from 'lucide-react';
-import { BuildWithCreator } from '@/lib/types';
+import {
+  ExternalLink,
+  Copy,
+  MoreHorizontal,
+  TrendingUp,
+  DollarSign,
+  Users,
+} from 'lucide-react';
+import { CoinWithCreator } from '@/lib/types';
 import { formatRelativeTime } from '@/lib/utils';
 import {
   Popover,
@@ -13,31 +20,66 @@ import {
 } from '@/components/ui/popover';
 import { toast } from 'sonner';
 
-export function BuildsView() {
-  const [builds, setBuilds] = useState<BuildWithCreator[]>([]);
+/**
+ * Formats a currency value for display
+ */
+const formatCurrency = (value: string | undefined): string => {
+  if (!value || value === '0') return 'N/A';
+
+  const num = parseFloat(value);
+  if (isNaN(num)) return 'N/A';
+
+  if (num >= 1e9) {
+    return `${(num / 1e9).toFixed(2)}B`;
+  } else if (num >= 1e6) {
+    return `${(num / 1e6).toFixed(2)}M`;
+  } else if (num >= 1e3) {
+    return `${(num / 1e3).toFixed(1)}K`;
+  } else {
+    return `${num.toFixed(2)}`;
+  }
+};
+
+/**
+ * Formats holder count for display
+ */
+const formatHolders = (count: number | undefined): string => {
+  if (!count) return 'N/A';
+
+  if (count >= 1e6) {
+    return `${(count / 1e6).toFixed(1)}M`;
+  } else if (count >= 1e3) {
+    return `${(count / 1e3).toFixed(1)}K`;
+  } else {
+    return count.toString();
+  }
+};
+
+export function CoinsList() {
+  const [coins, setCoins] = useState<CoinWithCreator[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchBuildsWithCreators = async () => {
+    const fetchCoinsWithCreators = async () => {
       try {
-        const response = await fetch('/api/builds');
+        const response = await fetch('/api/coins');
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        const buildsData: BuildWithCreator[] = await response.json();
-        setBuilds(buildsData);
+        const coinsData: CoinWithCreator[] = await response.json();
+        setCoins(coinsData);
       } catch (err) {
-        setError('Failed to load builds');
-        console.error('Error fetching builds:', err);
+        setError('Failed to load coins');
+        console.error('Error fetching coins:', err);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchBuildsWithCreators();
+    fetchCoinsWithCreators();
   }, []);
 
   if (isLoading) {
@@ -56,12 +98,12 @@ export function BuildsView() {
     );
   }
 
-  console.log('builds', builds);
+  console.log('coins', coins);
 
   return (
     <main className="flex-1 overflow-auto">
-      {builds.map((build) => (
-        <div key={build.id} className="border-b pb-4">
+      {coins.map((coin) => (
+        <div key={coin.id} className="border-b pb-4">
           {/* Post Header */}
           <div className="flex items-center justify-between p-4">
             <div className="flex items-center gap-2">
@@ -69,10 +111,9 @@ export function BuildsView() {
                 <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
                   <Image
                     src={
-                      build.creator?.pfp ||
-                      '/placeholder.svg?height=40&width=40'
+                      coin.creator?.pfp || '/placeholder.svg?height=40&width=40'
                     }
-                    alt={`${build.creator?.username || 'Creator'} profile`}
+                    alt={`${coin.creator?.username || 'Creator'} profile`}
                     width={40}
                     height={40}
                     className="object-cover"
@@ -80,12 +121,12 @@ export function BuildsView() {
                 </div>
               </div>
               <span className="font-bold">
-                {build.creator?.username || `Creator ${build.fid}`}
+                {coin.creator?.username || `Creator ${coin.fid}`}
               </span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-gray-500 text-sm">
-                {formatRelativeTime(build.created_at)}
+                {formatRelativeTime(coin.created_at)}
               </span>
               <Popover>
                 <PopoverTrigger asChild>
@@ -98,7 +139,7 @@ export function BuildsView() {
                     <button
                       className="flex items-center gap-3 w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
                       onClick={() => {
-                        navigator.clipboard.writeText(build.coin_address);
+                        navigator.clipboard.writeText(coin.coin_address);
                         toast.success('Address copied to clipboard!');
                       }}
                     >
@@ -106,7 +147,7 @@ export function BuildsView() {
                       Copy address
                     </button>
                     <Link
-                      href={`https://dexscreener.com/base/${build.coin_address}`}
+                      href={`https://dexscreener.com/base/${coin.coin_address}`}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
@@ -122,29 +163,45 @@ export function BuildsView() {
           </div>
 
           {/* Post Image */}
-          <div className="relative">
-            <Image
-              src={build.image || '/placeholder.svg?height=500&width=500'}
-              alt="Post image"
-              width={500}
-              height={500}
-              className="w-full aspect-square object-cover rounded-xl"
-            />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <h1 className="text-white text-6xl font-bold">{build.name}</h1>
-            </div>
-          </div>
+          <Image
+            src={coin.image || '/placeholder.svg?height=500&width=500'}
+            alt="Post image"
+            width={500}
+            height={500}
+            className="w-full aspect-square object-cover rounded-xl"
+          />
 
           {/* Post Actions */}
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1">
-                <div className="text-green-500 flex items-center">
-                  <span className="font-bold">$65</span>
+              {/* Zora Data Metrics */}
+              <div className="flex items-center gap-3 text-sm">
+                {/* 24h Volume */}
+                <div className="flex items-center gap-1 text-blue-600">
+                  <TrendingUp className="w-4 h-4" />
+                  <span className="font-medium">
+                    {formatCurrency(coin.zoraData?.volume24h)}
+                  </span>
+                </div>
+
+                {/* Market Cap */}
+                <div className="flex items-center gap-1 text-green-600">
+                  <DollarSign className="w-4 h-4" />
+                  <span className="font-medium">
+                    {formatCurrency(coin.zoraData?.marketCap)}
+                  </span>
+                </div>
+
+                {/* Unique Holders */}
+                <div className="flex items-center gap-1 text-purple-600">
+                  <Users className="w-4 h-4" />
+                  <span className="font-medium">
+                    {formatHolders(coin.zoraData?.uniqueHolders)}
+                  </span>
                 </div>
               </div>
             </div>
-            <Link href={`/builds/${build.id}`}>
+            <Link href={`/coins/${coin.id}`}>
               <button className="bg-green-500 text-white px-8 py-2 rounded-full font-bold">
                 Play
               </button>
@@ -153,7 +210,7 @@ export function BuildsView() {
 
           {/* Post Title */}
           <div className="px-4 pb-2">
-            <h2 className="text-xl font-bold">{build.name}</h2>
+            <h2 className="text-sm font-bold">{coin.name}</h2>
           </div>
         </div>
       ))}

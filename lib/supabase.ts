@@ -9,7 +9,7 @@ export type Notification = {
 };
 
 // --- Types ---
-export type User = {
+export type Player = {
   id?: string; // Supabase ID, usually UUID
   created_at?: string; // Timestamp
   fid: number;
@@ -31,13 +31,27 @@ type Conversation = {
   last_updated?: string;
 };
 
-type Coin = {
+export type Coin = {
   fid: number;
   coinAddress: `0x${string}`;
   name: string;
   symbol: string;
   description: string;
   parent: string;
+};
+
+type Creators = {
+  fid: number;
+  bio: string;
+  username: string;
+  pfp: string;
+  created_at: string;
+  updated_at: string;
+  score: number;
+  primary_address: string;
+  follower_count: number;
+  following_count: number;
+  power_badge: boolean;
 };
 
 // Initialize Supabase client
@@ -47,26 +61,26 @@ const supabase = createClient(
 );
 
 export const supabaseService = {
-  async upsertUser(
-    record: Partial<User> & Pick<User, 'fid' | 'name' | 'pfp' | 'username'>
+  async upsertPlayer(
+    record: Partial<Player> & Pick<Player, 'fid' | 'name' | 'pfp' | 'username'>
   ) {
     // Use standard upsert to set fid and openai_thread_id
     // Note: This will NOT increment message_count
     const { data, error } = await supabase
-      .from('users')
+      .from('players')
       .upsert(record, {
         onConflict: 'fid', // Assuming 'fid' is the unique constraint
       })
       .select(); // Select the updated/inserted row
 
     if (error) {
-      console.error('Supabase upsert error (users):', error);
-      throw new Error('Failed to upsert user');
+      console.error('Supabase upsert error (players):', error);
+      throw new Error('Failed to upsert player');
     }
     return data;
   },
 
-  async incrementUserMessageCount(fid: number) {
+  async incrementPlayerMessageCount(fid: number) {
     // Call the specific RPC function to increment the count atomically
     const { error } = await supabase.rpc('increment_message_count_by_fid', {
       p_fid: fid,
@@ -82,7 +96,7 @@ export const supabaseService = {
     }
   },
 
-  async incrementUserPoints(fid: number, points: number) {
+  async incrementPlayerPoints(fid: number, points: number) {
     const { error } = await supabase.rpc('increment_user_points', {
       p_fid: fid,
       p_points: points,
@@ -90,7 +104,7 @@ export const supabaseService = {
 
     if (error) {
       console.error('Supabase RPC error (increment_user_points):', error);
-      throw new Error('Failed to increment user points');
+      throw new Error('Failed to increment player points');
     }
   },
 
@@ -122,29 +136,29 @@ export const supabaseService = {
 
     return data;
   },
-  async getUserByFid(fid: number) {
+  async getPlayerByFid(fid: number) {
     const { data, error } = await supabase
-      .from('users')
+      .from('players')
       .select('*')
       .eq('fid', fid);
 
     if (error) {
       console.error('Supabase error:', error);
-      throw new Error('Failed to get user');
+      throw new Error('Failed to get player');
     }
 
     return data;
   },
 
-  async updateUser(fid: number, user: Partial<User>) {
+  async updatePlayer(fid: number, player: Partial<Player>) {
     const { data, error } = await supabase
-      .from('users')
-      .update(user)
+      .from('players')
+      .update(player)
       .eq('fid', fid);
 
     if (error) {
       console.error('Supabase error:', error);
-      throw new Error('Failed to update user');
+      throw new Error('Failed to update player');
     }
 
     return data;
@@ -203,11 +217,34 @@ export const supabaseService = {
     return data;
   },
 
-  async getUsers() {
+  async getPlayers() {
     const { data, error } = await supabase
-      .from('users')
+      .from('players')
       .select('*')
       .order('points', { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
+    return data;
+  },
+
+  async getCreatorByFID(fid: number) {
+    const { data, error } = await supabase
+      .from('creators')
+      .select('*')
+      .eq('fid', fid);
+
+    if (error) {
+      throw error;
+    }
+
+    return data;
+  },
+
+  async getCoins() {
+    const { data, error } = await supabase.from('coins').select('*');
 
     if (error) {
       throw error;
