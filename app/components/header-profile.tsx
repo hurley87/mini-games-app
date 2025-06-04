@@ -37,8 +37,7 @@ export function HeaderProfile() {
     context?.user && (context.user.fid || context.user.username);
 
   // Extract user data with fallbacks
-  const userDisplayName =
-    context?.user?.displayName || context?.user?.username || 'Anonymous';
+  const userDisplayName = context?.user?.username || 'Anonymous';
   const userPfp = context?.user?.pfpUrl;
 
   // Show connect button if not connected
