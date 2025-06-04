@@ -5,13 +5,10 @@ import {
   DrawerClose,
   DrawerContent,
   DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
   DrawerTrigger,
 } from '@/app/components/ui/drawer';
 import { Button } from '@/app/components/ui/button';
 import Image from 'next/image';
-<<<<<<< HEAD
 import {
   List,
   LogOut,
@@ -21,9 +18,6 @@ import {
   Wallet,
   Copy,
 } from 'lucide-react';
-=======
-import { Sparkles, LogOut, Trophy, Wallet, List } from 'lucide-react';
->>>>>>> 5b4dcd23142cb996c71bb4023aaf0b9f3035f4f0
 import { sdk } from '@farcaster/frame-sdk';
 import { useState } from 'react';
 import { useFarcasterContext } from '@/hooks/useFarcasterContext';
@@ -66,7 +60,8 @@ export function HeaderProfile() {
     context?.user && (context.user.fid || context.user.username);
 
   // Extract user data with fallbacks
-  const userDisplayName = context?.user?.username || 'Anonymous';
+  const userDisplayName =
+    context?.user?.displayName || context?.user?.username || 'Anonymous';
   const userPfp = context?.user?.pfpUrl;
 
   // Show connect button if not connected
@@ -89,7 +84,6 @@ export function HeaderProfile() {
   return (
     <Drawer>
       <DrawerTrigger asChild>
-<<<<<<< HEAD
         <button className="flex items-center gap-2 hover:bg-gray-50 rounded-lg px-2 py-1 transition-colors">
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 overflow-hidden">
             {userPfp ? (
@@ -124,45 +118,30 @@ export function HeaderProfile() {
             )}
           </div>
         </button>
-=======
-        <List className="w-6 h-6 text-gray-400" />
->>>>>>> 5b4dcd23142cb996c71bb4023aaf0b9f3035f4f0
       </DrawerTrigger>
       <DrawerContent>
-        <DrawerHeader>
-          <DrawerTitle>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 overflow-hidden">
-                {userPfp ? (
-                  <Image
-                    src={userPfp}
-                    alt={`${userDisplayName} avatar`}
-                    width={32}
-                    height={32}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-white font-semibold text-xs">
-                    {userDisplayName.charAt(0).toUpperCase()}
-                  </div>
-                )}
-              </div>
-              <span>{userDisplayName}</span>
-            </div>
-          </DrawerTitle>
-        </DrawerHeader>
         <div className="flex flex-col h-full">
           <div className="flex-1 p-6">
             {/* Menu Items */}
             <div className="space-y-6">
               <div className="flex items-center gap-4 text-xl font-semibold">
-                <Sparkles className="w-6 h-6" />
+                <List className="w-6 h-6" />
                 <span>Games</span>
               </div>
 
               <div className="flex items-center gap-4 text-xl font-semibold">
                 <Trophy className="w-6 h-6" />
                 <span>Leaderboard</span>
+              </div>
+
+              <div className="flex items-center gap-4 text-xl font-semibold">
+                <Settings className="w-6 h-6" />
+                <span>Settings</span>
+              </div>
+
+              <div className="flex items-center gap-4 text-xl font-semibold">
+                <UserPlus className="w-6 h-6" />
+                <span>Invite</span>
               </div>
 
               <div className="flex items-center gap-4 text-xl font-semibold">
