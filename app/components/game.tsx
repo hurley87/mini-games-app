@@ -4,6 +4,24 @@ import { useEffect, useState } from 'react';
 import { BuyCoinButton } from './BuyCoinButton';
 import { useAccount, useConnect } from 'wagmi';
 import { useFarcasterContext } from '@/hooks/useFarcasterContext';
+import { Address, createPublicClient, http } from 'viem';
+import { base } from 'viem/chains';
+
+// Create a public client for reading blockchain data
+const publicClient = createPublicClient({
+  chain: base,
+  transport: http(),
+});
+
+const ERC20_ABI = [
+  {
+    name: 'balanceOf',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [{ name: 'account', type: 'address' }],
+    outputs: [{ name: 'balance', type: 'uint256' }],
+  },
+] as const;
 
 interface GameProps {
   id: string;
@@ -14,6 +32,10 @@ interface GameProps {
 export function Game({ id, timeoutSeconds = 10, coinAddress }: GameProps) {
   const [loading, setLoading] = useState(true);
   const [isGameOver, setIsGameOver] = useState(false);
+  const [hasTokens, setHasTokens] = useState(false);
+  const [checkingTokens, setCheckingTokens] = useState(true);
+  const [hasPlayedBefore, setHasPlayedBefore] = useState(false);
+  const [checkingPlayStatus, setCheckingPlayStatus] = useState(true);
   const { context, isReady } = useFarcasterContext({
     disableNativeGestures: true,
   });
@@ -22,13 +44,105 @@ export function Game({ id, timeoutSeconds = 10, coinAddress }: GameProps) {
 
   console.log('address', address);
 
+  // Check if player has played this game before
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsGameOver(true);
-    }, timeoutSeconds * 1000);
+    const checkPlayStatus = async () => {
+      if (!context?.user?.fid) {
+        setCheckingPlayStatus(false);
+        return;
+      }
 
-    return () => clearTimeout(timer);
-  }, [timeoutSeconds]);
+      try {
+        const response = await fetch('/api/check-play-status', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            fid: context.user.fid,
+            gameId: id,
+            coinAddress,
+            walletAddress: address,
+          }),
+        });
+
+        if (response.ok) {
+          const status = await response.json();
+          setHasPlayedBefore(status.hasPlayed);
+          console.log('Play status check:', { hasPlayed: status.hasPlayed });
+        }
+      } catch (error) {
+        console.error('Error checking play status:', error);
+      } finally {
+        setCheckingPlayStatus(false);
+      }
+    };
+
+    if (isReady && context?.user?.fid) {
+      checkPlayStatus();
+    }
+  }, [context?.user?.fid, id, coinAddress, address, isReady]);
+
+  // Check token balance
+  useEffect(() => {
+    const checkTokenBalance = async () => {
+      if (!address || !coinAddress) {
+        setCheckingTokens(false);
+        return;
+      }
+
+      try {
+        const balance = await publicClient.readContract({
+          address: coinAddress as Address,
+          abi: ERC20_ABI,
+          functionName: 'balanceOf',
+          args: [address as Address],
+        });
+
+        const tokenBalance = balance > BigInt(0);
+        setHasTokens(tokenBalance);
+        console.log('Token balance check:', {
+          balance: balance.toString(),
+          hasTokens: tokenBalance,
+        });
+      } catch (error) {
+        console.error('Error checking token balance:', error);
+        setHasTokens(false);
+      } finally {
+        setCheckingTokens(false);
+      }
+    };
+
+    if (isConnected && address) {
+      checkTokenBalance();
+    } else {
+      setCheckingTokens(false);
+    }
+  }, [address, coinAddress, isConnected]);
+
+  // Set timeout logic:
+  // - First-time players always get 10-second preview (regardless of tokens)
+  // - Returning players only get unlimited if they have tokens
+  useEffect(() => {
+    if (checkingTokens || checkingPlayStatus) return; // Wait for all checks to complete
+
+    const shouldApplyTimeout =
+      !hasPlayedBefore || (hasPlayedBefore && !hasTokens);
+
+    if (shouldApplyTimeout) {
+      const timer = setTimeout(() => {
+        setIsGameOver(true);
+      }, timeoutSeconds * 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [
+    timeoutSeconds,
+    hasTokens,
+    hasPlayedBefore,
+    checkingTokens,
+    checkingPlayStatus,
+  ]);
 
   if (!id) {
     return <div>Please enter a game id</div>;
@@ -42,7 +156,7 @@ export function Game({ id, timeoutSeconds = 10, coinAddress }: GameProps) {
   const iframeUrl = `/api/embed/${id}?userId=${userId}&gameId=${id}`;
   console.log('Iframe URL:', iframeUrl);
 
-  if (!isReady) {
+  if (!isReady || checkingTokens || checkingPlayStatus) {
     return <div>Loading...</div>;
   }
 
@@ -53,23 +167,74 @@ export function Game({ id, timeoutSeconds = 10, coinAddress }: GameProps) {
           <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500 mb-4">
             Game Over
           </h1>
-          <p className="text-xl text-gray-300 mb-8">{`Time's up!`}</p>
-          {!isConnected ? (
-            <div>
+          <p className="text-xl text-gray-300 mb-4">{`Time's up!`}</p>
+
+          {!hasPlayedBefore ? (
+            // First-time player - encourage them to get tokens for full access
+            <div className="space-y-4">
+              <p className="text-sm text-green-400 mb-2">
+                🎉 Thanks for trying the game!
+              </p>
+              <p className="text-sm text-yellow-400 mb-4">
+                Want unlimited access? Get tokens to play without time limits!
+              </p>
+              {!isConnected ? (
+                <button
+                  onClick={() => connect({ connector: connectors[0] })}
+                  className="group relative px-8 py-4 text-lg font-semibold rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+                >
+                  <span className="relative z-10">Connect Wallet</span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 blur-sm"></div>
+                </button>
+              ) : (
+                <BuyCoinButton
+                  coinAddress={coinAddress}
+                  onSuccess={() => {
+                    // Recheck both play status and token balance after purchase
+                    setCheckingTokens(true);
+                    setCheckingPlayStatus(true);
+                    setIsGameOver(false);
+                  }}
+                />
+              )}
+            </div>
+          ) : hasTokens ? (
+            // Returning player with tokens - unlimited play
+            <div className="space-y-4">
+              <p className="text-sm text-blue-400">
+                🎮 You own tokens for this game!
+              </p>
               <button
-                onClick={() => connect({ connector: connectors[0] })}
-                className="group relative px-8 py-4 text-lg font-semibold rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+                onClick={() => setIsGameOver(false)}
+                className="group relative px-8 py-4 text-lg font-semibold rounded-lg bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
               >
-                <span className="relative z-10">Connect Wallet</span>
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 blur-sm"></div>
+                <span className="relative z-10">Play Again</span>
               </button>
             </div>
           ) : (
+            // Returning player without tokens - needs to buy
             <div className="space-y-4">
-              <BuyCoinButton
-                coinAddress={coinAddress}
-                onSuccess={() => setIsGameOver(false)}
-              />
+              <p className="text-sm text-yellow-400 mb-4">
+                You need tokens to continue playing this game!
+              </p>
+              {!isConnected ? (
+                <button
+                  onClick={() => connect({ connector: connectors[0] })}
+                  className="group relative px-8 py-4 text-lg font-semibold rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+                >
+                  <span className="relative z-10">Connect Wallet</span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 blur-sm"></div>
+                </button>
+              ) : (
+                <BuyCoinButton
+                  coinAddress={coinAddress}
+                  onSuccess={() => {
+                    // Recheck token balance after purchase
+                    setCheckingTokens(true);
+                    setIsGameOver(false);
+                  }}
+                />
+              )}
             </div>
           )}
         </div>
