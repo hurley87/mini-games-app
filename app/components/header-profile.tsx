@@ -9,13 +9,24 @@ import {
 } from '@/app/components/ui/drawer';
 import { Button } from '@/app/components/ui/button';
 import Image from 'next/image';
-import { List, LogOut, Settings, Trophy, UserPlus, Wallet } from 'lucide-react';
+import {
+  List,
+  LogOut,
+  Settings,
+  Trophy,
+  UserPlus,
+  Wallet,
+  Copy,
+} from 'lucide-react';
 import { sdk } from '@farcaster/frame-sdk';
 import { useState } from 'react';
 import { useFarcasterContext } from '@/hooks/useFarcasterContext';
+import { toast } from 'sonner';
+import { useAccount } from 'wagmi';
 
 export function HeaderProfile() {
   const { context, isLoading } = useFarcasterContext();
+  const { address } = useAccount();
   const [isConnecting, setIsConnecting] = useState(false);
 
   const handleConnect = async () => {
@@ -30,6 +41,18 @@ export function HeaderProfile() {
     } finally {
       setIsConnecting(false);
     }
+  };
+
+  // Helper function to format address
+  const formatAddress = (address: string) => {
+    if (!address) return '';
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  };
+
+  // Helper function to copy address
+  const copyAddress = (address: string) => {
+    navigator.clipboard.writeText(address);
+    toast.success('Address copied to clipboard!');
   };
 
   // Check if user is connected
@@ -55,6 +78,7 @@ export function HeaderProfile() {
       </Button>
     );
   }
+  console.log('address1', address);
 
   // Show profile drawer if connected
   return (
@@ -76,9 +100,23 @@ export function HeaderProfile() {
               </div>
             )}
           </div>
-          <span className="text-sm font-medium">
-            {isLoading ? 'Loading...' : userDisplayName}
-          </span>
+          <div className="flex flex-col items-start">
+            <span className="text-sm font-medium">
+              {isLoading ? 'Loading...' : userDisplayName}
+            </span>
+            {address && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  copyAddress(address);
+                }}
+                className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                <span>{formatAddress(address)}</span>
+                <Copy className="w-3 h-3" />
+              </button>
+            )}
+          </div>
         </button>
       </DrawerTrigger>
       <DrawerContent>
