@@ -5,11 +5,13 @@ import {
   DrawerClose,
   DrawerContent,
   DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
   DrawerTrigger,
 } from '@/app/components/ui/drawer';
 import { Button } from '@/app/components/ui/button';
 import Image from 'next/image';
-import { List, LogOut, Settings, Trophy, UserPlus, Wallet } from 'lucide-react';
+import { Sparkles, LogOut, Trophy, UserPlus, Wallet, List } from 'lucide-react';
 import { sdk } from '@farcaster/frame-sdk';
 import { useState } from 'react';
 import { useFarcasterContext } from '@/hooks/useFarcasterContext';
@@ -59,45 +61,43 @@ export function HeaderProfile() {
   return (
     <Drawer>
       <DrawerTrigger asChild>
-        <button className="flex items-center gap-2 hover:bg-gray-50 rounded-lg px-2 py-1 transition-colors">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 overflow-hidden">
-            {userPfp ? (
-              <Image
-                src={userPfp}
-                alt={`${userDisplayName} avatar`}
-                width={32}
-                height={32}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-white font-semibold text-xs">
-                {isLoading ? '...' : userDisplayName.charAt(0).toUpperCase()}
-              </div>
-            )}
-          </div>
-          <span className="text-sm font-medium">
-            {isLoading ? 'Loading...' : userDisplayName}
-          </span>
-        </button>
+        <List className="w-6 h-6 text-gray-400" />
       </DrawerTrigger>
       <DrawerContent>
+        <DrawerHeader>
+          <DrawerTitle>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 overflow-hidden">
+                {userPfp ? (
+                  <Image
+                    src={userPfp}
+                    alt={`${userDisplayName} avatar`}
+                    width={32}
+                    height={32}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-white font-semibold text-xs">
+                    {userDisplayName.charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </div>
+              <span>{userDisplayName}</span>
+            </div>
+          </DrawerTitle>
+        </DrawerHeader>
         <div className="flex flex-col h-full">
           <div className="flex-1 p-6">
             {/* Menu Items */}
             <div className="space-y-6">
               <div className="flex items-center gap-4 text-xl font-semibold">
-                <List className="w-6 h-6" />
+                <Sparkles className="w-6 h-6" />
                 <span>Games</span>
               </div>
 
               <div className="flex items-center gap-4 text-xl font-semibold">
                 <Trophy className="w-6 h-6" />
                 <span>Leaderboard</span>
-              </div>
-
-              <div className="flex items-center gap-4 text-xl font-semibold">
-                <Settings className="w-6 h-6" />
-                <span>Settings</span>
               </div>
 
               <div className="flex items-center gap-4 text-xl font-semibold">
