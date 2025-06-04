@@ -11,7 +11,7 @@ import {
 } from '@/app/components/ui/drawer';
 import { Button } from '@/app/components/ui/button';
 import Image from 'next/image';
-import { Sparkles, LogOut, Trophy, UserPlus, Wallet, List } from 'lucide-react';
+import { Sparkles, LogOut, Trophy, Wallet, List } from 'lucide-react';
 import { sdk } from '@farcaster/frame-sdk';
 import { useState } from 'react';
 import { useFarcasterContext } from '@/hooks/useFarcasterContext';
@@ -98,11 +98,6 @@ export function HeaderProfile() {
               <div className="flex items-center gap-4 text-xl font-semibold">
                 <Trophy className="w-6 h-6" />
                 <span>Leaderboard</span>
-              </div>
-
-              <div className="flex items-center gap-4 text-xl font-semibold">
-                <UserPlus className="w-6 h-6" />
-                <span>Invite</span>
               </div>
 
               <div className="flex items-center gap-4 text-xl font-semibold">
