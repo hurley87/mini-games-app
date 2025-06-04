@@ -9,25 +9,18 @@ import {
 } from '@/app/components/ui/drawer';
 import { Button } from '@/app/components/ui/button';
 import Image from 'next/image';
-import {
-  List,
-  LogOut,
-  Settings,
-  Trophy,
-  UserPlus,
-  Wallet,
-  Copy,
-  Sparkles,
-} from 'lucide-react';
+import { List, LogOut, Trophy, Wallet, Copy, Sparkles } from 'lucide-react';
 import { sdk } from '@farcaster/frame-sdk';
 import { useState } from 'react';
 import { useFarcasterContext } from '@/hooks/useFarcasterContext';
 import { toast } from 'sonner';
-import { useAccount } from 'wagmi';
+import { useAccount, useDisconnect } from 'wagmi';
+import Link from 'next/link';
 
 export function HeaderProfile() {
   const { context, isLoading } = useFarcasterContext();
   const { address } = useAccount();
+  const { disconnect } = useDisconnect();
   const [isConnecting, setIsConnecting] = useState(false);
 
   const handleConnect = async () => {
@@ -41,6 +34,17 @@ export function HeaderProfile() {
       console.error('Failed to connect:', error);
     } finally {
       setIsConnecting(false);
+    }
+  };
+
+  const handleLogout = () => {
+    try {
+      // Disconnect wallet
+      disconnect();
+      toast.success('Successfully logged out');
+    } catch (error) {
+      console.error('Failed to logout:', error);
+      toast.error('Failed to logout');
     }
   };
 
@@ -129,30 +133,25 @@ export function HeaderProfile() {
           <div className="flex-1 p-6">
             {/* Menu Items */}
             <div className="space-y-6">
-              <div className="flex items-center gap-4 text-xl font-semibold">
-                <Sparkles className="w-6 h-6" />
-                <span>Games</span>
-              </div>
+              <Link href="/">
+                <div className="flex items-center gap-4 text-xl font-semibold">
+                  <Sparkles className="w-6 h-6" />
+                  <span>Games</span>
+                </div>
+              </Link>
 
               <div className="flex items-center gap-4 text-xl font-semibold">
                 <Trophy className="w-6 h-6" />
                 <span>Leaderboard</span>
               </div>
 
-              <div className="flex items-center gap-4 text-xl font-semibold">
-                <Settings className="w-6 h-6" />
-                <span>Settings</span>
-              </div>
-
-              <div className="flex items-center gap-4 text-xl font-semibold">
-                <UserPlus className="w-6 h-6" />
-                <span>Invite</span>
-              </div>
-
-              <div className="flex items-center gap-4 text-xl font-semibold">
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-4 text-xl font-semibold hover:text-red-600 transition-colors cursor-pointer w-full text-left"
+              >
                 <LogOut className="w-6 h-6" />
                 <span>Log out</span>
-              </div>
+              </button>
             </div>
           </div>
         </div>
