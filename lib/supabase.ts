@@ -41,6 +41,14 @@ export type Coin = {
   parent: string;
 };
 
+export type GamePlay = {
+  id?: string;
+  created_at?: string;
+  fid: number;
+  game_id: string;
+  coin_address: string;
+};
+
 // Initialize Supabase client
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -253,6 +261,54 @@ export const supabaseService = {
     }
 
     return data;
+  },
+
+  async recordGamePlay(gamePlay: Omit<GamePlay, 'id' | 'created_at'>) {
+    const { data, error } = await supabase
+      .from('game_plays')
+      .upsert(gamePlay, {
+        onConflict: 'fid,game_id',
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error recording game play:', error);
+      throw new Error('Failed to record game play');
+    }
+
+    return data;
+  },
+
+  async hasPlayerPlayedGame(fid: number, gameId: string) {
+    const { data, error } = await supabase
+      .from('game_plays')
+      .select('id')
+      .eq('fid', fid)
+      .eq('game_id', gameId)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      // PGRST116 is "not found" error, which is expected when player hasn't played
+      console.error('Error checking game play:', error);
+      throw new Error('Failed to check game play status');
+    }
+
+    return !!data;
+  },
+
+  async getPlayerGamePlays(fid: number) {
+    const { data, error } = await supabase
+      .from('game_plays')
+      .select('*')
+      .eq('fid', fid);
+
+    if (error) {
+      console.error('Error getting player game plays:', error);
+      throw new Error('Failed to get player game plays');
+    }
+
+    return data || [];
   },
 
   // Add direct access to supabase client

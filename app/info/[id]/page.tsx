@@ -2,7 +2,7 @@ import { GameWrapper } from '@/app/components/game-wrapper';
 import { supabaseService } from '@/lib/supabase';
 import { Metadata } from 'next';
 
-interface TokenPageProps {
+interface InfoPageProps {
   params: Promise<{
     id: string;
   }>;
@@ -14,7 +14,7 @@ const appUrl = 'https://app.minigames.studio';
 
 export async function generateMetadata({
   params,
-}: TokenPageProps): Promise<Metadata> {
+}: InfoPageProps): Promise<Metadata> {
   const { id } = await params;
   const coin = await supabaseService.getCoinById(id);
 
@@ -38,7 +38,7 @@ export async function generateMetadata({
       title: `${coin.name}`,
       openGraph: {
         title: `${coin.name}`,
-        description: 'View your game details.',
+        description: coin.description || 'An exciting mini game to play!',
       },
       other: {
         'fc:frame': JSON.stringify(frame),
@@ -51,10 +51,10 @@ export async function generateMetadata({
       version: 'next',
       imageUrl: `${appUrl}/splash.jpg`,
       button: {
-        title: 'View Token',
+        title: 'View Game',
         action: {
           type: 'launch_frame',
-          name: 'Token Not Found',
+          name: 'Game Not Found',
           url: `${appUrl}/info/${id}`,
           splashImageUrl: `${appUrl}/splash.jpg`,
           splashBackgroundColor: '#000000',
@@ -75,18 +75,15 @@ export async function generateMetadata({
   }
 }
 
-export default async function GamePage({
+export default async function InfoPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
   const coin = await supabaseService.getCoinById(id);
-  console.log('coin', coin);
   const coinAddress = coin.coin_address;
-  console.log('coinAddress', coinAddress);
   const buildId = coin.build_id;
-  console.log('buildId', buildId);
 
   return (
     <GameWrapper
