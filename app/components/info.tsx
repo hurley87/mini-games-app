@@ -77,7 +77,7 @@ export function Info({
           {playStatus.reason === 'needs_tokens' && (
             <div className="text-center space-y-4">
               <p className="text-lg text-yellow-600">
-                You've played this game before! 🎮
+                {`You've played this game before! 🎮`}
               </p>
               <p className="text-sm text-gray-600">
                 To continue playing, you need to own tokens for this game.
@@ -104,7 +104,7 @@ export function Info({
           {playStatus.reason === 'no_wallet' && (
             <div className="text-center space-y-4">
               <p className="text-lg text-yellow-600">
-                You've played this game before! 🎮
+                {`You've played this game before! 🎮`}
               </p>
               <p className="text-sm text-gray-600">
                 Please connect your wallet to check if you own tokens.
@@ -148,7 +148,7 @@ export function Info({
 
         {!playStatus.hasPlayed && (
           <p className="text-sm text-green-600 font-medium">
-            🎉 First time playing? It's free!
+            {`🎉 First time playing? It's free!`}
           </p>
         )}
 
