@@ -50,10 +50,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     const combinedText = image ? `${text} ${image}` : text;
 
-    console.log('Request data:', data);
-
     if (!fid) {
-      console.warn('Request received without FID.');
       return NextResponse.json({
         success: false,
         message: 'User FID is missing.',
@@ -74,8 +71,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     try {
       const conversationResult =
         await supabaseService.getConversationByThreadHash(thread_hash);
-
-      console.log('Raw conversationResult:', conversationResult);
 
       if (
         Array.isArray(conversationResult) &&

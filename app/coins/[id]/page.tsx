@@ -16,17 +16,17 @@ export async function generateMetadata({
   params,
 }: TokenPageProps): Promise<Metadata> {
   const { id } = await params;
-  const build = await supabaseService.getBuildById(id);
+  const coin = await supabaseService.getCoinById(id);
 
   try {
     const frame = {
       version: 'next',
-      imageUrl: build.image || `${appUrl}/logo.png`,
+      imageUrl: coin.image || `${appUrl}/logo.png`,
       button: {
-        title: `Play ${build.name}`,
+        title: `Play ${coin.name}`,
         action: {
           type: 'launch_frame',
-          name: build.name,
+          name: coin.name,
           url: `${appUrl}/info/${id}`,
           splashImageUrl: `${appUrl}/splash.jpg`,
           splashBackgroundColor: '#000000',
@@ -35,9 +35,9 @@ export async function generateMetadata({
     };
 
     return {
-      title: `${build.name}`,
+      title: `${coin.name}`,
       openGraph: {
-        title: `${build.name}`,
+        title: `${coin.name}`,
         description: 'View your game details.',
       },
       other: {
@@ -81,12 +81,16 @@ export default async function GamePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const build = await supabaseService.getBuildById(id);
-  const coinAddress = build.coin_address;
+  const coin = await supabaseService.getCoinById(id);
+  console.log('coin', coin);
+  const coinAddress = coin.coin_address;
+  console.log('coinAddress', coinAddress);
+  const buildId = coin.build_id;
+  console.log('buildId', buildId);
 
   return (
     <div className="">
-      <Game id={id} coinAddress={coinAddress} />
+      <Game id={buildId} coinAddress={coinAddress} />
     </div>
   );
 }

@@ -9,7 +9,8 @@ export async function POST(request: Request) {
       !userData.fid ||
       !userData.name ||
       !userData.pfp ||
-      !userData.username
+      !userData.username ||
+      !userData.address
     ) {
       return NextResponse.json(
         { error: 'Missing required fields' },

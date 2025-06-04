@@ -57,9 +57,7 @@ export async function GET(
     </script>
   `;
 
-    const html = build.code.replace('<head>', `<head>${injectedScript}`);
-
-    console.log('html', html);
+    const html = build.html.replace('<head>', `<head>${injectedScript}`);
 
     return new Response(html, {
       headers: { 'Content-Type': 'text/html' },

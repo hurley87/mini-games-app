@@ -6,6 +6,7 @@ export interface Build {
   coin_address: string;
   fid: number;
   created_at: string;
+  html: string;
 }
 
 export interface Coin {

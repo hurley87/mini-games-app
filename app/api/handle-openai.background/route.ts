@@ -73,7 +73,6 @@ const handleCompletedRun = async (
       latestMessage.content[0]?.type === 'text'
     ) {
       const assistantResponse = latestMessage.content[0].text.value;
-      console.log('✅ Assistant response:', assistantResponse);
 
       if (!assistantResponse || assistantResponse.trim().length === 0) {
         console.warn(

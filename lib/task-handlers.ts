@@ -65,7 +65,6 @@ export const taskHandlers = {
     taskData: CreateTaskData
   ): Promise<TaskResponse<{ gameId: string }>> {
     try {
-      console.log('taskData', taskData);
       // Validate input
       const validatedData = createGameSchema.parse(taskData);
 
@@ -112,12 +111,6 @@ export const taskHandlers = {
                 console.warn('Could not cancel active run:', e);
               }
             }
-
-            // Here you would typically save the code to your database or storage
-            // For now, we'll just log it
-            console.log('address:', taskData.verifiedAddress);
-            console.log('gameName:', taskData.name);
-            console.log('Saving code for thread:', taskData.threadId);
 
             const instructions = `
 You are now generating the implementation of a simple, fun browser-based 3D game using Three.js.

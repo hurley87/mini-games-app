@@ -19,6 +19,7 @@ export type Player = {
   url?: string;
   token?: string;
   points?: number;
+  wallet_address: string;
 };
 
 // --- End Types ---
@@ -48,7 +49,8 @@ const supabase = createClient(
 
 export const supabaseService = {
   async upsertPlayer(
-    record: Partial<Player> & Pick<Player, 'fid' | 'name' | 'pfp' | 'username'>
+    record: Partial<Player> &
+      Pick<Player, 'fid' | 'name' | 'pfp' | 'username' | 'wallet_address'>
   ) {
     // Use standard upsert to set fid and openai_thread_id
     // Note: This will NOT increment message_count
@@ -164,7 +166,7 @@ export const supabaseService = {
   async getBuildById(id: string) {
     const { data, error } = await supabase
       .from('builds')
-      .select('code, name, image, description, coin_address')
+      .select('title, image, description, html')
       .eq('id', id)
       .single();
 
@@ -231,6 +233,20 @@ export const supabaseService = {
 
   async getCoins() {
     const { data, error } = await supabase.from('coins').select('*');
+
+    if (error) {
+      throw error;
+    }
+
+    return data;
+  },
+
+  async getCoinById(id: string) {
+    const { data, error } = await supabase
+      .from('coins')
+      .select('*')
+      .eq('id', id)
+      .single();
 
     if (error) {
       throw error;

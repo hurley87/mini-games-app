@@ -17,12 +17,6 @@ export async function POST(request: Request) {
 
     let result;
 
-    console.log('toolName', toolName);
-    console.log('args', args);
-    console.log('parent', parent);
-    console.log('verifiedAddress', verifiedAddress);
-    console.log('fid', fid);
-
     switch (toolName) {
       case 'create_game':
         result = await taskHandlers.handleCreateGame({
@@ -33,7 +27,6 @@ export async function POST(request: Request) {
           threadId,
           runId,
         });
-        console.log('result', result);
         if (result.success && result.data && 'gameId' in result.data) {
           await publishCast(
             `Game created!`,

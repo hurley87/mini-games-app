@@ -101,7 +101,7 @@ export function CoinsList() {
   console.log('coins', coins);
 
   return (
-    <main className="flex-1 overflow-auto">
+    <main className="flex-1 overflow-auto container mx-auto px-4 py-12 max-w-6xl pt-20">
       {coins.map((coin) => (
         <div key={coin.id} className="border-b pb-4">
           {/* Post Header */}

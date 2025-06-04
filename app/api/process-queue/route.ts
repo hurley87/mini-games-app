@@ -7,8 +7,6 @@ export const maxDuration = 300;
 const MAX_ITEMS_PER_RUN = 5; // Process up to 5 items per cron job run
 
 export async function POST(request: Request) {
-  console.log('Processing queue');
-  console.log(request);
   try {
     let processedCount = 0;
     let successCount = 0;
@@ -37,6 +35,7 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error('Error in queue processor:', error);
+    console.log('Processing queue', request);
     return NextResponse.json(
       {
         success: false,

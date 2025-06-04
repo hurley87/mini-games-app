@@ -10,17 +10,12 @@ export default function App() {
   const { context, isReady } = useFarcasterContext({
     autoAddFrame: true,
   });
-  const { address, isConnected } = useAccount();
-
-  console.log('address', address);
-  console.log('isConnected', isConnected);
+  const { address } = useAccount();
 
   useEffect(() => {
     const saveUser = async () => {
       if (context) {
-        console.log('context', context);
         const user = context.user;
-        console.log('user', user);
 
         // Only proceed if user exists and all required fields are present
         if (
@@ -35,8 +30,8 @@ export default function App() {
             name: user.displayName,
             pfp: user.pfpUrl,
             username: user.username,
+            wallet_address: address,
           };
-          console.log('userData', userData);
 
           // Call the API endpoint to upsert user data
           await fetch('/api/players', {
@@ -62,9 +57,7 @@ export default function App() {
   return (
     <div className="max-w-md mx-auto bg-white min-h-screen flex flex-col">
       <Header />
-      <div className="container mx-auto px-4 py-12 max-w-6xl pt-20">
-        <CoinsList />
-      </div>
+      <CoinsList />
     </div>
   );
 }
