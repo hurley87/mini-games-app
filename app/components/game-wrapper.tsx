@@ -6,6 +6,8 @@ import { Game } from './game';
 import { getCoin } from '@zoralabs/coins-sdk';
 import { base } from 'viem/chains';
 import { ZoraCoinData, Creator } from '@/lib/types';
+import { ArrowLeft, Clock } from 'lucide-react';
+import { Button } from './ui/button';
 
 interface GameWrapperProps {
   id: string;
@@ -37,6 +39,7 @@ export function GameWrapper({
     ZoraCoinData | undefined
   >(zoraData);
   const [isLoadingZoraData, setIsLoadingZoraData] = useState(false);
+  const [remainingTime, setRemainingTime] = useState(timeoutSeconds);
 
   // Fetch Zora data if not provided
   useEffect(() => {
@@ -71,13 +74,60 @@ export function GameWrapper({
     fetchZoraCoinData();
   }, [coinAddress, fetchedZoraData]);
 
+  // Timeout countdown effect
+  useEffect(() => {
+    if (!showGame || !timeoutSeconds) return;
+
+    setRemainingTime(timeoutSeconds);
+    const interval = setInterval(() => {
+      setRemainingTime((prev) => {
+        if (prev <= 1) {
+          setShowGame(false);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [showGame, timeoutSeconds]);
+
   if (isLoadingZoraData) {
     return <div>Loading...</div>;
   }
 
   if (showGame) {
     return (
-      <Game id={id} timeoutSeconds={timeoutSeconds} coinAddress={coinAddress} />
+      <div className="flex flex-col h-full">
+        <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between p-2 border-b border-gray-700 bg-gray-900">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowGame(false)}
+            className="flex items-center gap-2 text-gray-400 hover:text-gray-100"
+          >
+            <ArrowLeft size={20} />
+            <span>Exit</span>
+          </Button>
+
+          {timeoutSeconds && (
+            <div className="flex items-center gap-2 text-gray-400">
+              <Clock size={16} />
+              <span className="text-sm font-mono">
+                {Math.floor(remainingTime / 60)}:
+                {(remainingTime % 60).toString().padStart(2, '0')}
+              </span>
+            </div>
+          )}
+        </header>
+        <div className="flex-1 pt-16">
+          <Game
+            id={id}
+            timeoutSeconds={timeoutSeconds}
+            coinAddress={coinAddress}
+          />
+        </div>
+      </div>
     );
   }
 

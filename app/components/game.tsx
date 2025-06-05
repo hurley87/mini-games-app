@@ -254,7 +254,7 @@ export function Game({ id, timeoutSeconds = 10, coinAddress }: GameProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 top-0 left-0 w-full h-full bg-gray-900">
+    <div className="fixed inset-0 z-50 left-0 w-full h-full bg-gray-900 top-12">
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
           <div className="flex flex-col items-center space-y-4">
