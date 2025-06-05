@@ -110,17 +110,9 @@ export function Leaderboard({
 
   return (
     <div className="w-full bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-700">
-      {/* Header */}
-      {/* <div className="bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-4">
-        <h2 className="text-xl font-bold text-white flex items-center gap-2">
-          🏆 Leaderboard
-          {limit && <span className="text-sm opacity-80">(Top {limit})</span>}
-        </h2>
-      </div> */}
-
       {/* Leaderboard List */}
       <div className="divide-y divide-gray-700">
-        {leaderboard.map((player, index) => (
+        {leaderboard.map((player) => (
           <div
             key={player.fid}
             className={`flex items-center gap-4 p-4 hover:bg-gray-700 transition-colors ${
