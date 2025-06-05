@@ -13,12 +13,14 @@ import { useEffect } from 'react';
 interface BuyCoinButtonProps {
   coinAddress: string;
   amount?: string;
+  symbol: string;
   onSuccess?: () => void;
 }
 
 export function BuyCoinButton({
   coinAddress,
-  amount = '0.0001',
+  amount = '0.0005',
+  symbol,
   onSuccess,
 }: BuyCoinButtonProps) {
   const { address } = useAccount();
@@ -37,20 +39,15 @@ export function BuyCoinButton({
     },
   };
 
-  console.log('tradeParams', tradeParams);
-
   // Create configuration for wagmi
   const contractCallParams = tradeCoinCall(tradeParams);
 
-  const { data, error } = useSimulateContract({
+  const { data } = useSimulateContract({
     ...contractCallParams,
     query: {
       enabled: Boolean(address && coinAddress),
     },
   });
-
-  console.log('simulation data:', data);
-  console.log('simulation error:', error);
 
   const { writeContract, isPending, data: hash } = useWriteContract();
 
@@ -70,20 +67,20 @@ export function BuyCoinButton({
         onClick={() => writeContract(data!.request)}
         disabled={!data?.request || isPending || isConfirming}
         className={`
-          px-4 py-2 rounded-md font-medium
+          px-4 py-6 rounded-xl font-medium shadow-md shadow-purple-500/20
           ${
             !data?.request || isPending || isConfirming
-              ? 'bg-gray-400 cursor-not-allowed'
-              : 'bg-blue-500 hover:bg-blue-600'
+              ? 'bg-gray-600 cursor-not-allowed'
+              : 'bg-purple-600 hover:bg-purple-700'
           }
-          text-white transition-colors
+          text-white transition-colors text-xl
         `}
       >
         {isPending
           ? 'Buying...'
           : isConfirming
             ? 'Confirming...'
-            : `Buy ${amount} ETH`}
+            : `Buy $${symbol}`}
       </button>
     </div>
   );

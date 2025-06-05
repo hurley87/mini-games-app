@@ -89,14 +89,28 @@ export default async function InfoPage({
   console.log('buildId', buildId);
   const build = await supabaseService.getBuildById(buildId);
 
-  console.log('build', build);
+  console.log('build', build.image);
+
+  // Fetch creator information
+  let creator = null;
+  try {
+    const creatorResult = await supabaseService.getCreatorByFID(coin.fid);
+    creator = creatorResult[0] || null;
+  } catch (error) {
+    console.error(`Failed to fetch creator for coin ${coin.fid}:`, error);
+  }
 
   return (
     <GameWrapper
       id={buildId}
+      symbol={coin.symbol}
       name={coin.name}
       description={build.tutorial || 'An exciting mini to play!'}
       coinAddress={coinAddress}
+      imageUrl={coin.image}
+      zoraData={coin.zoraData}
+      fid={coin.fid}
+      creator={creator}
     />
   );
 }

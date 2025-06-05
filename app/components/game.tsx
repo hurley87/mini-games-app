@@ -145,7 +145,11 @@ export function Game({ id, timeoutSeconds = 10, coinAddress }: GameProps) {
   ]);
 
   if (!id) {
-    return <div>Please enter a game id</div>;
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-gray-300">Please enter a game id</div>
+      </div>
+    );
   }
 
   const userId = context?.user?.fid;
@@ -157,14 +161,21 @@ export function Game({ id, timeoutSeconds = 10, coinAddress }: GameProps) {
   console.log('Iframe URL:', iframeUrl);
 
   if (!isReady || checkingTokens || checkingPlayStatus) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-2 border-gray-600 border-t-purple-500"></div>
+          <div className="text-gray-300">Loading...</div>
+        </div>
+      </div>
+    );
   }
 
   if (isGameOver) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm">
-        <div className="text-center p-8 rounded-2xl bg-gray-800/50 border border-gray-700/50 max-w-md w-full mx-4">
-          <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500 mb-4">
+        <div className="text-center p-8 rounded-2xl bg-gray-800/80 border border-gray-700 max-w-md w-full mx-4">
+          <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-500 mb-4">
             Game Over
           </h1>
           <p className="text-xl text-gray-300 mb-4">{`Time's up!`}</p>
@@ -175,20 +186,20 @@ export function Game({ id, timeoutSeconds = 10, coinAddress }: GameProps) {
               <p className="text-sm text-green-400 mb-2">
                 🎉 Thanks for trying the game!
               </p>
-              <p className="text-sm text-yellow-400 mb-4">
+              <p className="text-sm text-amber-400 mb-4">
                 Want unlimited access? Get tokens to play without time limits!
               </p>
               {!isConnected ? (
                 <button
                   onClick={() => connect({ connector: connectors[0] })}
-                  className="group relative px-8 py-4 text-lg font-semibold rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+                  className="w-full py-3 px-6 text-lg font-semibold rounded-xl bg-purple-600 hover:bg-purple-700 text-white transition-colors"
                 >
-                  <span className="relative z-10">Connect Wallet</span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 blur-sm"></div>
+                  Connect Wallet
                 </button>
               ) : (
                 <BuyCoinButton
                   coinAddress={coinAddress}
+                  symbol=""
                   onSuccess={() => {
                     // Recheck both play status and token balance after purchase
                     setCheckingTokens(true);
@@ -201,33 +212,33 @@ export function Game({ id, timeoutSeconds = 10, coinAddress }: GameProps) {
           ) : hasTokens ? (
             // Returning player with tokens - unlimited play
             <div className="space-y-4">
-              <p className="text-sm text-blue-400">
+              <p className="text-sm text-purple-400">
                 🎮 You own tokens for this game!
               </p>
               <button
                 onClick={() => setIsGameOver(false)}
-                className="group relative px-8 py-4 text-lg font-semibold rounded-lg bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+                className="w-full py-3 px-6 text-lg font-semibold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition-colors"
               >
-                <span className="relative z-10">Play Again</span>
+                Play Again
               </button>
             </div>
           ) : (
             // Returning player without tokens - needs to buy
             <div className="space-y-4">
-              <p className="text-sm text-yellow-400 mb-4">
-                You need tokens to continue playing this game!
+              <p className="text-sm text-amber-400 mb-4">
+                You need tokens to continue playing this game.
               </p>
               {!isConnected ? (
                 <button
                   onClick={() => connect({ connector: connectors[0] })}
-                  className="group relative px-8 py-4 text-lg font-semibold rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+                  className="w-full py-3 px-6 text-lg font-semibold rounded-xl bg-purple-600 hover:bg-purple-700 text-white transition-colors"
                 >
-                  <span className="relative z-10">Connect Wallet</span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 blur-sm"></div>
+                  Connect Wallet
                 </button>
               ) : (
                 <BuyCoinButton
                   coinAddress={coinAddress}
+                  symbol=""
                   onSuccess={() => {
                     // Recheck token balance after purchase
                     setCheckingTokens(true);
@@ -243,8 +254,15 @@ export function Game({ id, timeoutSeconds = 10, coinAddress }: GameProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 top-0 left-0 w-full h-full">
-      {loading && <p>Loading game...</p>}
+    <div className="fixed inset-0 z-50 top-0 left-0 w-full h-full bg-gray-900">
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
+          <div className="flex flex-col items-center space-y-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-2 border-gray-600 border-t-purple-500"></div>
+            <p className="text-gray-300">Loading game...</p>
+          </div>
+        </div>
+      )}
       <iframe
         src={iframeUrl}
         sandbox="allow-scripts allow-same-origin"

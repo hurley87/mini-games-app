@@ -39,10 +39,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className="antialiased">
+    <html lang="en" className="dark">
+      <body className="antialiased bg-gray-900 text-white">
         <Providers>{children}</Providers>
-        <Toaster />
+        <Toaster theme="dark" />
       </body>
     </html>
   );

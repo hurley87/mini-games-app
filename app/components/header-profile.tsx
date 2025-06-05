@@ -75,7 +75,7 @@ export function HeaderProfile() {
       <Button
         onClick={handleConnect}
         disabled={isConnecting}
-        className="flex items-center gap-2"
+        className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white border-purple-600"
         variant="outline"
       >
         <Wallet className="w-4 h-4" />
@@ -89,14 +89,14 @@ export function HeaderProfile() {
   return (
     <Drawer>
       <DrawerTrigger asChild>
-        <List className="w-6 h-6 text-gray-400" />
+        <List className="w-6 h-6 text-gray-400 hover:text-purple-400 transition-colors cursor-pointer" />
       </DrawerTrigger>
-      <DrawerContent>
+      <DrawerContent className="bg-gray-900 border-gray-700">
         <div className="flex flex-col h-full">
           {/* Profile Section */}
-          <div className="p-6 border-b">
+          <div className="p-6 border-b border-gray-700">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 overflow-hidden">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 overflow-hidden">
                 {userPfp ? (
                   <Image
                     src={userPfp}
@@ -114,13 +114,13 @@ export function HeaderProfile() {
                 )}
               </div>
               <div className="flex flex-col">
-                <span className="font-medium">
+                <span className="font-medium text-white">
                   {isLoading ? 'Loading...' : userDisplayName}
                 </span>
                 {address && (
                   <button
                     onClick={() => copyAddress(address)}
-                    className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 transition-colors self-start"
+                    className="flex items-center gap-1 text-sm text-gray-400 hover:text-purple-400 transition-colors self-start"
                   >
                     <span>{formatAddress(address)}</span>
                     <Copy className="w-3 h-3" />
@@ -134,20 +134,20 @@ export function HeaderProfile() {
             {/* Menu Items */}
             <div className="space-y-6">
               <Link href="/">
-                <div className="flex items-center gap-4 text-xl font-semibold">
+                <div className="flex items-center gap-4 text-xl font-semibold text-white hover:text-purple-400 transition-colors">
                   <Sparkles className="w-6 h-6" />
                   <span>Games</span>
                 </div>
               </Link>
 
-              <div className="flex items-center gap-4 text-xl font-semibold">
+              <div className="flex items-center gap-4 text-xl font-semibold text-white hover:text-purple-400 transition-colors cursor-pointer">
                 <Trophy className="w-6 h-6" />
                 <span>Leaderboard</span>
               </div>
 
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-4 text-xl font-semibold hover:text-red-600 transition-colors cursor-pointer w-full text-left"
+                className="flex items-center gap-4 text-xl font-semibold text-white hover:text-red-400 transition-colors cursor-pointer w-full text-left"
               >
                 <LogOut className="w-6 h-6" />
                 <span>Log out</span>
@@ -157,7 +157,12 @@ export function HeaderProfile() {
         </div>
         <DrawerFooter>
           <DrawerClose asChild>
-            <Button variant="outline">Close</Button>
+            <Button
+              variant="outline"
+              className="bg-gray-800 border-gray-600 text-white hover:bg-gray-700"
+            >
+              Close
+            </Button>
           </DrawerClose>
         </DrawerFooter>
       </DrawerContent>

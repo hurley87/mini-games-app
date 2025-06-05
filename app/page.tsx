@@ -54,11 +54,18 @@ export default function App() {
   }, [context]);
 
   if (!isReady) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-2 border-gray-600 border-t-purple-500"></div>
+          <div className="text-gray-300">Loading...</div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-md mx-auto bg-white min-h-screen flex flex-col">
+    <div className="max-w-md mx-auto bg-gray-900 min-h-screen flex flex-col">
       <Header />
       <CoinsList />
     </div>
