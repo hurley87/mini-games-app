@@ -17,6 +17,8 @@ export async function generateMetadata({
 }: InfoPageProps): Promise<Metadata> {
   const { id } = await params;
   const coin = await supabaseService.getCoinById(id);
+  const buildId = coin.build_id;
+  const build = await supabaseService.getBuildById(buildId);
 
   try {
     const frame = {
@@ -38,7 +40,7 @@ export async function generateMetadata({
       title: `${coin.name}`,
       openGraph: {
         title: `${coin.name}`,
-        description: coin.description || 'An exciting mini game to play!',
+        description: build.tutorial || 'An exciting mini game to!',
       },
       other: {
         'fc:frame': JSON.stringify(frame),
@@ -84,12 +86,16 @@ export default async function InfoPage({
   const coin = await supabaseService.getCoinById(id);
   const coinAddress = coin.coin_address;
   const buildId = coin.build_id;
+  console.log('buildId', buildId);
+  const build = await supabaseService.getBuildById(buildId);
+
+  console.log('build', build);
 
   return (
     <GameWrapper
       id={buildId}
       name={coin.name}
-      description={coin.description || 'An exciting mini game to play!'}
+      description={build.tutorial || 'An exciting mini to play!'}
       coinAddress={coinAddress}
     />
   );

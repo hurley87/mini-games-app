@@ -87,12 +87,14 @@ export default async function GamePage({
   console.log('coinAddress', coinAddress);
   const buildId = coin.build_id;
   console.log('buildId', buildId);
+  const build = await supabaseService.getBuildById(buildId);
+  console.log('build', build);
 
   return (
     <GameWrapper
       id={buildId}
       name={coin.name}
-      description={coin.description || 'An exciting mini game to play!'}
+      description={build.tutorial || 'An exciting game to play!'}
       coinAddress={coinAddress}
     />
   );

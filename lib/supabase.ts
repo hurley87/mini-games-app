@@ -174,7 +174,7 @@ export const supabaseService = {
   async getBuildById(id: string) {
     const { data, error } = await supabase
       .from('builds')
-      .select('title, image, description, html')
+      .select('title, image, description, html, tutorial')
       .eq('id', id)
       .single();
 
