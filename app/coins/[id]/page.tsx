@@ -23,7 +23,7 @@ export async function generateMetadata({
       version: 'next',
       imageUrl: coin.image || `${appUrl}/logo.png`,
       button: {
-        title: `Play ${coin.name}`,
+        title: `Play ${coin.name}, Earn $${coin.symbol}`,
         action: {
           type: 'launch_frame',
           name: coin.name,
