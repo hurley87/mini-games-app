@@ -12,11 +12,8 @@ export default function App() {
   });
   const { address } = useAccount();
 
-  console.log('address for player insert', address);
-
   useEffect(() => {
     const saveUser = async () => {
-      console.log('context', context);
       if (context) {
         const user = context.user;
 

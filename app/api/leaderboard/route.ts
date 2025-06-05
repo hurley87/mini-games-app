@@ -1,12 +1,12 @@
-import { supabaseService } from '@/lib/supabase';
 import { NextResponse } from 'next/server';
+import { supabaseService } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const players = await supabaseService.getPlayers();
-    return NextResponse.json(players);
+    const leaderboard = await supabaseService.getPlayerLeaderboard();
+    return NextResponse.json(leaderboard);
   } catch (error) {
     console.error('Error fetching leaderboard:', error);
     return NextResponse.json(

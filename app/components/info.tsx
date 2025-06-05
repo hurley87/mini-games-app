@@ -9,6 +9,7 @@ import { ZoraCoinData, Creator } from '@/lib/types';
 import { DollarSign, TrendingUp, Users } from 'lucide-react';
 import { formatCurrency, formatHolders } from '@/lib/utils';
 import { sdk } from '@farcaster/frame-sdk';
+import { Header } from './header';
 
 interface InfoProps {
   name: string;
@@ -355,7 +356,8 @@ export function Info({
   // Player can play - show the normal play button
   return (
     <div className="min-h-screen bg-gray-900">
-      <div className="max-w-sm mx-auto bg-gray-900">
+      <Header />
+      <div className="max-w-sm mx-auto bg-gray-900 pt-14">
         {/* Header with app icon and basic info */}
         <div className="p-6 border-b border-gray-700">
           <div className="flex items-start space-x-4">
@@ -469,7 +471,7 @@ export function Info({
                   Premium Player
                 </h3>
                 <p className="text-xs text-blue-300 mt-1">
-                  You own {symbol} tokens - enjoy unlimited access!
+                  You own ${symbol} tokens - enjoy unlimited access!
                 </p>
               </div>
             </div>
@@ -480,20 +482,14 @@ export function Info({
         <div className="p-6">
           <button
             onClick={handlePlay}
-            className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-full transition-colors text-lg"
+            className="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-4 rounded-xl font-semibold shadow-md shadow-purple-500/20 text-lg"
           >
             PLAY
           </button>
-          <p className="text-xs text-gray-400 text-center mt-2">
-            Instant access • No downloads required
-          </p>
         </div>
 
         {/* Description */}
         <div className="p-6 border-t border-gray-700">
-          <h2 className="text-lg font-semibold text-white mb-3">
-            About this game
-          </h2>
           <p className="text-sm text-gray-300 leading-relaxed">{description}</p>
         </div>
 

@@ -49,6 +49,15 @@ export type GamePlay = {
   coin_address: string;
 };
 
+export type PlayerRank = {
+  fid: number;
+  username: string;
+  name?: string;
+  pfp?: string;
+  points: number;
+  rank: number;
+};
+
 // Initialize Supabase client
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -92,14 +101,14 @@ export const supabaseService = {
     }
   },
 
-  async incrementPlayerPoints(fid: number, points: number) {
-    const { error } = await supabase.rpc('increment_user_points', {
-      p_fid: fid,
-      p_points: points,
+  async incrementPlayerPoints(id: number, points: number) {
+    const { error } = await supabase.rpc('increment_player_points', {
+      player_id_param: id,
+      points_to_add: points,
     });
 
     if (error) {
-      console.error('Supabase RPC error (increment_user_points):', error);
+      console.error('Supabase RPC error (increment_player_points):', error);
       throw new Error('Failed to increment player points');
     }
   },
@@ -306,6 +315,30 @@ export const supabaseService = {
     if (error) {
       console.error('Error getting player game plays:', error);
       throw new Error('Failed to get player game plays');
+    }
+
+    return data || [];
+  },
+
+  async getPlayerRankByFid(fid: number) {
+    const { data, error } = await supabase.rpc('get_player_rank_by_fid', {
+      player_fid: fid,
+    });
+
+    if (error) {
+      console.error('Error getting player rank:', error);
+      throw new Error('Failed to get player rank');
+    }
+
+    return data?.[0] || null;
+  },
+
+  async getPlayerLeaderboard() {
+    const { data, error } = await supabase.rpc('get_player_leaderboard');
+
+    if (error) {
+      console.error('Error getting leaderboard:', error);
+      throw new Error('Failed to get leaderboard');
     }
 
     return data || [];

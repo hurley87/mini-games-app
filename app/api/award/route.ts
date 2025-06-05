@@ -3,6 +3,18 @@ import { supabaseService } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
+// Handle preflight OPTIONS request
+export async function OPTIONS() {
+  return new Response(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  });
+}
+
 export async function POST(request: Request) {
   // Add CORS headers
   const headers = {
@@ -11,26 +23,40 @@ export async function POST(request: Request) {
     'Access-Control-Allow-Headers': 'Content-Type',
   };
 
-  // Handle preflight requests
-  if (request.method === 'OPTIONS') {
-    return new NextResponse(null, { headers });
-  }
-
   try {
-    const { userId, gameId, score } = await request.json();
+    const { userId, buildId, score } = await request.json();
 
-    if (!userId || !gameId || typeof score !== 'number') {
+    console.log('userId', userId);
+    console.log('buildId', buildId);
+    console.log('score', score);
+
+    if (!userId || !buildId || typeof score !== 'number') {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400, headers }
       );
     }
 
-    // First, save the score to the scores table
+    // First, check if the build exists
+    const { data: buildExists, error: buildCheckError } = await supabaseService
+      .from('builds')
+      .select('id')
+      .eq('id', buildId)
+      .single();
+
+    if (buildCheckError || !buildExists) {
+      console.error('Build not found:', buildId, buildCheckError);
+      return NextResponse.json(
+        { error: 'Build not found' },
+        { status: 404, headers }
+      );
+    }
+
+    // Then, save the score to the scores table
     const { error: scoreError } = await supabaseService.from('scores').insert([
       {
-        user_id: userId,
-        game_id: gameId,
+        fid: userId,
+        build_id: buildId,
         score: 1,
       },
     ]);
@@ -43,7 +69,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Then, increment the user's points
+    // Then, increment the player's points
     try {
       await supabaseService.incrementPlayerPoints(Number(userId), 1);
     } catch (error) {

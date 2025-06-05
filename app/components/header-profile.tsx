@@ -140,10 +140,13 @@ export function HeaderProfile() {
                 </div>
               </Link>
 
-              <div className="flex items-center gap-4 text-xl font-semibold text-white hover:text-purple-400 transition-colors cursor-pointer">
+              <Link
+                className="flex items-center gap-4 text-xl font-semibold text-white hover:text-purple-400 transition-colors cursor-pointer"
+                href="/leaderboard"
+              >
                 <Trophy className="w-6 h-6" />
                 <span>Leaderboard</span>
-              </div>
+              </Link>
 
               <button
                 onClick={handleLogout}

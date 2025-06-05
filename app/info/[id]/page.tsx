@@ -86,10 +86,7 @@ export default async function InfoPage({
   const coin = await supabaseService.getCoinById(id);
   const coinAddress = coin.coin_address;
   const buildId = coin.build_id;
-  console.log('buildId', buildId);
   const build = await supabaseService.getBuildById(buildId);
-
-  console.log('build', build.image);
 
   // Fetch creator information
   let creator = null;

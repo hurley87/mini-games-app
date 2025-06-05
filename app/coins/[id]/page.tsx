@@ -82,13 +82,9 @@ export default async function GamePage({
 }) {
   const { id } = await params;
   const coin = await supabaseService.getCoinById(id);
-  console.log('coin', coin);
   const coinAddress = coin.coin_address;
-  console.log('coinAddress', coinAddress);
   const buildId = coin.build_id;
-  console.log('buildId', buildId);
   const build = await supabaseService.getBuildById(buildId);
-  console.log('build', build);
 
   // Fetch creator information
   let creator = null;

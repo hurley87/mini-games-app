@@ -9,7 +9,9 @@ export function Header() {
         <Sparkles className="w-6 h-6 text-purple-400" />
       </Link>
       <div className="flex items-center gap-6">
-        <Trophy className="w-6 h-6 text-gray-400" />
+        <Link href="/leaderboard">
+          <Trophy className="w-6 h-6 text-gray-400" />
+        </Link>
         <HeaderProfile />
       </div>
     </header>

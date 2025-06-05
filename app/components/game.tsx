@@ -157,7 +157,7 @@ export function Game({ id, timeoutSeconds = 10, coinAddress }: GameProps) {
   // Debug logs
   console.log('Game ID:', id);
 
-  const iframeUrl = `/api/embed/${id}?userId=${userId}&gameId=${id}`;
+  const iframeUrl = `/api/embed/${id}?userId=${userId}&buildId=${id}`;
   console.log('Iframe URL:', iframeUrl);
 
   if (!isReady || checkingTokens || checkingPlayStatus) {

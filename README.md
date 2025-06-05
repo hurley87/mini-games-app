@@ -10,6 +10,7 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-oncha
 ## Getting Started
 
 1. Install dependencies:
+
 ```bash
 npm install
 # or
@@ -33,7 +34,7 @@ The environment variables enable the following features:
 ```bash
 # Shared/OnchainKit variables
 NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME=
-NEXT_PUBLIC_URL=
+NEXT_PUBLIC_URL=http://localhost:3000/
 NEXT_PUBLIC_ICON_URL=
 NEXT_PUBLIC_ONCHAINKIT_API_KEY=
 
@@ -59,6 +60,7 @@ REDIS_TOKEN=
 ```
 
 3. Start the development server:
+
 ```bash
 npm run dev
 ```
@@ -66,21 +68,26 @@ npm run dev
 ## Template Features
 
 ### Frame Configuration
+
 - `.well-known/farcaster.json` endpoint configured for Frame metadata and account association
 - Frame metadata automatically added to page headers in `layout.tsx`
 
 ### Background Notifications
+
 - Redis-backed notification system using Upstash
 - Ready-to-use notification endpoints in `api/notify` and `api/webhook`
 - Notification client utilities in `lib/notification-client.ts`
 
 ### Theming
+
 - Custom theme defined in `theme.css` with OnchainKit variables
 - Pixel font integration with Pixelify Sans
 - Dark/light mode support through OnchainKit
 
 ### MiniKit Provider
+
 The app is wrapped with `MiniKitProvider` in `providers.tsx`, configured with:
+
 - OnchainKit integration
 - Access to Frames context
 - Sets up Wagmi Connectors
@@ -92,10 +99,12 @@ The app is wrapped with `MiniKitProvider` in `providers.tsx`, configured with:
 To get started building your own frame, follow these steps:
 
 1. Remove the DemoComponents:
+
    - Delete `components/DemoComponents.tsx`
    - Remove demo-related imports from `page.tsx`
 
 2. Start building your Frame:
+
    - Modify `page.tsx` to create your Frame UI
    - Update theme variables in `theme.css`
    - Adjust MiniKit configuration in `providers.tsx`

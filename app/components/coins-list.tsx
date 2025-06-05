@@ -139,8 +139,19 @@ export function CoinsList() {
             className="w-full aspect-square object-cover rounded-xl"
           />
 
+          <Link href={`/coins/${coin.id}`}>
+            <button className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-semibold transition-colors w-full mt-4 text-xl py-4">
+              Play
+            </button>
+          </Link>
+
+          {/* Post Title */}
+          <div className="px-4 pb-2 mt-4">
+            <h2 className="text-sm font-bold text-white">{coin.name}</h2>
+          </div>
+
           {/* Post Actions */}
-          <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center justify-between px-4 ">
             <div className="flex items-center gap-4">
               {/* Zora Data Metrics */}
               <div className="flex items-center gap-3 text-sm">
@@ -169,16 +180,6 @@ export function CoinsList() {
                 </div>
               </div>
             </div>
-            <Link href={`/coins/${coin.id}`}>
-              <button className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-2 rounded-full font-bold transition-colors">
-                Play
-              </button>
-            </Link>
-          </div>
-
-          {/* Post Title */}
-          <div className="px-4 pb-2">
-            <h2 className="text-sm font-bold text-white">{coin.name}</h2>
           </div>
         </div>
       ))}

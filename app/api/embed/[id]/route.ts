@@ -10,19 +10,19 @@ export async function GET(
   // Parse URL manually
   const url = new URL(request.url);
   const userId = url.searchParams.get('userId');
-  const gameId = url.searchParams.get('gameId');
+  const buildId = url.searchParams.get('buildId');
 
   // Debug logs
   console.log('API Route - Full URL:', request.url);
   console.log('API Route - Params:', params);
   console.log('API Route - URL Search Params:', url.searchParams.toString());
   console.log('API Route - userId:', userId);
-  console.log('API Route - gameId:', gameId);
+  console.log('API Route - buildId:', buildId);
 
   // Validate required parameters
-  if (!userId || !gameId) {
+  if (!userId || !buildId) {
     return NextResponse.json(
-      { error: 'Missing required parameters: userId and gameId are required' },
+      { error: 'Missing required parameters: userId and buildId are required' },
       { status: 400 }
     );
   }
@@ -34,6 +34,8 @@ export async function GET(
       return NextResponse.json({ error: 'Build not found' }, { status: 404 });
     }
 
+    console.log('process.env.NEXT_PUBLIC_URL', process.env.NEXT_PUBLIC_URL);
+
     const injectedScript = `
     <script>
       window.awardPoints = async function(score) {
@@ -43,7 +45,7 @@ export async function GET(
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               userId: '${userId}',
-              gameId: '${gameId}',
+              buildId: '${buildId}',
               score: score
             })
           });
@@ -57,7 +59,7 @@ export async function GET(
     </script>
   `;
 
-    const html = build.html.replace('<head>', `<head>${injectedScript}`);
+    const html = build.html.replace('</body>', `${injectedScript}</body>`);
 
     return new Response(html, {
       headers: { 'Content-Type': 'text/html' },
