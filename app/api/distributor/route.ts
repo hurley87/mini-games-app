@@ -43,8 +43,8 @@ export async function POST(request: Request) {
       console.log('coinAddress', coinAddress);
 
       const account = await getWalletAccount(
-        coin.wallet_id,
-        coin.wallet_address
+        'q6pjcc0zexrczw37fm88rc3j',
+        '0xe67C7640c647Ee0Bb85a70f08EDBC385FBeCae3F'
       );
 
       const walletClient = createClientForWallet(account);
