@@ -76,7 +76,6 @@ export function GameWrapper({
     fetchZoraCoinData();
   }, [coinAddress, fetchedZoraData]);
 
-  // Timeout countdown effect
   useEffect(() => {
     if (!showGame || !timeoutSeconds) return;
 

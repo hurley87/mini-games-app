@@ -357,6 +357,20 @@ export const supabaseService = {
     return data || [];
   },
 
+  async getNotificationByFid(fid: number) {
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .eq('fid', fid);
+
+    if (error) {
+      console.error('Error getting notifications by fid:', error);
+      throw new Error('Failed to get notifications by fid');
+    }
+
+    return data || [];
+  },
+
   // Add direct access to supabase client
   from: supabase.from.bind(supabase),
 };

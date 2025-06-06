@@ -4,6 +4,7 @@ import {
   getWalletAccount,
 } from '@/lib/clients';
 import { supabaseService } from '@/lib/supabase';
+import { SendNotificationRequest } from '@farcaster/frame-node';
 import { NextResponse } from 'next/server';
 
 // Route configuration
@@ -104,6 +105,27 @@ export async function POST(request: Request) {
             .eq('fid', transfer.fid)
             .eq('coin_id', transfer.coin_id)
             .eq('status', 'pending');
+          const notifications = await supabaseService.getNotificationByFid(fid);
+
+          const notification = notifications[0];
+
+          const response = await fetch(notification.url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              notificationId: crypto.randomUUID(),
+              title: `Check your wallet`,
+              body: `You earned ${tokenCount * 10 ** 18} ${coin.symbol} tokens`,
+              targetUrl: `https://app.minigames.studio/coins/${coin.id}`,
+              tokens: [notification.token],
+            } satisfies SendNotificationRequest),
+          });
+
+          const responseJson = await response.json();
+
+          console.log('response', responseJson);
         } else {
           console.error('Transfer failed for fid:', fid);
         }
