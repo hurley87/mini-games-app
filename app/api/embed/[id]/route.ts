@@ -9,20 +9,20 @@ export async function GET(
 
   // Parse URL manually
   const url = new URL(request.url);
-  const userId = url.searchParams.get('userId');
+  const fid = url.searchParams.get('fid');
   const buildId = url.searchParams.get('buildId');
 
   // Debug logs
   console.log('API Route - Full URL:', request.url);
   console.log('API Route - Params:', params);
   console.log('API Route - URL Search Params:', url.searchParams.toString());
-  console.log('API Route - userId:', userId);
+  console.log('API Route - fid:', fid);
   console.log('API Route - buildId:', buildId);
 
   // Validate required parameters
-  if (!userId || !buildId) {
+  if (!fid || !buildId) {
     return NextResponse.json(
-      { error: 'Missing required parameters: userId and buildId are required' },
+      { error: 'Missing required parameters: fid and buildId are required' },
       { status: 400 }
     );
   }
@@ -44,7 +44,7 @@ export async function GET(
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              userId: '${userId}',
+              fid: '${fid}',
               buildId: '${buildId}',
               score: score
             })

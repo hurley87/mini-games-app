@@ -24,13 +24,9 @@ export async function POST(request: Request) {
   };
 
   try {
-    const { userId, buildId, score } = await request.json();
+    const { fid, buildId, score } = await request.json();
 
-    console.log('userId', userId);
-    console.log('buildId', buildId);
-    console.log('score', score);
-
-    if (!userId || !buildId || typeof score !== 'number') {
+    if (!fid || !buildId || typeof score !== 'number') {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400, headers }
@@ -55,7 +51,7 @@ export async function POST(request: Request) {
     // Then, save the score to the scores table
     const { error: scoreError } = await supabaseService.from('scores').insert([
       {
-        fid: userId,
+        fid,
         build_id: buildId,
         score: 1,
       },
@@ -71,7 +67,7 @@ export async function POST(request: Request) {
 
     // Then, increment the player's points
     try {
-      await supabaseService.incrementPlayerPoints(Number(userId), 1);
+      await supabaseService.incrementPlayerPoints(Number(fid), 1);
     } catch (error) {
       console.error('Error updating points:', error);
       return NextResponse.json(

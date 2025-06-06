@@ -152,12 +152,12 @@ export function Game({ id, timeoutSeconds = 10, coinAddress }: GameProps) {
     );
   }
 
-  const userId = context?.user?.fid;
+  const fid = context?.user?.fid;
 
   // Debug logs
   console.log('Game ID:', id);
 
-  const iframeUrl = `/api/embed/${id}?userId=${userId}&buildId=${id}`;
+  const iframeUrl = `/api/embed/${id}?fid=${fid}&buildId=${id}`;
   console.log('Iframe URL:', iframeUrl);
 
   if (!isReady || checkingTokens || checkingPlayStatus) {
