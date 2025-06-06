@@ -68,45 +68,45 @@ export async function POST(request: Request) {
 
       try {
         // Transfer tokens using ERC-20 transfer function
-        // const hash = await walletClient.writeContract({
-        //   address: coinAddress as `0x${string}`,
-        //   abi: [
-        //     {
-        //       name: 'transfer',
-        //       type: 'function',
-        //       stateMutability: 'nonpayable',
-        //       inputs: [
-        //         { name: 'to', type: 'address' },
-        //         { name: 'amount', type: 'uint256' },
-        //       ],
-        //       outputs: [{ name: '', type: 'bool' }],
-        //     },
-        //   ] as const,
-        //   functionName: 'transfer',
-        //   args: [
-        //     playerWalletAddress as `0x${string}`,
-        //     BigInt(tokenCount) * BigInt(10 ** 18),
-        //   ],
-        //   account: account,
-        //   chain: walletClient.chain,
-        // });
-        // console.log('Transfer transaction hash:', hash);
-        // // Wait for transaction confirmation
-        // const publicClient = getPublicClient();
-        // const receipt = await publicClient.waitForTransactionReceipt({ hash });
-        // console.log('receipt', receipt);
-        // if (receipt.status === 'success') {
-        //   console.log('Transfer successful for fid:', fid);
-        //   // Update the transfer status in the database
-        //   await supabaseService
-        //     .from('scores')
-        //     .update({ status: 'complete' })
-        //     .eq('fid', transfer.fid)
-        //     .eq('coin_id', transfer.coin_id)
-        //     .eq('status', 'pending');
-        // } else {
-        //   console.error('Transfer failed for fid:', fid);
-        // }
+        const hash = await walletClient.writeContract({
+          address: coinAddress as `0x${string}`,
+          abi: [
+            {
+              name: 'transfer',
+              type: 'function',
+              stateMutability: 'nonpayable',
+              inputs: [
+                { name: 'to', type: 'address' },
+                { name: 'amount', type: 'uint256' },
+              ],
+              outputs: [{ name: '', type: 'bool' }],
+            },
+          ] as const,
+          functionName: 'transfer',
+          args: [
+            playerWalletAddress as `0x${string}`,
+            BigInt(tokenCount) * BigInt(10 ** 18),
+          ],
+          account: account,
+          chain: walletClient.chain,
+        });
+        console.log('Transfer transaction hash:', hash);
+        // Wait for transaction confirmation
+        const publicClient = getPublicClient();
+        const receipt = await publicClient.waitForTransactionReceipt({ hash });
+        console.log('receipt', receipt);
+        if (receipt.status === 'success') {
+          console.log('Transfer successful for fid:', fid);
+          // Update the transfer status in the database
+          await supabaseService
+            .from('scores')
+            .update({ status: 'complete' })
+            .eq('fid', transfer.fid)
+            .eq('coin_id', transfer.coin_id)
+            .eq('status', 'pending');
+        } else {
+          console.error('Transfer failed for fid:', fid);
+        }
       } catch (transferError) {
         console.error('Error transferring tokens for fid:', fid, transferError);
         continue;

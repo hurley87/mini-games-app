@@ -10,7 +10,6 @@ import {
 import { Button } from '@/app/components/ui/button';
 import Image from 'next/image';
 import { List, LogOut, Trophy, Wallet, Copy, Sparkles } from 'lucide-react';
-import { sdk } from '@farcaster/frame-sdk';
 import { useState } from 'react';
 import { useFarcasterContext } from '@/hooks/useFarcasterContext';
 import { toast } from 'sonner';
