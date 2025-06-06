@@ -344,6 +344,19 @@ export const supabaseService = {
     return data || [];
   },
 
+  async getPendingScoresGroupedByToken() {
+    const { data, error } = await supabase.rpc(
+      'get_pending_scores_grouped_by_token'
+    );
+
+    if (error) {
+      console.error('Error getting pending scores grouped by token:', error);
+      throw new Error('Failed to get pending scores grouped by token');
+    }
+
+    return data || [];
+  },
+
   // Add direct access to supabase client
   from: supabase.from.bind(supabase),
 };

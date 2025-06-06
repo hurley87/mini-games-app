@@ -26,12 +26,29 @@ export function HeaderProfile() {
   const handleConnect = async () => {
     setIsConnecting(true);
     try {
-      // Trigger Farcaster connection
-      await sdk.actions.openUrl('https://warpcast.com');
-      // You might need to implement specific connection logic here
-      // depending on your Farcaster Frame setup
+      // Call distributor API
+      const response = await fetch('/api/distributor', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        console.log('Distributor data:', data.data);
+        toast.success('Connected successfully!');
+      } else {
+        throw new Error(data.error || 'Failed to connect');
+      }
     } catch (error) {
       console.error('Failed to connect:', error);
+      toast.error('Failed to connect');
     } finally {
       setIsConnecting(false);
     }

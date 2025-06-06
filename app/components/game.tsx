@@ -27,9 +27,15 @@ interface GameProps {
   id: string;
   timeoutSeconds?: number;
   coinAddress: string;
+  coinId: string;
 }
 
-export function Game({ id, timeoutSeconds = 10, coinAddress }: GameProps) {
+export function Game({
+  id,
+  timeoutSeconds = 10,
+  coinAddress,
+  coinId,
+}: GameProps) {
   const [loading, setLoading] = useState(true);
   const [isGameOver, setIsGameOver] = useState(false);
   const [hasTokens, setHasTokens] = useState(false);
@@ -60,7 +66,7 @@ export function Game({ id, timeoutSeconds = 10, coinAddress }: GameProps) {
           },
           body: JSON.stringify({
             fid: context.user.fid,
-            gameId: id,
+            coinId,
             coinAddress,
             walletAddress: address,
           }),
@@ -157,7 +163,7 @@ export function Game({ id, timeoutSeconds = 10, coinAddress }: GameProps) {
   // Debug logs
   console.log('Game ID:', id);
 
-  const iframeUrl = `/api/embed/${id}?fid=${fid}&buildId=${id}`;
+  const iframeUrl = `/api/embed/${id}?fid=${fid}&coinId=${coinId}`;
   console.log('Iframe URL:', iframeUrl);
 
   if (!isReady || checkingTokens || checkingPlayStatus) {

@@ -20,6 +20,7 @@ interface GameWrapperProps {
   zoraData?: ZoraCoinData;
   fid: number;
   creator?: Creator;
+  coinId: string;
 }
 
 export function GameWrapper({
@@ -33,6 +34,7 @@ export function GameWrapper({
   zoraData,
   fid,
   creator,
+  coinId,
 }: GameWrapperProps) {
   const [showGame, setShowGame] = useState(false);
   const [fetchedZoraData, setFetchedZoraData] = useState<
@@ -132,6 +134,7 @@ export function GameWrapper({
             id={id}
             timeoutSeconds={timeoutSeconds}
             coinAddress={coinAddress}
+            coinId={coinId}
           />
         </div>
       </div>

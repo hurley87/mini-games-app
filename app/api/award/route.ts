@@ -24,9 +24,9 @@ export async function POST(request: Request) {
   };
 
   try {
-    const { fid, buildId, score } = await request.json();
+    const { fid, coinId, score } = await request.json();
 
-    if (!fid || !buildId || typeof score !== 'number') {
+    if (!fid || !coinId || typeof score !== 'number') {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400, headers }
@@ -34,16 +34,16 @@ export async function POST(request: Request) {
     }
 
     // First, check if the build exists
-    const { data: buildExists, error: buildCheckError } = await supabaseService
-      .from('builds')
+    const { data: coinExists, error: coinCheckError } = await supabaseService
+      .from('coins')
       .select('id')
-      .eq('id', buildId)
+      .eq('id', coinId)
       .single();
 
-    if (buildCheckError || !buildExists) {
-      console.error('Build not found:', buildId, buildCheckError);
+    if (coinCheckError || !coinExists) {
+      console.error('Coin not found:', coinId, coinCheckError);
       return NextResponse.json(
-        { error: 'Build not found' },
+        { error: 'Coin not found' },
         { status: 404, headers }
       );
     }
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
     const { error: scoreError } = await supabaseService.from('scores').insert([
       {
         fid,
-        build_id: buildId,
+        coin_id: coinId,
         score: 1,
       },
     ]);

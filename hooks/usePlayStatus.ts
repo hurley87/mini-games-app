@@ -22,7 +22,7 @@ export function usePlayStatus() {
   const { context } = useFarcasterContext();
 
   const checkPlayStatus = useCallback(
-    async (gameId: string, coinAddress: string) => {
+    async (coinId: string, coinAddress: string) => {
       if (!context?.user?.fid) {
         setError('User not authenticated');
         return;
@@ -39,7 +39,7 @@ export function usePlayStatus() {
           },
           body: JSON.stringify({
             fid: context.user.fid,
-            gameId,
+            coinId,
             coinAddress,
             walletAddress: address,
           }),

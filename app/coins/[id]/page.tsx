@@ -106,6 +106,7 @@ export default async function GamePage({
       zoraData={coin.zoraData}
       fid={coin.fid}
       creator={creator}
+      coinId={coin.id}
     />
   );
 }

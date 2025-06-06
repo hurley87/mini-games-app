@@ -10,17 +10,17 @@ export async function GET(
   // Parse URL manually
   const url = new URL(request.url);
   const fid = url.searchParams.get('fid');
-  const buildId = url.searchParams.get('buildId');
+  const coinId = url.searchParams.get('coinId');
 
   // Debug logs
   console.log('API Route - Full URL:', request.url);
   console.log('API Route - Params:', params);
   console.log('API Route - URL Search Params:', url.searchParams.toString());
   console.log('API Route - fid:', fid);
-  console.log('API Route - buildId:', buildId);
+  console.log('API Route - coinId:', coinId);
 
   // Validate required parameters
-  if (!fid || !buildId) {
+  if (!fid || !coinId) {
     return NextResponse.json(
       { error: 'Missing required parameters: fid and buildId are required' },
       { status: 400 }
@@ -45,7 +45,7 @@ export async function GET(
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               fid: '${fid}',
-              buildId: '${buildId}',
+              coinId: '${coinId}',
               score: score
             })
           });

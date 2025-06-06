@@ -1,16 +1,8 @@
 {
   "crons": [
     {
-      "path": "/api/handle-openai.background",
+      "path": "/api/distributor",
       "schedule": "* * * * *"
-    },
-    {
-      "path": "/api/handle-tool.background",
-      "schedule": "* * * * *"
-    },
-    {
-      "path": "/api/hurls",
-      "schedule": "*/2 * * * *"
     }
   ]
 }

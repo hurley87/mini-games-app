@@ -108,6 +108,7 @@ export default async function InfoPage({
       zoraData={coin.zoraData}
       fid={coin.fid}
       creator={creator}
+      coinId={coin.id}
     />
   );
 }

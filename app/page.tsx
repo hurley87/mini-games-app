@@ -33,6 +33,8 @@ export default function App() {
             wallet_address: address,
           };
 
+          console.log('userData', userData);
+
           // Call the API endpoint to upsert user data
           await fetch('/api/players', {
             method: 'POST',

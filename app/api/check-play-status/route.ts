@@ -21,17 +21,22 @@ const ERC20_ABI = [
 
 export async function POST(request: NextRequest) {
   try {
-    const { fid, gameId, coinAddress, walletAddress } = await request.json();
+    const { fid, coinId, coinAddress, walletAddress } = await request.json();
 
-    if (!fid || !gameId || !coinAddress) {
+    console.log('fid', fid);
+    console.log('coinId', coinId);
+    console.log('coinAddress', coinAddress);
+    console.log('walletAddress', walletAddress);
+
+    if (!fid || !coinId || !coinAddress) {
       return NextResponse.json(
-        { error: 'Missing required fields: fid, gameId, coinAddress' },
+        { error: 'Missing required fields: fid, coinId, coinAddress' },
         { status: 400 }
       );
     }
 
     // Check if player has played this game before
-    const hasPlayed = await supabaseService.hasPlayerPlayedGame(fid, gameId);
+    const hasPlayed = await supabaseService.hasPlayerPlayedGame(fid, coinId);
 
     // If they haven't played before, they can play for free
     if (!hasPlayed) {
