@@ -132,7 +132,7 @@ export function Info({
   if (!playStatus.canPlay) {
     return (
       <div className="min-h-screen bg-gray-900">
-        <div className="max-w-sm mx-auto bg-gray-900">
+        <div className="max-w-lg mx-auto bg-gray-900">
           {/* Header with app icon and basic info */}
           <div className="p-6 border-b border-gray-700">
             <div className="flex items-start space-x-4">
@@ -357,7 +357,7 @@ export function Info({
   return (
     <div className="min-h-screen bg-gray-900">
       <Header />
-      <div className="max-w-sm mx-auto bg-gray-900 pt-14">
+      <div className="max-w-lg mx-auto bg-gray-900 pt-14">
         {/* Header with app icon and basic info */}
         <div className="p-6 border-b border-gray-700">
           <div className="flex items-start space-x-4">

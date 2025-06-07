@@ -64,7 +64,7 @@ export default function App() {
   }
 
   return (
-    <div className="max-w-md mx-auto bg-gray-900 min-h-screen flex flex-col">
+    <div className="max-w-lg mx-auto bg-gray-900 min-h-screen flex flex-col">
       <Header />
       <CoinsList />
     </div>

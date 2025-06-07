@@ -3,7 +3,7 @@ import { Header } from '@/app/components/header';
 
 export default function LeaderboardPage() {
   return (
-    <div className="max-w-md mx-auto bg-gray-900 min-h-screen flex flex-col">
+    <div className="max-w-lg mx-auto bg-gray-900 min-h-screen flex flex-col">
       <Header />
       <div className="px-4 pt-20 pb-8">
         <div className="text-center mb-8">
