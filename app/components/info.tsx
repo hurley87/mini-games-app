@@ -18,6 +18,7 @@ import {
 import { formatCurrency, formatHolders, formatTokenBalance } from '@/lib/utils';
 import { sdk } from '@farcaster/frame-sdk';
 import { Header } from './header';
+import { CoinLeaderboard } from './coin-leaderboard';
 
 interface InfoProps {
   name: string;
@@ -374,6 +375,9 @@ export function Info({
               </button>
             </div>
           </div>
+
+          {/* Coin Leaderboard */}
+          <CoinLeaderboard coinId={coinId} symbol={symbol} limit={10} />
         </div>
       </div>
     );
@@ -583,6 +587,9 @@ export function Info({
             </button>
           </div>
         </div>
+
+        {/* Coin Leaderboard */}
+        <CoinLeaderboard coinId={coinId} symbol={symbol} limit={10} />
       </div>
     </div>
   );

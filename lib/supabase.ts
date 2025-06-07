@@ -1,5 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
 
+// Helper function to validate UUID format
+function isValidUUID(uuid: string): boolean {
+  const uuidRegex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(uuid);
+}
+
 export type Notification = {
   id: string;
   fid: number;
@@ -342,6 +349,114 @@ export const supabaseService = {
     }
 
     return data || [];
+  },
+
+  async getCoinLeaderboard(coinId: string, limit?: number) {
+    try {
+      // Validate UUID format
+      if (!coinId || !isValidUUID(coinId)) {
+        throw new Error('Invalid coin ID format');
+      }
+
+      // Try the stored procedure first
+      const { data, error } = await supabase.rpc('get_coin_leaderboard', {
+        coin_id_param: coinId,
+        limit_param: limit || null,
+      });
+
+      if (error) {
+        console.error('Error getting coin leaderboard via RPC:', error);
+
+        // Fallback to direct query if stored procedure fails
+        console.log('Attempting fallback query...');
+        return await this.getCoinLeaderboardFallback(coinId, limit);
+      }
+
+      return data || [];
+    } catch (error) {
+      console.error('Error in getCoinLeaderboard:', error);
+      throw error;
+    }
+  },
+
+  async getCoinLeaderboardFallback(coinId: string, limit?: number) {
+    try {
+      // Get all scores for this coin first
+      const { data: scores, error: scoresError } = await supabase
+        .from('scores')
+        .select('fid, score')
+        .eq('coin_id', coinId);
+
+      if (scoresError) {
+        console.error('Error fetching scores:', scoresError);
+        throw new Error('Failed to get coin scores');
+      }
+
+      if (!scores || scores.length === 0) {
+        return [];
+      }
+
+      // Aggregate scores by player FID
+      const playerStats = new Map();
+
+      scores.forEach((scoreRow: any) => {
+        const fid = scoreRow.fid;
+        const existing = playerStats.get(fid) || {
+          fid,
+          total_score: 0,
+          play_count: 0,
+        };
+
+        existing.total_score += scoreRow.score || 0;
+        existing.play_count += 1;
+        playerStats.set(fid, existing);
+      });
+
+      // Get unique FIDs
+      const uniqueFids = Array.from(playerStats.keys());
+
+      // Fetch player information for all unique FIDs
+      const { data: players, error: playersError } = await supabase
+        .from('players')
+        .select('fid, username, name, pfp')
+        .in('fid', uniqueFids);
+
+      if (playersError) {
+        console.error('Error fetching players:', playersError);
+        throw new Error('Failed to get player information');
+      }
+
+      // Create a map of player info by FID
+      const playerInfoMap = new Map();
+      players?.forEach((player: any) => {
+        playerInfoMap.set(player.fid, player);
+      });
+
+      // Combine stats with player info
+      const leaderboard = Array.from(playerStats.values())
+        .map((stats: any) => {
+          const playerInfo = playerInfoMap.get(stats.fid);
+          return {
+            fid: stats.fid,
+            username: playerInfo?.username || `User ${stats.fid}`,
+            name: playerInfo?.name,
+            pfp: playerInfo?.pfp,
+            total_score: stats.total_score,
+            play_count: stats.play_count,
+          };
+        })
+        .sort((a, b) => b.total_score - a.total_score)
+        .map((player, index) => ({
+          ...player,
+          rank: index + 1,
+        }));
+
+      // Apply limit if specified
+      return limit ? leaderboard.slice(0, limit) : leaderboard;
+    } catch (error) {
+      console.error('Error in getCoinLeaderboardFallback:', error);
+      throw error;
+    }
   },
 
   async getPendingScoresGroupedByToken() {
