@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Helper function to validate UUID format
-function isValidUUID(uuid: string): boolean {
+function isValidUUID(uuid: string) {
   const uuidRegex =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   return uuidRegex.test(uuid);
@@ -64,6 +64,29 @@ export type PlayerRank = {
   points: number;
   rank: number;
 };
+
+type ScoreRow = {
+  fid: number;
+  score: number;
+};
+
+type PlayerStats = {
+  fid: number;
+  total_score: number;
+  play_count: number;
+};
+
+type PlayerInfo = {
+  fid: number;
+  username: string;
+  name?: string;
+  pfp?: string;
+};
+
+type LeaderboardEntry = PlayerInfo &
+  PlayerStats & {
+    rank: number;
+  };
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -135,6 +158,7 @@ export const supabaseService = {
 
     return data;
   },
+
   async getConversationByThreadHash(threadHash: string) {
     const { data, error } = await supabase
       .from('conversations')
@@ -148,6 +172,7 @@ export const supabaseService = {
 
     return data;
   },
+
   async getPlayerByFid(fid: number) {
     const { data, error } = await supabase
       .from('players')
@@ -201,6 +226,7 @@ export const supabaseService = {
 
     return data;
   },
+
   async insertNotification(
     notification: Omit<Notification, 'id' | 'created_at'>
   ) {
@@ -397,9 +423,9 @@ export const supabaseService = {
       }
 
       // Aggregate scores by player FID
-      const playerStats = new Map();
+      const playerStats = new Map<number, PlayerStats>();
 
-      scores.forEach((scoreRow: any) => {
+      scores.forEach((scoreRow: ScoreRow) => {
         const fid = scoreRow.fid;
         const existing = playerStats.get(fid) || {
           fid,
@@ -427,14 +453,14 @@ export const supabaseService = {
       }
 
       // Create a map of player info by FID
-      const playerInfoMap = new Map();
-      players?.forEach((player: any) => {
+      const playerInfoMap = new Map<number, PlayerInfo>();
+      players?.forEach((player: PlayerInfo) => {
         playerInfoMap.set(player.fid, player);
       });
 
       // Combine stats with player info
-      const leaderboard = Array.from(playerStats.values())
-        .map((stats: any) => {
+      const leaderboard: LeaderboardEntry[] = Array.from(playerStats.values())
+        .map((stats) => {
           const playerInfo = playerInfoMap.get(stats.fid);
           return {
             fid: stats.fid,
