@@ -9,11 +9,11 @@ import {
 } from '@/app/components/ui/drawer';
 import { Button } from '@/app/components/ui/button';
 import Image from 'next/image';
-import { List, LogOut, Trophy, Wallet, Copy, Sparkles } from 'lucide-react';
+import { List, Trophy, Wallet, Copy, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import { useFarcasterContext } from '@/hooks/useFarcasterContext';
 import { toast } from 'sonner';
-import { useAccount, useDisconnect } from 'wagmi';
+import { useAccount } from 'wagmi';
 import Link from 'next/link';
 import { trackGameEvent } from '@/lib/posthog';
 import { sentryTracker } from '@/lib/sentry';
@@ -21,7 +21,6 @@ import { sentryTracker } from '@/lib/sentry';
 export function HeaderProfile() {
   const { context, isLoading } = useFarcasterContext();
   const { address } = useAccount();
-  const { disconnect } = useDisconnect();
   const [isConnecting, setIsConnecting] = useState(false);
 
   const handleConnect = async () => {
@@ -84,30 +83,6 @@ export function HeaderProfile() {
     }
   };
 
-  const handleLogout = () => {
-    try {
-      trackGameEvent.navigationClick('logout', 'header_profile');
-      // Disconnect wallet
-      disconnect();
-      toast.success('Successfully logged out');
-    } catch (error) {
-      console.error('Failed to logout:', error);
-      toast.error('Failed to logout');
-
-      trackGameEvent.error('logout_error', 'Failed to logout', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-      });
-
-      sentryTracker.userActionError(
-        error instanceof Error ? error : new Error('Failed to logout'),
-        {
-          action: 'logout',
-          element: 'logout_button',
-          page: 'header_profile',
-        }
-      );
-    }
-  };
 
   // Helper function to format address
   const formatAddress = (address: string) => {
@@ -267,13 +242,6 @@ export function HeaderProfile() {
                 <span>Leaderboard</span>
               </Link>
 
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-4 text-xl font-semibold text-white hover:text-red-400 transition-colors cursor-pointer w-full text-left"
-              >
-                <LogOut className="w-6 h-6" />
-                <span>Log out</span>
-              </button>
             </div>
           </div>
         </div>
