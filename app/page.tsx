@@ -5,6 +5,7 @@ import { useAccount } from 'wagmi';
 import { Header } from './components/header';
 import { useFarcasterContext } from '@/hooks/useFarcasterContext';
 import { CoinsList } from './components/coins-list';
+import { trackGameEvent, identifyUser, setUserProperties } from '@/lib/posthog';
 
 export default function App() {
   const { context, isReady } = useFarcasterContext({
@@ -35,22 +36,51 @@ export default function App() {
 
           console.log('userData', userData);
 
-          // Call the API endpoint to upsert user data
-          await fetch('/api/players', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(userData),
+          // Track user login event
+          trackGameEvent.userLogin(user.fid, user.username, address);
+
+          // Identify user in PostHog
+          identifyUser(user.fid.toString(), {
+            username: user.username,
+            display_name: user.displayName,
+            pfp_url: user.pfpUrl,
+            wallet_address: address,
           });
+
+          // Set user properties
+          setUserProperties({
+            fid: user.fid,
+            username: user.username,
+            display_name: user.displayName,
+            has_wallet: !!address,
+          });
+
+          // Call the API endpoint to upsert user data
+          try {
+            await fetch('/api/players', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(userData),
+            });
+          } catch (error) {
+            trackGameEvent.error('api_error', 'Failed to save user data', {
+              error: error instanceof Error ? error.message : 'Unknown error',
+            });
+          }
         } else {
           console.warn('Missing required user data fields');
+          trackGameEvent.error(
+            'authentication_error',
+            'Missing required user data fields'
+          );
         }
       }
     };
 
     saveUser();
-  }, [context]);
+  }, [context, address]);
 
   if (!isReady) {
     return (

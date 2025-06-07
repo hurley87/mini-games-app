@@ -1,7 +1,16 @@
+'use client';
+
+import { useEffect } from 'react';
 import { Leaderboard } from '@/components/leaderboard';
 import { Header } from '@/app/components/header';
+import { trackGameEvent } from '@/lib/posthog';
 
 export default function LeaderboardPage() {
+  useEffect(() => {
+    // Track leaderboard view
+    trackGameEvent.leaderboardView();
+  }, []);
+
   return (
     <div className="max-w-lg mx-auto bg-gray-900 min-h-screen flex flex-col">
       <Header />

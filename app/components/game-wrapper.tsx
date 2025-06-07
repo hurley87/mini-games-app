@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Info } from './info';
 import { Game } from './game';
 import { getCoin } from '@zoralabs/coins-sdk';
@@ -8,6 +8,7 @@ import { base } from 'viem/chains';
 import { ZoraCoinData, Creator } from '@/lib/types';
 import { ArrowLeft, Clock } from 'lucide-react';
 import { Button } from './ui/button';
+import { trackGameEvent } from '@/lib/posthog';
 
 interface GameWrapperProps {
   id: string;
@@ -42,6 +43,7 @@ export function GameWrapper({
   >(zoraData);
   const [isLoadingZoraData, setIsLoadingZoraData] = useState(false);
   const [remainingTime, setRemainingTime] = useState(timeoutSeconds);
+  const gameStartTime = useRef<number | null>(null);
 
   // Fetch Zora data if not provided
   useEffect(() => {
@@ -68,13 +70,41 @@ export function GameWrapper({
           `Failed to fetch Zora data for coin ${coinAddress}:`,
           error
         );
+        trackGameEvent.error('zora_fetch_error', 'Failed to fetch Zora data', {
+          coin_address: coinAddress,
+          coin_name: name,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        });
       } finally {
         setIsLoadingZoraData(false);
       }
     }
 
     fetchZoraCoinData();
-  }, [coinAddress, fetchedZoraData]);
+  }, [coinAddress, fetchedZoraData, name]);
+
+  // Handle game start
+  const handleGameStart = () => {
+    gameStartTime.current = Date.now();
+    setShowGame(true);
+
+    // Track game start
+    trackGameEvent.gameStart(id, name, coinAddress);
+  };
+
+  // Handle game exit
+  const handleGameExit = () => {
+    const sessionTime = gameStartTime.current
+      ? Math.round((Date.now() - gameStartTime.current) / 1000)
+      : 0;
+
+    setShowGame(false);
+
+    // Track game exit
+    trackGameEvent.gameExit(id, name, sessionTime);
+
+    gameStartTime.current = null;
+  };
 
   useEffect(() => {
     if (!showGame || !timeoutSeconds) return;
@@ -83,7 +113,14 @@ export function GameWrapper({
     const interval = setInterval(() => {
       setRemainingTime((prev) => {
         if (prev <= 1) {
+          // Game timed out
+          const sessionTime = gameStartTime.current
+            ? Math.round((Date.now() - gameStartTime.current) / 1000)
+            : 0;
+
+          trackGameEvent.gameExit(id, name, sessionTime);
           setShowGame(false);
+          gameStartTime.current = null;
           return 0;
         }
         return prev - 1;
@@ -91,7 +128,7 @@ export function GameWrapper({
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [showGame, timeoutSeconds]);
+  }, [showGame, timeoutSeconds, id, name]);
 
   if (isLoadingZoraData) {
     return (
@@ -111,7 +148,7 @@ export function GameWrapper({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setShowGame(false)}
+            onClick={handleGameExit}
             className="flex items-center gap-2 text-gray-400 hover:text-gray-100"
           >
             <ArrowLeft size={20} />
@@ -153,7 +190,7 @@ export function GameWrapper({
       zoraData={fetchedZoraData}
       fid={fid}
       creator={creator}
-      onPlay={() => setShowGame(true)}
+      onPlay={handleGameStart}
       coinId={coinId}
     />
   );

@@ -19,6 +19,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { toast } from 'sonner';
+import { trackGameEvent } from '@/lib/posthog';
 
 export function CoinsList() {
   const [coins, setCoins] = useState<CoinWithCreator[]>([]);
@@ -36,9 +37,15 @@ export function CoinsList() {
 
         const coinsData: CoinWithCreator[] = await response.json();
         setCoins(coinsData);
+
+        // Track games list viewed
+        trackGameEvent.gamesList();
       } catch (err) {
         setError('Failed to load coins');
         console.error('Error fetching coins:', err);
+        trackGameEvent.error('fetch_error', 'Failed to load coins', {
+          error: err instanceof Error ? err.message : 'Unknown error',
+        });
       } finally {
         setIsLoading(false);
       }
@@ -46,6 +53,28 @@ export function CoinsList() {
 
     fetchCoinsWithCreators();
   }, []);
+
+  const handleCopyAddress = (coin: CoinWithCreator) => {
+    navigator.clipboard.writeText(coin.coin_address);
+    toast.success('Address copied to clipboard!');
+
+    // Track coin address copy
+    trackGameEvent.coinAddressCopy(coin.coin_address, coin.name);
+  };
+
+  const handleDexScreenerClick = (coin: CoinWithCreator) => {
+    // Track DEX screener click
+    trackGameEvent.dexScreenerClick(coin.coin_address, coin.name);
+  };
+
+  const handleGameCardView = (coin: CoinWithCreator) => {
+    // Track game card view
+    trackGameEvent.gameCardView(
+      coin.id,
+      coin.name,
+      coin.creator?.username || `Creator ${coin.fid}`
+    );
+  };
 
   if (isLoading) {
     return (
@@ -106,10 +135,7 @@ export function CoinsList() {
                   <div className="space-y-1">
                     <button
                       className="flex items-center gap-3 w-full px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 rounded-md transition-colors"
-                      onClick={() => {
-                        navigator.clipboard.writeText(coin.coin_address);
-                        toast.success('Address copied to clipboard!');
-                      }}
+                      onClick={() => handleCopyAddress(coin)}
                     >
                       <Copy className="w-4 h-4" />
                       Copy address
@@ -118,6 +144,7 @@ export function CoinsList() {
                       href={`https://dexscreener.com/base/${coin.coin_address}`}
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={() => handleDexScreenerClick(coin)}
                     >
                       <button className="flex items-center gap-3 w-full px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 rounded-md transition-colors">
                         <ExternalLink className="w-4 h-4" />
@@ -137,10 +164,14 @@ export function CoinsList() {
             width={500}
             height={500}
             className="w-full aspect-square object-cover rounded-xl"
+            onClick={() => handleGameCardView(coin)}
           />
 
           <Link href={`/coins/${coin.id}`}>
-            <button className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-semibold transition-colors w-full mt-4 text-xl py-4">
+            <button
+              className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-semibold transition-colors w-full mt-4 text-xl py-4"
+              onClick={() => handleGameCardView(coin)}
+            >
               Play
             </button>
           </Link>

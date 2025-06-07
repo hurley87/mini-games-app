@@ -15,6 +15,7 @@ import { useFarcasterContext } from '@/hooks/useFarcasterContext';
 import { toast } from 'sonner';
 import { useAccount, useDisconnect } from 'wagmi';
 import Link from 'next/link';
+import { trackGameEvent } from '@/lib/posthog';
 
 export function HeaderProfile() {
   const { context, isLoading } = useFarcasterContext();
@@ -24,6 +25,8 @@ export function HeaderProfile() {
 
   const handleConnect = async () => {
     setIsConnecting(true);
+    trackGameEvent.navigationClick('connect_wallet', 'header_profile');
+
     try {
       // Call distributor API
       const response = await fetch('/api/distributor', {
@@ -42,12 +45,24 @@ export function HeaderProfile() {
       if (data.success) {
         console.log('Distributor data:', data.data);
         toast.success('Connected successfully!');
+        trackGameEvent.userLogin(
+          context?.user?.fid || 0,
+          context?.user?.username || 'anonymous',
+          address
+        );
       } else {
         throw new Error(data.error || 'Failed to connect');
       }
     } catch (error) {
       console.error('Failed to connect:', error);
       toast.error('Failed to connect');
+      trackGameEvent.error(
+        'connection_error',
+        'Failed to connect to distributor',
+        {
+          error: error instanceof Error ? error.message : 'Unknown error',
+        }
+      );
     } finally {
       setIsConnecting(false);
     }
@@ -55,12 +70,16 @@ export function HeaderProfile() {
 
   const handleLogout = () => {
     try {
+      trackGameEvent.navigationClick('logout', 'header_profile');
       // Disconnect wallet
       disconnect();
       toast.success('Successfully logged out');
     } catch (error) {
       console.error('Failed to logout:', error);
       toast.error('Failed to logout');
+      trackGameEvent.error('logout_error', 'Failed to logout', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
     }
   };
 
@@ -74,6 +93,15 @@ export function HeaderProfile() {
   const copyAddress = (address: string) => {
     navigator.clipboard.writeText(address);
     toast.success('Address copied to clipboard!');
+    trackGameEvent.coinAddressCopy(address, 'user_wallet');
+  };
+
+  const handleGamesNavigation = () => {
+    trackGameEvent.navigationClick('games', 'header_profile');
+  };
+
+  const handleLeaderboardNavigation = () => {
+    trackGameEvent.navigationClick('leaderboard', 'header_profile');
   };
 
   // Check if user is connected
@@ -149,7 +177,7 @@ export function HeaderProfile() {
           <div className="flex-1 p-6">
             {/* Menu Items */}
             <div className="space-y-6">
-              <Link href="/">
+              <Link href="/" onClick={handleGamesNavigation}>
                 <div className="flex items-center gap-4 text-xl font-semibold text-white hover:text-purple-400 transition-colors">
                   <Sparkles className="w-6 h-6" />
                   <span>Games</span>
@@ -159,6 +187,7 @@ export function HeaderProfile() {
               <Link
                 className="flex items-center gap-4 text-xl font-semibold text-white hover:text-purple-400 transition-colors cursor-pointer"
                 href="/leaderboard"
+                onClick={handleLeaderboardNavigation}
               >
                 <Trophy className="w-6 h-6" />
                 <span>Leaderboard</span>
