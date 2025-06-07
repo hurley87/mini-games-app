@@ -117,7 +117,7 @@ async function processTransfers() {
             body: JSON.stringify({
               notificationId: crypto.randomUUID(),
               title: `Check your wallet`,
-              body: `You earned ${tokenCount * 10 ** 18} ${coin.symbol} tokens`,
+              body: `You earned ${tokenCount} ${coin.symbol} tokens`,
               targetUrl: `https://app.minigames.studio/coins/${coin.id}`,
               tokens: [notification.token],
             } satisfies SendNotificationRequest),
