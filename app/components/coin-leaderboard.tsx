@@ -22,6 +22,14 @@ export function CoinLeaderboard({
   const { leaderboard, isLoading, error } = useCoinLeaderboard(coinId, limit);
   const { context } = useFarcasterContext();
 
+  const handleViewProfile = async (fid: number) => {
+    try {
+      await sdk.actions.viewProfile({ fid });
+    } catch (error) {
+      console.error('Failed to view profile:', error);
+    }
+  };
+
   const handleSharePosition = async (player: CoinLeaderboardEntry) => {
     try {
       const rankEmoji =
@@ -183,7 +191,13 @@ export function CoinLeaderboard({
                 {/* Player Info */}
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-white truncate flex items-center gap-2">
-                    {player.name || player.username}
+                    <button
+                      onClick={() => handleViewProfile(player.fid)}
+                      className="text-white hover:text-blue-400 transition-colors truncate text-left"
+                      title="View profile"
+                    >
+                      {player.name || player.username}
+                    </button>
                     {isCurrentUser && (
                       <span className="text-xs px-2 py-1 bg-purple-600 text-white rounded-full">
                         You
@@ -191,9 +205,13 @@ export function CoinLeaderboard({
                     )}
                   </div>
                   {player.name && player.username && (
-                    <div className="text-sm text-gray-400 truncate">
+                    <button
+                      onClick={() => handleViewProfile(player.fid)}
+                      className="text-sm text-gray-400 hover:text-blue-400 transition-colors truncate text-left block"
+                      title="View profile"
+                    >
                       @{player.username}
-                    </div>
+                    </button>
                   )}
                   <div className="flex items-center justify-between mt-1">
                     <div className="text-xs text-gray-500">
