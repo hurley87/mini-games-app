@@ -12,8 +12,8 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
-// Main API route handler
-export async function POST(request: Request) {
+// Shared logic for processing transfers
+async function processTransfers() {
   try {
     const pendingTransfers =
       await supabaseService.getPendingScoresGroupedByToken();
@@ -138,7 +138,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, data: pendingTransfers });
   } catch (error) {
     console.error('Error processing background task:', error);
-    console.log('request', request);
 
     return NextResponse.json(
       {
@@ -149,4 +148,14 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
+}
+
+// Handle GET requests (for Vercel cron jobs)
+export async function GET() {
+  return await processTransfers();
+}
+
+// Handle POST requests (for manual triggers)
+export async function POST() {
+  return await processTransfers();
 }
