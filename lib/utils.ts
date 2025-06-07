@@ -86,3 +86,46 @@ export function formatHolders(count: number | undefined): string {
     return count.toString();
   }
 }
+
+/**
+ * Formats token balance from wei to readable format
+ * @param balance - Token balance as string (in wei)
+ * @param decimals - Number of decimal places (default 18)
+ * @returns Formatted token balance string
+ */
+export function formatTokenBalance(
+  balance: string | undefined,
+  decimals: number = 18
+): string {
+  if (!balance || balance === '0') return '0';
+
+  try {
+    const balanceBigInt = BigInt(balance);
+    const divisor = BigInt(10 ** decimals);
+    const wholePart = balanceBigInt / divisor;
+    const fractionalPart = balanceBigInt % divisor;
+
+    // Convert to number for easier formatting
+    const wholeNumber = Number(wholePart);
+    const fractionalNumber = Number(fractionalPart) / Number(divisor);
+    const totalNumber = wholeNumber + fractionalNumber;
+
+    if (totalNumber >= 1e9) {
+      return `${(totalNumber / 1e9).toFixed(2)}B`;
+    } else if (totalNumber >= 1e6) {
+      return `${(totalNumber / 1e6).toFixed(2)}M`;
+    } else if (totalNumber >= 1e3) {
+      return `${(totalNumber / 1e3).toFixed(1)}K`;
+    } else if (totalNumber >= 1) {
+      return totalNumber.toFixed(2);
+    } else if (totalNumber > 0) {
+      // For very small numbers, show more decimal places
+      return totalNumber.toFixed(6).replace(/\.?0+$/, '');
+    } else {
+      return '0';
+    }
+  } catch (error) {
+    console.error('Error formatting token balance:', error);
+    return '0';
+  }
+}

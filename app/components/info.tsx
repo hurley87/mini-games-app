@@ -3,11 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useFarcasterContext } from '@/hooks/useFarcasterContext';
 import { usePlayStatus } from '@/hooks/usePlayStatus';
+import { usePlayerStats } from '@/hooks/usePlayerStats';
 import { BuyCoinButton } from './BuyCoinButton';
 import { useAccount, useConnect } from 'wagmi';
 import { ZoraCoinData, Creator } from '@/lib/types';
-import { DollarSign, TrendingUp, Users } from 'lucide-react';
-import { formatCurrency, formatHolders } from '@/lib/utils';
+import { DollarSign, TrendingUp, Users, Trophy, Coins } from 'lucide-react';
+import { formatCurrency, formatHolders, formatTokenBalance } from '@/lib/utils';
 import { sdk } from '@farcaster/frame-sdk';
 import { Header } from './header';
 
@@ -39,6 +40,7 @@ export function Info({
   const { isReady } = useFarcasterContext();
   const { playStatus, isLoading, error, checkPlayStatus, recordPlay } =
     usePlayStatus();
+  const { playerStats, isLoading: isLoadingStats } = usePlayerStats();
   const [hasCheckedStatus, setHasCheckedStatus] = useState(false);
   const { isConnected } = useAccount();
   const { connectors, connect } = useConnect();
@@ -466,31 +468,52 @@ export function Info({
                   />
                 </svg>
               </div>
-              <div>
+              <div className="flex-1">
                 <h3 className="text-sm font-semibold text-blue-200">
                   Premium Player
                 </h3>
                 <p className="text-xs text-blue-300 mt-1">
                   You own ${symbol} tokens - enjoy unlimited access!
                 </p>
+
+                {/* Player Stats */}
+                <div className="flex items-center gap-4 mt-3">
+                  {/* Token Balance */}
+                  <div className="flex items-center gap-1.5">
+                    <Coins className="w-4 h-4 text-blue-400" />
+                    <div className="text-xs">
+                      <span className="text-blue-300 font-medium">
+                        {formatTokenBalance(playStatus.tokenBalance)} ${symbol}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Points */}
+                  {!isLoadingStats && playerStats && (
+                    <div className="flex items-center gap-1.5">
+                      <Trophy className="w-4 h-4 text-yellow-400" />
+                      <div className="text-xs">
+                        <span className="text-yellow-300 font-medium">
+                          {playerStats.points.toLocaleString()} pts
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Play Button */}
-        <div className="p-6">
+        {/* Description */}
+        <div className="p-6 border-t border-gray-700 flex flex-col items-center">
+          <p className="text-sm text-gray-300 leading-relaxed">{description}</p>
           <button
             onClick={handlePlay}
             className="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-4 rounded-xl font-semibold shadow-md shadow-purple-500/20 text-lg"
           >
             PLAY
           </button>
-        </div>
-
-        {/* Description */}
-        <div className="p-6 border-t border-gray-700">
-          <p className="text-sm text-gray-300 leading-relaxed">{description}</p>
         </div>
 
         {/* Creator */}
