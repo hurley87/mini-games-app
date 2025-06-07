@@ -154,6 +154,7 @@ export function GameWrapper({
       fid={fid}
       creator={creator}
       onPlay={() => setShowGame(true)}
+      coinId={coinId}
     />
   );
 }

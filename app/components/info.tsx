@@ -7,7 +7,14 @@ import { usePlayerStats } from '@/hooks/usePlayerStats';
 import { BuyCoinButton } from './BuyCoinButton';
 import { useAccount, useConnect } from 'wagmi';
 import { ZoraCoinData, Creator } from '@/lib/types';
-import { DollarSign, TrendingUp, Users, Trophy, Coins } from 'lucide-react';
+import {
+  DollarSign,
+  TrendingUp,
+  Users,
+  Trophy,
+  Coins,
+  Share2,
+} from 'lucide-react';
 import { formatCurrency, formatHolders, formatTokenBalance } from '@/lib/utils';
 import { sdk } from '@farcaster/frame-sdk';
 import { Header } from './header';
@@ -23,6 +30,7 @@ interface InfoProps {
   fid: number;
   creator?: Creator;
   onPlay: () => void;
+  coinId: string;
 }
 
 export function Info({
@@ -36,6 +44,7 @@ export function Info({
   fid,
   creator,
   onPlay,
+  coinId,
 }: InfoProps) {
   const { isReady } = useFarcasterContext();
   const { playStatus, isLoading, error, checkPlayStatus, recordPlay } =
@@ -73,6 +82,21 @@ export function Info({
       await sdk.actions.viewProfile({ fid });
     } catch (error) {
       console.error('Failed to view profile:', error);
+    }
+  };
+
+  const handleShare = async () => {
+    try {
+      const tokenBalance = formatTokenBalance(playStatus?.tokenBalance);
+
+      const shareText = `🎮 Playing ${name}!\n\n💰 ${tokenBalance} $${symbol} tokens\n\nJoin me in this epic mini game! 🚀`;
+
+      await sdk.actions.composeCast({
+        text: shareText,
+        embeds: [`https://app.minigames.studio/coins/${coinId}`],
+      });
+    } catch (error) {
+      console.error('Failed to share:', error);
     }
   };
 
@@ -500,13 +524,22 @@ export function Info({
                     </div>
                   )}
                 </div>
+
+                {/* Share Button */}
+                <button
+                  onClick={handleShare}
+                  className="mt-4 flex items-center justify-center gap-2 w-full py-4 px-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors"
+                >
+                  <Share2 className="w-3.5 h-3.5" />
+                  Share Progress
+                </button>
               </div>
             </div>
           </div>
         )}
 
         {/* Description */}
-        <div className="p-6 border-t border-gray-700 flex flex-col items-center">
+        <div className="p-6 border-t border-gray-700 flex flex-col gap-6 items-center">
           <p className="text-sm text-gray-300 leading-relaxed">{description}</p>
           <button
             onClick={handlePlay}
