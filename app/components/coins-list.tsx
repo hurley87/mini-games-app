@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/popover';
 import { toast } from 'sonner';
 import { trackGameEvent } from '@/lib/posthog';
+import { sentryTracker } from '@/lib/sentry';
 
 export function CoinsList() {
   const [coins, setCoins] = useState<CoinWithCreator[]>([]);
@@ -32,7 +33,8 @@ export function CoinsList() {
         const response = await fetch('/api/coins');
 
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          const errorMessage = `HTTP error! status: ${response.status}`;
+          throw new Error(errorMessage);
         }
 
         const coinsData: CoinWithCreator[] = await response.json();
@@ -41,11 +43,25 @@ export function CoinsList() {
         // Track games list viewed
         trackGameEvent.gamesList();
       } catch (err) {
-        setError('Failed to load coins');
+        const errorMessage = 'Failed to load coins';
+        setError(errorMessage);
         console.error('Error fetching coins:', err);
-        trackGameEvent.error('fetch_error', 'Failed to load coins', {
+
+        trackGameEvent.error('fetch_error', errorMessage, {
           error: err instanceof Error ? err.message : 'Unknown error',
         });
+
+        sentryTracker.apiError(
+          err instanceof Error ? err : new Error(errorMessage),
+          {
+            endpoint: '/api/coins',
+            method: 'GET',
+            status_code:
+              err instanceof Error && 'status' in err
+                ? (err as unknown as { status: number }).status
+                : undefined,
+          }
+        );
       } finally {
         setIsLoading(false);
       }
@@ -55,25 +71,63 @@ export function CoinsList() {
   }, []);
 
   const handleCopyAddress = (coin: CoinWithCreator) => {
-    navigator.clipboard.writeText(coin.coin_address);
-    toast.success('Address copied to clipboard!');
+    try {
+      navigator.clipboard.writeText(coin.coin_address);
+      toast.success('Address copied to clipboard!');
 
-    // Track coin address copy
-    trackGameEvent.coinAddressCopy(coin.coin_address, coin.name);
+      // Track coin address copy
+      trackGameEvent.coinAddressCopy(coin.coin_address, coin.name);
+    } catch (error) {
+      toast.error('Failed to copy address');
+      sentryTracker.userActionError(
+        error instanceof Error ? error : new Error('Failed to copy address'),
+        {
+          action: 'copy_address',
+          element: 'coin_address',
+          page: 'coins_list',
+        }
+      );
+    }
   };
 
   const handleDexScreenerClick = (coin: CoinWithCreator) => {
-    // Track DEX screener click
-    trackGameEvent.dexScreenerClick(coin.coin_address, coin.name);
+    try {
+      // Track DEX screener click
+      trackGameEvent.dexScreenerClick(coin.coin_address, coin.name);
+    } catch (error) {
+      sentryTracker.userActionError(
+        error instanceof Error
+          ? error
+          : new Error('Failed to track dex screener click'),
+        {
+          action: 'dex_screener_click',
+          element: 'external_link',
+          page: 'coins_list',
+        }
+      );
+    }
   };
 
   const handleGameCardView = (coin: CoinWithCreator) => {
-    // Track game card view
-    trackGameEvent.gameCardView(
-      coin.id,
-      coin.name,
-      coin.creator?.username || `Creator ${coin.fid}`
-    );
+    try {
+      // Track game card view
+      trackGameEvent.gameCardView(
+        coin.id,
+        coin.name,
+        coin.creator?.username || `Creator ${coin.fid}`
+      );
+    } catch (error) {
+      sentryTracker.userActionError(
+        error instanceof Error
+          ? error
+          : new Error('Failed to track game card view'),
+        {
+          action: 'game_card_view',
+          element: 'game_card',
+          page: 'coins_list',
+        }
+      );
+    }
   };
 
   if (isLoading) {
@@ -111,6 +165,16 @@ export function CoinsList() {
                     width={40}
                     height={40}
                     className="object-cover"
+                    onError={() => {
+                      sentryTracker.userActionError(
+                        'Failed to load creator profile image',
+                        {
+                          action: 'image_load_error',
+                          element: 'creator_pfp',
+                          page: 'coins_list',
+                        }
+                      );
+                    }}
                   />
                 </div>
               </div>
@@ -165,6 +229,13 @@ export function CoinsList() {
             height={500}
             className="w-full aspect-square object-cover rounded-xl"
             onClick={() => handleGameCardView(coin)}
+            onError={() => {
+              sentryTracker.userActionError('Failed to load game image', {
+                action: 'image_load_error',
+                element: 'game_image',
+                page: 'coins_list',
+              });
+            }}
           />
 
           <Link href={`/coins/${coin.id}`}>

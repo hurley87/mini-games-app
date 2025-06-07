@@ -6,6 +6,7 @@ import { Header } from './components/header';
 import { useFarcasterContext } from '@/hooks/useFarcasterContext';
 import { CoinsList } from './components/coins-list';
 import { trackGameEvent, identifyUser, setUserProperties } from '@/lib/posthog';
+import { setSentryUser, sentryTracker } from '@/lib/sentry';
 
 export default function App() {
   const { context, isReady } = useFarcasterContext({
@@ -55,6 +56,14 @@ export default function App() {
             has_wallet: !!address,
           });
 
+          // Set Sentry user context
+          setSentryUser({
+            id: user.fid.toString(),
+            username: user.username,
+            fid: user.fid,
+            wallet_address: address,
+          });
+
           // Call the API endpoint to upsert user data
           try {
             await fetch('/api/players', {
@@ -65,9 +74,18 @@ export default function App() {
               body: JSON.stringify(userData),
             });
           } catch (error) {
+            const errorMessage =
+              error instanceof Error ? error.message : 'Unknown error';
             trackGameEvent.error('api_error', 'Failed to save user data', {
-              error: error instanceof Error ? error.message : 'Unknown error',
+              error: errorMessage,
             });
+            sentryTracker.apiError(
+              error instanceof Error ? error : new Error(errorMessage),
+              {
+                endpoint: '/api/players',
+                method: 'POST',
+              }
+            );
           }
         } else {
           console.warn('Missing required user data fields');
@@ -75,11 +93,23 @@ export default function App() {
             'authentication_error',
             'Missing required user data fields'
           );
+          sentryTracker.authError('Missing required user data fields', {
+            fid: user?.fid,
+            username: user?.username,
+          });
         }
       }
     };
 
-    saveUser();
+    saveUser().catch((error) => {
+      sentryTracker.authError(
+        error instanceof Error ? error : new Error('Failed to save user'),
+        {
+          fid: context?.user?.fid,
+          username: context?.user?.username,
+        }
+      );
+    });
   }, [context, address]);
 
   if (!isReady) {

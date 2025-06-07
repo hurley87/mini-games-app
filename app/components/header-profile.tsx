@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { useAccount, useDisconnect } from 'wagmi';
 import Link from 'next/link';
 import { trackGameEvent } from '@/lib/posthog';
+import { sentryTracker } from '@/lib/sentry';
 
 export function HeaderProfile() {
   const { context, isLoading } = useFarcasterContext();
@@ -56,11 +57,26 @@ export function HeaderProfile() {
     } catch (error) {
       console.error('Failed to connect:', error);
       toast.error('Failed to connect');
+
       trackGameEvent.error(
         'connection_error',
         'Failed to connect to distributor',
         {
           error: error instanceof Error ? error.message : 'Unknown error',
+        }
+      );
+
+      sentryTracker.apiError(
+        error instanceof Error
+          ? error
+          : new Error('Failed to connect to distributor'),
+        {
+          endpoint: '/api/distributor',
+          method: 'POST',
+          status_code:
+            error instanceof Error && 'status' in error
+              ? (error as unknown as { status: number }).status
+              : undefined,
         }
       );
     } finally {
@@ -77,9 +93,19 @@ export function HeaderProfile() {
     } catch (error) {
       console.error('Failed to logout:', error);
       toast.error('Failed to logout');
+
       trackGameEvent.error('logout_error', 'Failed to logout', {
         error: error instanceof Error ? error.message : 'Unknown error',
       });
+
+      sentryTracker.userActionError(
+        error instanceof Error ? error : new Error('Failed to logout'),
+        {
+          action: 'logout',
+          element: 'logout_button',
+          page: 'header_profile',
+        }
+      );
     }
   };
 
@@ -91,17 +117,55 @@ export function HeaderProfile() {
 
   // Helper function to copy address
   const copyAddress = (address: string) => {
-    navigator.clipboard.writeText(address);
-    toast.success('Address copied to clipboard!');
-    trackGameEvent.coinAddressCopy(address, 'user_wallet');
+    try {
+      navigator.clipboard.writeText(address);
+      toast.success('Address copied to clipboard!');
+      trackGameEvent.coinAddressCopy(address, 'user_wallet');
+    } catch (error) {
+      toast.error('Failed to copy address');
+      sentryTracker.userActionError(
+        error instanceof Error ? error : new Error('Failed to copy address'),
+        {
+          action: 'copy_wallet_address',
+          element: 'wallet_address',
+          page: 'header_profile',
+        }
+      );
+    }
   };
 
   const handleGamesNavigation = () => {
-    trackGameEvent.navigationClick('games', 'header_profile');
+    try {
+      trackGameEvent.navigationClick('games', 'header_profile');
+    } catch (error) {
+      sentryTracker.userActionError(
+        error instanceof Error
+          ? error
+          : new Error('Failed to track navigation'),
+        {
+          action: 'navigate_games',
+          element: 'navigation_link',
+          page: 'header_profile',
+        }
+      );
+    }
   };
 
   const handleLeaderboardNavigation = () => {
-    trackGameEvent.navigationClick('leaderboard', 'header_profile');
+    try {
+      trackGameEvent.navigationClick('leaderboard', 'header_profile');
+    } catch (error) {
+      sentryTracker.userActionError(
+        error instanceof Error
+          ? error
+          : new Error('Failed to track navigation'),
+        {
+          action: 'navigate_leaderboard',
+          element: 'navigation_link',
+          page: 'header_profile',
+        }
+      );
+    }
   };
 
   // Check if user is connected
@@ -148,6 +212,16 @@ export function HeaderProfile() {
                     width={48}
                     height={48}
                     className="w-full h-full object-cover"
+                    onError={() => {
+                      sentryTracker.userActionError(
+                        'Failed to load user profile image',
+                        {
+                          action: 'image_load_error',
+                          element: 'user_pfp',
+                          page: 'header_profile',
+                        }
+                      );
+                    }}
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-white font-semibold">

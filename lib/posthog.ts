@@ -153,7 +153,7 @@ export const trackGameEvent = {
     });
   },
 
-  // Error tracking
+  // Error tracking - now also integrates with Sentry for critical errors
   error: (
     errorType: string,
     errorMessage: string,
@@ -164,6 +164,44 @@ export const trackGameEvent = {
       error_message: errorMessage,
       ...context,
     });
+
+    // For critical errors, also report to Sentry
+    if (
+      errorType === 'api_error' ||
+      errorType === 'authentication_error' ||
+      errorType === 'zora_fetch_error' ||
+      errorType === 'fetch_error'
+    ) {
+      // Lazy load Sentry to avoid circular dependencies
+      import('@/lib/sentry')
+        .then(({ sentryTracker }) => {
+          if (errorType === 'api_error') {
+            sentryTracker.apiError(errorMessage, {
+              endpoint: context?.endpoint as string,
+              method: context?.method as string,
+              status_code: context?.status_code as number,
+            });
+          } else if (errorType === 'authentication_error') {
+            sentryTracker.authError(errorMessage, {
+              fid: context?.fid as number,
+              username: context?.username as string,
+            });
+          } else if (errorType === 'zora_fetch_error') {
+            sentryTracker.web3Error(errorMessage, {
+              action: 'fetch_data',
+              coin_address: context?.coin_address as string,
+            });
+          } else {
+            sentryTracker.apiError(errorMessage, {
+              endpoint: (context?.endpoint as string) || 'unknown',
+              method: (context?.method as string) || 'GET',
+            });
+          }
+        })
+        .catch((err) => {
+          console.warn('Failed to load Sentry for error reporting:', err);
+        });
+    }
   },
 };
 

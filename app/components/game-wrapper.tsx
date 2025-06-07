@@ -9,6 +9,7 @@ import { ZoraCoinData, Creator } from '@/lib/types';
 import { ArrowLeft, Clock } from 'lucide-react';
 import { Button } from './ui/button';
 import { trackGameEvent } from '@/lib/posthog';
+import { sentryTracker, setSentryTags } from '@/lib/sentry';
 
 interface GameWrapperProps {
   id: string;
@@ -45,6 +46,16 @@ export function GameWrapper({
   const [remainingTime, setRemainingTime] = useState(timeoutSeconds);
   const gameStartTime = useRef<number | null>(null);
 
+  // Set Sentry context for this game
+  useEffect(() => {
+    setSentryTags({
+      game_id: id,
+      game_name: name,
+      coin_address: coinAddress,
+      creator_fid: fid.toString(),
+    });
+  }, [id, name, coinAddress, fid]);
+
   // Fetch Zora data if not provided
   useEffect(() => {
     async function fetchZoraCoinData() {
@@ -70,11 +81,22 @@ export function GameWrapper({
           `Failed to fetch Zora data for coin ${coinAddress}:`,
           error
         );
+
         trackGameEvent.error('zora_fetch_error', 'Failed to fetch Zora data', {
           coin_address: coinAddress,
           coin_name: name,
           error: error instanceof Error ? error.message : 'Unknown error',
         });
+
+        sentryTracker.web3Error(
+          error instanceof Error
+            ? error
+            : new Error('Failed to fetch Zora data'),
+          {
+            action: 'fetch_zora_data',
+            coin_address: coinAddress,
+          }
+        );
       } finally {
         setIsLoadingZoraData(false);
       }
@@ -85,25 +107,49 @@ export function GameWrapper({
 
   // Handle game start
   const handleGameStart = () => {
-    gameStartTime.current = Date.now();
-    setShowGame(true);
+    try {
+      gameStartTime.current = Date.now();
+      setShowGame(true);
 
-    // Track game start
-    trackGameEvent.gameStart(id, name, coinAddress);
+      // Track game start
+      trackGameEvent.gameStart(id, name, coinAddress);
+    } catch (error) {
+      sentryTracker.gameError(
+        error instanceof Error ? error : new Error('Failed to start game'),
+        {
+          game_id: id,
+          game_name: name,
+          coin_address: coinAddress,
+          action: 'start_game',
+        }
+      );
+    }
   };
 
   // Handle game exit
   const handleGameExit = () => {
-    const sessionTime = gameStartTime.current
-      ? Math.round((Date.now() - gameStartTime.current) / 1000)
-      : 0;
+    try {
+      const sessionTime = gameStartTime.current
+        ? Math.round((Date.now() - gameStartTime.current) / 1000)
+        : 0;
 
-    setShowGame(false);
+      setShowGame(false);
 
-    // Track game exit
-    trackGameEvent.gameExit(id, name, sessionTime);
+      // Track game exit
+      trackGameEvent.gameExit(id, name, sessionTime);
 
-    gameStartTime.current = null;
+      gameStartTime.current = null;
+    } catch (error) {
+      sentryTracker.gameError(
+        error instanceof Error ? error : new Error('Failed to track game exit'),
+        {
+          game_id: id,
+          game_name: name,
+          coin_address: coinAddress,
+          action: 'exit_game',
+        }
+      );
+    }
   };
 
   useEffect(() => {
@@ -113,14 +159,28 @@ export function GameWrapper({
     const interval = setInterval(() => {
       setRemainingTime((prev) => {
         if (prev <= 1) {
-          // Game timed out
-          const sessionTime = gameStartTime.current
-            ? Math.round((Date.now() - gameStartTime.current) / 1000)
-            : 0;
+          try {
+            // Game timed out
+            const sessionTime = gameStartTime.current
+              ? Math.round((Date.now() - gameStartTime.current) / 1000)
+              : 0;
 
-          trackGameEvent.gameExit(id, name, sessionTime);
-          setShowGame(false);
-          gameStartTime.current = null;
+            trackGameEvent.gameExit(id, name, sessionTime);
+            setShowGame(false);
+            gameStartTime.current = null;
+          } catch (error) {
+            sentryTracker.gameError(
+              error instanceof Error
+                ? error
+                : new Error('Failed to handle game timeout'),
+              {
+                game_id: id,
+                game_name: name,
+                coin_address: coinAddress,
+                action: 'game_timeout',
+              }
+            );
+          }
           return 0;
         }
         return prev - 1;
@@ -128,7 +188,7 @@ export function GameWrapper({
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [showGame, timeoutSeconds, id, name]);
+  }, [showGame, timeoutSeconds, id, name, coinAddress]);
 
   if (isLoadingZoraData) {
     return (
