@@ -33,13 +33,11 @@ export async function POST(request: Request) {
       );
     }
 
-    // Fetch sharer to get internal id
+    // Verify sharer exists
     const sharer = await supabaseService.getPlayerByFid(sharerFidNum);
     if (!sharer || sharer.length === 0) {
       return NextResponse.json({ error: 'Sharer not found' }, { status: 404 });
     }
-
-    const sharerId = sharer[0].id;
 
     // Verify referred player exists (they should since /api/players was called first)
     const referredPlayer = await supabaseService.getPlayerByFid(playerFidNum);
