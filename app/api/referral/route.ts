@@ -51,7 +51,7 @@ export async function POST(request: Request) {
     }
 
     // Award referral points to the sharer
-    await supabaseService.incrementPlayerPoints(sharerId, 5);
+    await supabaseService.incrementPlayerPoints(sharerFidNum, 5);
 
     return NextResponse.json({ awarded: true });
   } catch (error) {

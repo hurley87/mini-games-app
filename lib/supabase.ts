@@ -119,16 +119,26 @@ export const supabaseService = {
     record: Partial<Player> &
       Pick<Player, 'fid' | 'name' | 'pfp' | 'username' | 'wallet_address'>
   ): Promise<{ data: Player | null; isNew: boolean }> {
-    // First check if player exists
-    const existingPlayers = await this.getPlayerByFid(record.fid);
-    const isNew = !existingPlayers || existingPlayers.length === 0;
+    // Use atomic upsert with RPC function to avoid race conditions
+    const { data, error } = await supabase.rpc('upsert_player_with_new_flag', {
+      p_fid: record.fid,
+      p_name: record.name,
+      p_pfp: record.pfp,
+      p_username: record.username,
+      p_wallet_address: record.wallet_address,
+      p_url: record.url || null,
+      p_token: record.token || null,
+      p_points: record.points || null,
+    });
 
-    // Then upsert the player
-    const data = await this.upsertPlayer(record);
+    if (error) {
+      console.error('Supabase RPC error (upsert_player_with_new_flag):', error);
+      throw new Error('Failed to upsert player with new flag');
+    }
 
     return {
-      data: data?.[0] || null,
-      isNew,
+      data: data?.player || null,
+      isNew: data?.is_new || false,
     };
   },
 
