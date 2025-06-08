@@ -411,21 +411,8 @@ export const supabaseService = {
         throw new Error('Invalid coin ID format');
       }
 
-      // Try the stored procedure first
-      const { data, error } = await supabase.rpc('get_coin_leaderboard', {
-        coin_id_param: coinId,
-        limit_param: limit || null,
-      });
-
-      if (error) {
-        console.error('Error getting coin leaderboard via RPC:', error);
-
-        // Fallback to direct query if stored procedure fails
-        console.log('Attempting fallback query...');
-        return await this.getCoinLeaderboardFallback(coinId, limit);
-      }
-
-      return data || [];
+      // Use direct query method instead of RPC due to UUID/text type casting issues
+      return await this.getCoinLeaderboardFallback(coinId, limit);
     } catch (error) {
       console.error('Error in getCoinLeaderboard:', error);
       throw error;
