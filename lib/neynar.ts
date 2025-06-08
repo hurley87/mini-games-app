@@ -44,3 +44,26 @@ export const getConversation = async (threadId: string) => {
   });
   return messages;
 };
+
+/**
+ * Fetch a Farcaster user by FID using Neynar API
+ */
+export const getUserByFid = async (fid: number) => {
+  const res = await fetch(
+    `https://api.neynar.com/v2/farcaster/user/bulk?fids=${fid}`,
+    {
+      headers: {
+        accept: 'application/json',
+        api_key: process.env.NEYNAR_API_KEY as string,
+      },
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch user with fid ${fid}`);
+  }
+
+  const json = await res.json();
+  // v2 endpoint returns { users: [...] }
+  return json?.users?.[0];
+};

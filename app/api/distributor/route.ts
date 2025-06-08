@@ -4,6 +4,7 @@ import {
   getWalletAccount,
 } from '@/lib/clients';
 import { supabaseService } from '@/lib/supabase';
+import { getUserByFid } from '@/lib/neynar';
 import { SendNotificationRequest } from '@farcaster/frame-node';
 import { NextResponse } from 'next/server';
 
@@ -49,16 +50,29 @@ async function processTransfers() {
 
       const walletClient = createClientForWallet(account);
 
-      const player = await supabaseService.getPlayerByFid(fid);
+      let player = await supabaseService.getPlayerByFid(fid);
+      let playerWalletAddress = player?.[0]?.wallet_address;
 
-      if (!player) {
-        console.log('Player not found');
-        continue;
+      if (!player || player.length === 0 || !playerWalletAddress) {
+        console.log('Player info missing, fetching from Neynar');
+        try {
+          const user = await getUserByFid(fid);
+          if (user) {
+            const wallet = user.verifications?.[0];
+            await supabaseService.upsertPlayer({
+              fid,
+              name: user.display_name || user.username,
+              pfp: user.pfp_url,
+              username: user.username,
+              wallet_address: wallet || '',
+            });
+            player = await supabaseService.getPlayerByFid(fid);
+            playerWalletAddress = wallet || player?.[0]?.wallet_address;
+          }
+        } catch (err) {
+          console.error('Error fetching player from Neynar:', err);
+        }
       }
-
-      console.log('player', player);
-
-      const playerWalletAddress = player[0]?.wallet_address;
 
       if (!playerWalletAddress) {
         console.log('Player wallet address not found');
