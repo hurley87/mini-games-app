@@ -77,43 +77,60 @@ export default function App() {
             wallet_address: address,
           });
 
-          // Call the API endpoint to upsert user data
-          try {
-            await fetch('/api/players', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(userData),
-            });
-
-            if (
-              isNewPlayer &&
-              sharerFidParam &&
-              Number(sharerFidParam) !== user.fid
-            ) {
+          // Handle referral case first (for new players with a referrer)
+          if (
+            isNewPlayer &&
+            sharerFidParam &&
+            Number(sharerFidParam) !== user.fid
+          ) {
+            try {
               await fetch('/api/referral', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                   sharerFid: Number(sharerFidParam),
                   playerFid: user.fid,
+                  userData, // Include user data so referral API can create the player
                 }),
               });
+            } catch (error) {
+              const errorMessage =
+                error instanceof Error ? error.message : 'Unknown error';
+              trackGameEvent.error('api_error', 'Failed to process referral', {
+                error: errorMessage,
+              });
+              sentryTracker.apiError(
+                error instanceof Error ? error : new Error(errorMessage),
+                {
+                  endpoint: '/api/referral',
+                  method: 'POST',
+                }
+              );
             }
-          } catch (error) {
-            const errorMessage =
-              error instanceof Error ? error.message : 'Unknown error';
-            trackGameEvent.error('api_error', 'Failed to save user data', {
-              error: errorMessage,
-            });
-            sentryTracker.apiError(
-              error instanceof Error ? error : new Error(errorMessage),
-              {
-                endpoint: '/api/players',
+          } else {
+            // Call the API endpoint to upsert user data (non-referral case)
+            try {
+              await fetch('/api/players', {
                 method: 'POST',
-              }
-            );
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(userData),
+              });
+            } catch (error) {
+              const errorMessage =
+                error instanceof Error ? error.message : 'Unknown error';
+              trackGameEvent.error('api_error', 'Failed to save user data', {
+                error: errorMessage,
+              });
+              sentryTracker.apiError(
+                error instanceof Error ? error : new Error(errorMessage),
+                {
+                  endpoint: '/api/players',
+                  method: 'POST',
+                }
+              );
+            }
           }
         } else {
           console.warn('Missing required user data fields');
