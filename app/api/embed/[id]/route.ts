@@ -51,6 +51,10 @@ export async function GET(
           });
           if (!response.ok) {
             console.error('Failed to award points:', await response.text());
+          } else {
+            if (window.parent && window.parent !== window) {
+              window.parent.postMessage({ type: 'points-awarded' }, '*');
+            }
           }
         } catch (error) {
           console.error('Error awarding points:', error);

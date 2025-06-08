@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { sdk } from '@farcaster/frame-sdk';
 import { BuyCoinButton } from './BuyCoinButton';
 import { useAccount, useConnect } from 'wagmi';
 import { useFarcasterContext } from '@/hooks/useFarcasterContext';
@@ -49,6 +50,21 @@ export function Game({
   const { connectors, connect } = useConnect();
 
   console.log('address', address);
+
+  useEffect(() => {
+    const handleMessage = async (event: MessageEvent) => {
+      if (event.data && event.data.type === 'points-awarded') {
+        try {
+          await sdk.haptics.impactOccurred('medium');
+        } catch (error) {
+          console.error('Error triggering haptic:', error);
+        }
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
 
   // Check if player has played this game before
   useEffect(() => {
