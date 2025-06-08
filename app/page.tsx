@@ -16,8 +16,11 @@ export default function App() {
 
   useEffect(() => {
     const saveUser = async () => {
-      if (context) {
-        const user = context.user;
+      if (!context || !address) {
+        return;
+      }
+
+      const user = context.user;
 
         // Only proceed if user exists and all required fields are present
         if (
