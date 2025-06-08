@@ -19,8 +19,20 @@ export async function POST(request: Request) {
       );
     }
 
-    const data = await supabaseService.upsertPlayer(userData);
-    return NextResponse.json(data);
+    // Check if we need to return new player flag
+    const url = new URL(request.url);
+    const includeNewFlag = url.searchParams.get('includeNewFlag') === 'true';
+
+    if (includeNewFlag) {
+      const result = await supabaseService.upsertPlayerWithNewFlag(userData);
+      return NextResponse.json({
+        data: result.data,
+        isNew: result.isNew,
+      });
+    } else {
+      const data = await supabaseService.upsertPlayer(userData);
+      return NextResponse.json(data);
+    }
   } catch (error) {
     console.error('Error upserting user:', error);
     return NextResponse.json(

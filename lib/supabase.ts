@@ -115,6 +115,23 @@ export const supabaseService = {
     return data;
   },
 
+  async upsertPlayerWithNewFlag(
+    record: Partial<Player> &
+      Pick<Player, 'fid' | 'name' | 'pfp' | 'username' | 'wallet_address'>
+  ): Promise<{ data: Player | null; isNew: boolean }> {
+    // First check if player exists
+    const existingPlayers = await this.getPlayerByFid(record.fid);
+    const isNew = !existingPlayers || existingPlayers.length === 0;
+
+    // Then upsert the player
+    const data = await this.upsertPlayer(record);
+
+    return {
+      data: data?.[0] || null,
+      isNew,
+    };
+  },
+
   async incrementPlayerMessageCount(fid: number) {
     // Call the specific RPC function to increment the count atomically
     const { error } = await supabase.rpc('increment_message_count_by_fid', {

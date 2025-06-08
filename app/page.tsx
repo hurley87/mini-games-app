@@ -35,28 +35,6 @@ export default function App() {
             wallet_address: address,
           };
 
-          const params = new URLSearchParams(window.location.search);
-          const sharerFidParam = params.get('fid');
-          let isNewPlayer = false;
-
-          // Check if player already exists to determine if this is a new player
-          try {
-            const existsRes = await fetch(`/api/players/${user.fid}`);
-            if (existsRes.status === 404) {
-              isNewPlayer = true;
-            } else if (!existsRes.ok) {
-              throw new Error(
-                `Failed to check player existence: ${existsRes.status}`
-              );
-            }
-          } catch (error) {
-            console.error('Failed to check player existence:', error);
-            // Default to false for safety - avoid duplicate referrals on error
-            isNewPlayer = false;
-          }
-
-          console.log('userData', userData);
-
           // Track user login event
           trackGameEvent.userLogin(user.fid, user.username, address);
 
@@ -84,10 +62,24 @@ export default function App() {
             wallet_address: address,
           });
 
-          // Always save/update player data first
+          const params = new URLSearchParams(window.location.search);
+          const sharerFidParam = params.get('fid');
+
+          // Validate sharer FID parameter
+          const sharerFid = sharerFidParam ? Number(sharerFidParam) : null;
+          const isValidSharerFid =
+            sharerFid &&
+            !isNaN(sharerFid) &&
+            Number.isInteger(sharerFid) &&
+            sharerFid > 0;
+
+          // Save/update player data and determine if it's a new player atomically
+          let isNewPlayer = false;
           let playerDataSaved = false;
+
           try {
-            const response = await fetch('/api/players', {
+            // Use the enhanced API that can tell us if the player is new
+            const response = await fetch('/api/players?includeNewFlag=true', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -101,6 +93,8 @@ export default function App() {
               );
             }
 
+            const result = await response.json();
+            isNewPlayer = result.isNew;
             playerDataSaved = true;
           } catch (error) {
             const errorMessage =
@@ -115,15 +109,9 @@ export default function App() {
                 method: 'POST',
               }
             );
+            // Default to false for safety - avoid duplicate referrals on error
+            isNewPlayer = false;
           }
-
-          // Validate sharer FID parameter
-          const sharerFid = sharerFidParam ? Number(sharerFidParam) : null;
-          const isValidSharerFid =
-            sharerFid &&
-            !isNaN(sharerFid) &&
-            Number.isInteger(sharerFid) &&
-            sharerFid > 0;
 
           // Handle referral processing for new players with a valid referrer
           // Only proceed if player data was successfully saved
