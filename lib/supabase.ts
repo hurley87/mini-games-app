@@ -115,6 +115,33 @@ export const supabaseService = {
     return data;
   },
 
+  async upsertPlayerWithNewFlag(
+    record: Partial<Player> &
+      Pick<Player, 'fid' | 'name' | 'pfp' | 'username' | 'wallet_address'>
+  ): Promise<{ data: Player | null; isNew: boolean }> {
+    // Use atomic upsert with RPC function to avoid race conditions
+    const { data, error } = await supabase.rpc('upsert_player_with_new_flag', {
+      p_fid: record.fid,
+      p_name: record.name,
+      p_pfp: record.pfp,
+      p_username: record.username,
+      p_wallet_address: record.wallet_address,
+      p_url: record.url || null,
+      p_token: record.token || null,
+      p_points: record.points || null,
+    });
+
+    if (error) {
+      console.error('Supabase RPC error (upsert_player_with_new_flag):', error);
+      throw new Error('Failed to upsert player with new flag');
+    }
+
+    return {
+      data: data?.player || null,
+      isNew: data?.is_new || false,
+    };
+  },
+
   async incrementPlayerMessageCount(fid: number) {
     // Call the specific RPC function to increment the count atomically
     const { error } = await supabase.rpc('increment_message_count_by_fid', {
@@ -131,9 +158,9 @@ export const supabaseService = {
     }
   },
 
-  async incrementPlayerPoints(id: number, points: number) {
+  async incrementPlayerPoints(fid: number, points: number) {
     const { error } = await supabase.rpc('increment_player_points', {
-      player_id_param: id,
+      player_id_param: fid,
       points_to_add: points,
     });
 

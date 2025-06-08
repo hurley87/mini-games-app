@@ -35,8 +35,6 @@ export default function App() {
             wallet_address: address,
           };
 
-          console.log('userData', userData);
-
           // Track user login event
           trackGameEvent.userLogin(user.fid, user.username, address);
 
@@ -64,15 +62,40 @@ export default function App() {
             wallet_address: address,
           });
 
-          // Call the API endpoint to upsert user data
+          const params = new URLSearchParams(window.location.search);
+          const sharerFidParam = params.get('fid');
+
+          // Validate sharer FID parameter
+          const sharerFid = sharerFidParam ? Number(sharerFidParam) : null;
+          const isValidSharerFid =
+            sharerFid &&
+            !isNaN(sharerFid) &&
+            Number.isInteger(sharerFid) &&
+            sharerFid > 0;
+
+          // Save/update player data and determine if it's a new player atomically
+          let isNewPlayer = false;
+          let playerDataSaved = false;
+
           try {
-            await fetch('/api/players', {
+            // Use the enhanced API that can tell us if the player is new
+            const response = await fetch('/api/players?includeNewFlag=true', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify(userData),
             });
+
+            if (!response.ok) {
+              throw new Error(
+                `HTTP ${response.status}: ${response.statusText}`
+              );
+            }
+
+            const result = await response.json();
+            isNewPlayer = result.isNew;
+            playerDataSaved = true;
           } catch (error) {
             const errorMessage =
               error instanceof Error ? error.message : 'Unknown error';
@@ -86,6 +109,47 @@ export default function App() {
                 method: 'POST',
               }
             );
+            // Default to false for safety - avoid duplicate referrals on error
+            isNewPlayer = false;
+          }
+
+          // Handle referral processing for new players with a valid referrer
+          // Only proceed if player data was successfully saved
+          if (
+            isNewPlayer &&
+            playerDataSaved &&
+            isValidSharerFid &&
+            sharerFid !== user.fid
+          ) {
+            try {
+              const response = await fetch('/api/referral', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  sharerFid: sharerFid,
+                  playerFid: user.fid,
+                }),
+              });
+
+              if (!response.ok) {
+                throw new Error(
+                  `HTTP ${response.status}: ${response.statusText}`
+                );
+              }
+            } catch (error) {
+              const errorMessage =
+                error instanceof Error ? error.message : 'Unknown error';
+              trackGameEvent.error('api_error', 'Failed to process referral', {
+                error: errorMessage,
+              });
+              sentryTracker.apiError(
+                error instanceof Error ? error : new Error(errorMessage),
+                {
+                  endpoint: '/api/referral',
+                  method: 'POST',
+                }
+              );
+            }
           }
         } else {
           console.warn('Missing required user data fields');
