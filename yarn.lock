@@ -279,9 +279,9 @@
     ox "^0.4.4"
     zod "^3.24.1"
 
-"@farcaster/frame-sdk@^0.0.44":
-  version "0.0.44"
-  resolved "https://registry.npmjs.org/@farcaster/frame-sdk/-/frame-sdk-0.0.44.tgz"
+"@farcaster/frame-sdk@^0.0.60":
+  version "0.0.60"
+  resolved "https://registry.npmjs.org/@farcaster/frame-sdk/-/frame-sdk-0.0.60.tgz"
   integrity sha512-mRFRmHwl7WmFN4VCoXLRP2kPE70WNsyQwc2t6cMQAjpu7yQbjsxGthKBSkxxMxo2v/pchJmEyxjNl+aXzo/GSQ==
   dependencies:
     "@farcaster/frame-core" "0.0.39"
