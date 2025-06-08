@@ -14,8 +14,19 @@ export async function POST(request: Request) {
       );
     }
 
+    // Validate that sharerFid and playerFid are numeric
+    if (isNaN(Number(sharerFid)) || isNaN(Number(playerFid))) {
+      return NextResponse.json(
+        { error: 'Invalid sharerFid or playerFid - must be numeric' },
+        { status: 400 }
+      );
+    }
+
+    const sharerFidNum = Number(sharerFid);
+    const playerFidNum = Number(playerFid);
+
     // Prevent self-referral
-    if (sharerFid === playerFid) {
+    if (sharerFidNum === playerFidNum) {
       return NextResponse.json(
         { error: 'Cannot refer yourself' },
         { status: 400 }
@@ -23,16 +34,15 @@ export async function POST(request: Request) {
     }
 
     // Fetch sharer to get internal id
-    const sharer = await supabaseService.getPlayerByFid(Number(sharerFid));
-    const sharerId = sharer?.[0]?.id;
-    if (!sharerId) {
+    const sharer = await supabaseService.getPlayerByFid(sharerFidNum);
+    if (!sharer || sharer.length === 0) {
       return NextResponse.json({ error: 'Sharer not found' }, { status: 404 });
     }
 
+    const sharerId = sharer[0].id;
+
     // Verify referred player exists (they should since /api/players was called first)
-    const referredPlayer = await supabaseService.getPlayerByFid(
-      Number(playerFid)
-    );
+    const referredPlayer = await supabaseService.getPlayerByFid(playerFidNum);
     if (!referredPlayer || referredPlayer.length === 0) {
       return NextResponse.json(
         { error: 'Referred player not found' },
