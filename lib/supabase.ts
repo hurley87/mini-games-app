@@ -158,9 +158,9 @@ export const supabaseService = {
     }
   },
 
-  async incrementPlayerPoints(id: number, points: number) {
+  async incrementPlayerPoints(fid: number, points: number) {
     const { error } = await supabase.rpc('increment_player_points', {
-      player_id_param: id,
+      player_id_param: fid,
       points_to_add: points,
     });
 

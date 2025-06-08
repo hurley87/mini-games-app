@@ -48,8 +48,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // Award referral points to the sharer using the internal database ID
-    await supabaseService.incrementPlayerPoints(sharer[0].id, 5);
+    // Award referral points to the sharer using the FID
+    await supabaseService.incrementPlayerPoints(Number(sharer[0].fid), 5);
 
     return NextResponse.json({ awarded: true });
   } catch (error) {
