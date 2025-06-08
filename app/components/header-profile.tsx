@@ -9,7 +9,7 @@ import {
 } from '@/app/components/ui/drawer';
 import { Button } from '@/app/components/ui/button';
 import Image from 'next/image';
-import { List, Trophy, Wallet, Copy, Sparkles } from 'lucide-react';
+import { List, Trophy, Wallet, Copy, Sparkles, Share2 } from 'lucide-react';
 import { useState } from 'react';
 import { useFarcasterContext } from '@/hooks/useFarcasterContext';
 import { toast } from 'sonner';
@@ -17,6 +17,7 @@ import { useAccount } from 'wagmi';
 import Link from 'next/link';
 import { trackGameEvent } from '@/lib/posthog';
 import { sentryTracker } from '@/lib/sentry';
+import { sdk } from '@farcaster/frame-sdk';
 
 export function HeaderProfile() {
   const { context, isLoading } = useFarcasterContext();
@@ -143,6 +144,18 @@ export function HeaderProfile() {
     }
   };
 
+  const handleShareReferral = async () => {
+    if (!context?.user?.fid) return;
+    try {
+      await sdk.actions.composeCast({
+        text: 'Join me on Mini Games!',
+        embeds: [`https://app.minigames.studio/?fid=${context.user.fid}`],
+      });
+    } catch (error) {
+      console.error('Failed to share referral link:', error);
+    }
+  };
+
   // Check if user is connected
   const isConnected =
     context?.user && (context.user.fid || context.user.username);
@@ -241,6 +254,14 @@ export function HeaderProfile() {
                 <Trophy className="w-6 h-6" />
                 <span>Leaderboard</span>
               </Link>
+
+              <button
+                onClick={handleShareReferral}
+                className="flex items-center gap-4 text-xl font-semibold text-white hover:text-purple-400 transition-colors"
+              >
+                <Share2 className="w-6 h-6" />
+                <span>Invite Friends</span>
+              </button>
 
             </div>
           </div>

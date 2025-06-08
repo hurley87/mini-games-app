@@ -35,6 +35,19 @@ export default function App() {
             wallet_address: address,
           };
 
+          const params = new URLSearchParams(window.location.search);
+          const sharerFidParam = params.get('fid');
+          let isNewPlayer = false;
+
+          try {
+            const existsRes = await fetch(`/api/player/${user.fid}/rank`);
+            if (existsRes.status === 404) {
+              isNewPlayer = true;
+            }
+          } catch (error) {
+            console.error('Failed to check player existence:', error);
+          }
+
           console.log('userData', userData);
 
           // Track user login event
@@ -73,6 +86,21 @@ export default function App() {
               },
               body: JSON.stringify(userData),
             });
+
+            if (
+              isNewPlayer &&
+              sharerFidParam &&
+              Number(sharerFidParam) !== user.fid
+            ) {
+              await fetch('/api/referral', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  sharerFid: Number(sharerFidParam),
+                  playerFid: user.fid,
+                }),
+              });
+            }
           } catch (error) {
             const errorMessage =
               error instanceof Error ? error.message : 'Unknown error';
