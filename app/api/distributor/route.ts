@@ -58,7 +58,7 @@ async function processTransfers() {
 
       console.log('player', player);
 
-      const playerWalletAddress = player[0].wallet_address;
+      const playerWalletAddress = player[0]?.wallet_address;
 
       if (!playerWalletAddress) {
         console.log('Player wallet address not found');
