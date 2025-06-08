@@ -14,11 +14,12 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check if referred player already exists
-    const existingPlayer = await supabaseService.getPlayerByFid(Number(playerFid));
-
-    if (existingPlayer && existingPlayer.length > 0) {
-      return NextResponse.json({ awarded: false });
+    // Prevent self-referral
+    if (sharerFid === playerFid) {
+      return NextResponse.json(
+        { error: 'Cannot refer yourself' },
+        { status: 400 }
+      );
     }
 
     // Fetch sharer to get internal id
@@ -28,6 +29,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Sharer not found' }, { status: 404 });
     }
 
+    // Verify referred player exists (they should since /api/players was called first)
+    const referredPlayer = await supabaseService.getPlayerByFid(
+      Number(playerFid)
+    );
+    if (!referredPlayer || referredPlayer.length === 0) {
+      return NextResponse.json(
+        { error: 'Referred player not found' },
+        { status: 404 }
+      );
+    }
+
+    // Award referral points to the sharer
     await supabaseService.incrementPlayerPoints(sharerId, 5);
 
     return NextResponse.json({ awarded: true });
