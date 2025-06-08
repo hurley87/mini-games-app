@@ -39,13 +39,20 @@ export default function App() {
           const sharerFidParam = params.get('fid');
           let isNewPlayer = false;
 
+          // Check if player already exists to determine if this is a new player
           try {
-            const existsRes = await fetch(`/api/player/${user.fid}/rank`);
+            const existsRes = await fetch(`/api/players/${user.fid}`);
             if (existsRes.status === 404) {
               isNewPlayer = true;
+            } else if (!existsRes.ok) {
+              throw new Error(
+                `Failed to check player existence: ${existsRes.status}`
+              );
             }
           } catch (error) {
             console.error('Failed to check player existence:', error);
+            // Default to false for safety - avoid duplicate referrals on error
+            isNewPlayer = false;
           }
 
           console.log('userData', userData);
@@ -78,14 +85,23 @@ export default function App() {
           });
 
           // Always save/update player data first
+          let playerDataSaved = false;
           try {
-            await fetch('/api/players', {
+            const response = await fetch('/api/players', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify(userData),
             });
+
+            if (!response.ok) {
+              throw new Error(
+                `HTTP ${response.status}: ${response.statusText}`
+              );
+            }
+
+            playerDataSaved = true;
           } catch (error) {
             const errorMessage =
               error instanceof Error ? error.message : 'Unknown error';
@@ -101,21 +117,37 @@ export default function App() {
             );
           }
 
-          // Handle referral processing for new players with a referrer
+          // Validate sharer FID parameter
+          const sharerFid = sharerFidParam ? Number(sharerFidParam) : null;
+          const isValidSharerFid =
+            sharerFid &&
+            !isNaN(sharerFid) &&
+            Number.isInteger(sharerFid) &&
+            sharerFid > 0;
+
+          // Handle referral processing for new players with a valid referrer
+          // Only proceed if player data was successfully saved
           if (
             isNewPlayer &&
-            sharerFidParam &&
-            Number(sharerFidParam) !== user.fid
+            playerDataSaved &&
+            isValidSharerFid &&
+            sharerFid !== user.fid
           ) {
             try {
-              await fetch('/api/referral', {
+              const response = await fetch('/api/referral', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                  sharerFid: Number(sharerFidParam),
+                  sharerFid: sharerFid,
                   playerFid: user.fid,
                 }),
               });
+
+              if (!response.ok) {
+                throw new Error(
+                  `HTTP ${response.status}: ${response.statusText}`
+                );
+              }
             } catch (error) {
               const errorMessage =
                 error instanceof Error ? error.message : 'Unknown error';
