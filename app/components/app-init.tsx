@@ -101,12 +101,7 @@ export function AppInit() {
           isNewPlayer = false;
         }
 
-        if (
-          isNewPlayer &&
-          playerDataSaved &&
-          isValidSharerFid &&
-          sharerFid !== user.fid
-        ) {
+        if (playerDataSaved && isValidSharerFid && sharerFid !== user.fid) {
           try {
             const response = await fetch('/api/referral', {
               method: 'POST',
