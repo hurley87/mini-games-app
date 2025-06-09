@@ -1,8 +1,14 @@
 import './theme.css';
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import { Inter } from 'next/font/google';
 import { Providers } from './providers';
 import { Toaster } from '@/components/ui/sonner';
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+});
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -39,7 +45,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className={`${inter.variable} dark`}>
       <body className="antialiased bg-gray-900 text-white">
         <Providers>{children}</Providers>
         <Toaster theme="dark" />

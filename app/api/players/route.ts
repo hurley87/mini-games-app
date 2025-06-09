@@ -4,7 +4,9 @@ import { supabaseService } from '@/lib/supabase';
 export async function POST(request: Request) {
   try {
     const userData = await request.json();
-    console.log('userData', userData);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('userData', userData);
+    }
     // Validate required fields
     if (
       !userData.fid ||

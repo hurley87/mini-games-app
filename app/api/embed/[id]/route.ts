@@ -13,11 +13,13 @@ export async function GET(
   const coinId = url.searchParams.get('coinId');
 
   // Debug logs
-  console.log('API Route - Full URL:', request.url);
-  console.log('API Route - Params:', params);
-  console.log('API Route - URL Search Params:', url.searchParams.toString());
-  console.log('API Route - fid:', fid);
-  console.log('API Route - coinId:', coinId);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('API Route - Full URL:', request.url);
+    console.log('API Route - Params:', params);
+    console.log('API Route - URL Search Params:', url.searchParams.toString());
+    console.log('API Route - fid:', fid);
+    console.log('API Route - coinId:', coinId);
+  }
 
   // Validate required parameters
   if (!fid || !coinId) {
@@ -34,7 +36,9 @@ export async function GET(
       return NextResponse.json({ error: 'Build not found' }, { status: 404 });
     }
 
-    console.log('process.env.NEXT_PUBLIC_URL', process.env.NEXT_PUBLIC_URL);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('process.env.NEXT_PUBLIC_URL', process.env.NEXT_PUBLIC_URL);
+    }
 
     const injectedScript = `
     <script>

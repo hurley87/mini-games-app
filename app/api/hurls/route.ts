@@ -78,13 +78,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         typeof conversationResult[0]?.openai_thread_id === 'string'
       ) {
         conversationThreadId = conversationResult[0].openai_thread_id;
-        console.log(
-          `Found existing conversation thread: ${conversationThreadId} for hash ${thread_hash}`
-        );
+        if (process.env.NODE_ENV !== 'production') {
+          console.log(
+            `Found existing conversation thread: ${conversationThreadId} for hash ${thread_hash}`
+          );
+        }
       } else {
-        console.warn(
-          `Thread ${thread_hash} not found or result format unexpected. Creating new thread.`
-        );
+        if (process.env.NODE_ENV !== 'production') {
+          console.warn(
+            `Thread ${thread_hash} not found or result format unexpected. Creating new thread.`
+          );
+        }
         const client = new OpenAI();
         const newThread = await client.beta.threads.create();
         conversationThreadId = newThread.id;
@@ -92,9 +96,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           thread_hash,
           openai_thread_id: conversationThreadId,
         });
-        console.log(
-          `Created and saved new conversation thread: ${conversationThreadId} for hash ${thread_hash}`
-        );
+        if (process.env.NODE_ENV !== 'production') {
+          console.log(
+            `Created and saved new conversation thread: ${conversationThreadId} for hash ${thread_hash}`
+          );
+        }
       }
     } catch (dbError) {
       console.error(
@@ -120,7 +126,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    console.log('conversationThreadId', conversationThreadId);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('conversationThreadId', conversationThreadId);
+    }
 
     // --- Process OpenAI Interaction using the background route ---
     void fetch(`${process.env.BASE_URL}/api/handle-openai.background`, {
