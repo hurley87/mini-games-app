@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 body {
-  font-family: 'Geist', sans-serif;
+  font-family: var(--font-inter), sans-serif;
   font-optical-sizing: auto;
   font-weight: 400;
   font-style: normal;
