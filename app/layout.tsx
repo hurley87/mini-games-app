@@ -1,13 +1,13 @@
 import './theme.css';
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
-import { GeistSans } from 'next/font/google';
+import { Inter } from 'next/font/google';
 import { Providers } from './providers';
 import { Toaster } from '@/components/ui/sonner';
 
-const geistSans = GeistSans({
+const inter = Inter({
   subsets: ['latin'],
-  variable: '--font-geist-sans',
+  variable: '--font-inter',
 });
 
 export const viewport: Viewport = {
@@ -45,7 +45,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} dark`}>
+    <html lang="en" className={`${inter.variable} dark`}>
       <body className="antialiased bg-gray-900 text-white">
         <Providers>{children}</Providers>
         <Toaster theme="dark" />
