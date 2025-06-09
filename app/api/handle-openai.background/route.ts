@@ -75,16 +75,20 @@ const handleCompletedRun = async (
       const assistantResponse = latestMessage.content[0].text.value;
 
       if (!assistantResponse || assistantResponse.trim().length === 0) {
-        console.warn(
-          `⚠️ Assistant generated empty response for thread ${threadId}. Skipping publish.`
-        );
+        if (process.env.NODE_ENV !== 'production') {
+          console.warn(
+            `⚠️ Assistant generated empty response for thread ${threadId}. Skipping publish.`
+          );
+        }
         return;
       }
 
       if (assistantResponse.length > NEYNAR_CAST_CHAR_LIMIT) {
-        console.warn(
-          `⚠️ Assistant response exceeded character limit (${assistantResponse.length}/${NEYNAR_CAST_CHAR_LIMIT}) for thread ${threadId}.`
-        );
+        if (process.env.NODE_ENV !== 'production') {
+          console.warn(
+            `⚠️ Assistant response exceeded character limit (${assistantResponse.length}/${NEYNAR_CAST_CHAR_LIMIT}) for thread ${threadId}.`
+          );
+        }
         const truncatedResponse = assistantResponse.slice(
           0,
           NEYNAR_CAST_CHAR_LIMIT
@@ -94,11 +98,15 @@ const handleCompletedRun = async (
       }
 
       await publishCast(assistantResponse, parent);
-      console.log(`Published cast reply to ${parent}`);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(`Published cast reply to ${parent}`);
+      }
     } else {
-      console.warn(
-        `No suitable assistant message found in thread ${threadId} to publish.`
-      );
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn(
+          `No suitable assistant message found in thread ${threadId} to publish.`
+        );
+      }
     }
   } catch (error) {
     console.error(
@@ -122,9 +130,11 @@ async function retryToolCall(
     return response;
   } catch (error) {
     if (retries > 0) {
-      console.log(
-        `Retrying tool call to ${url}. Attempts remaining: ${retries - 1}`
-      );
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(
+          `Retrying tool call to ${url}. Attempts remaining: ${retries - 1}`
+        );
+      }
       await new Promise((resolve) => setTimeout(resolve, TOOL_RETRY_DELAY));
       return retryToolCall(url, options, retries - 1);
     }
@@ -142,7 +152,9 @@ export async function POST(request: Request) {
     const body: BackgroundOpenAIRequest = await request.json();
     const { threadId, content, parent, verifiedAddress, fid, image } = body;
 
-    console.log('Processing OpenAI interaction for thread:', threadId);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Processing OpenAI interaction for thread:', threadId);
+    }
 
     // Add user message to thread
     await client.beta.threads.messages.create(threadId, {
@@ -150,16 +162,22 @@ export async function POST(request: Request) {
       // @ts-expect-error - OpenAI SDK type mismatch
       content: content,
     });
-    console.log(`Added user message to thread ${threadId}`);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`Added user message to thread ${threadId}`);
+    }
 
     // Run Assistant on Conversation Thread
     const run = await client.beta.threads.runs.create(threadId, {
       assistant_id: ASSISTANT_ID,
     });
-    console.log(`Started run ${run.id} for thread ${threadId}`);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`Started run ${run.id} for thread ${threadId}`);
+    }
 
     const runStatus = await waitForRunCompletion(client, threadId, run.id);
-    console.log(`Run ${run.id} completed with status: ${runStatus.status}`);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`Run ${run.id} completed with status: ${runStatus.status}`);
+    }
 
     // Handle Run Outcome
     if (runStatus.status === 'completed') {
@@ -201,9 +219,11 @@ export async function POST(request: Request) {
                 );
               }
 
-              console.log(
-                `Successfully completed tool call: ${call.function.name}`
-              );
+              if (process.env.NODE_ENV !== 'production') {
+                console.log(
+                  `Successfully completed tool call: ${call.function.name}`
+                );
+              }
             } catch (toolError) {
               console.error(
                 `Failed to execute tool ${call.function.name} (call ID: ${call.id}) after retries:`,
@@ -222,7 +242,9 @@ export async function POST(request: Request) {
         // Wait for all tool calls to complete
         await Promise.allSettled(toolPromises);
       } else {
-        console.warn(`Run ${run.id} requires action but has no tool calls.`);
+        if (process.env.NODE_ENV !== 'production') {
+          console.warn(`Run ${run.id} requires action but has no tool calls.`);
+        }
       }
     } else {
       console.error(

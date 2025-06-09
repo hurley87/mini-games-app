@@ -146,7 +146,9 @@ export function CoinsList() {
     );
   }
 
-  console.log('coins', coins);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('coins', coins);
+  }
 
   return (
     <main className="flex-1 overflow-auto container mx-auto px-4 py-12 max-w-6xl pt-20 bg-gray-900">
