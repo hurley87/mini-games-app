@@ -99,11 +99,12 @@ export default function App() {
           }
         };
 
-        if (
-          typeof window !== 'undefined' &&
-          'requestIdleCallback' in window
-        ) {
-          (window as any).requestIdleCallback(run);
+        if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+          (
+            window as Window & {
+              requestIdleCallback: (callback: () => void) => number;
+            }
+          ).requestIdleCallback(run);
         } else {
           setTimeout(run, 0);
         }
