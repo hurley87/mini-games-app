@@ -4,8 +4,40 @@ import { useEffect } from 'react';
 import { Leaderboard } from '@/components/leaderboard';
 import { Header } from '@/app/components/header';
 import { trackGameEvent } from '@/lib/posthog';
+import { useFarcasterContext } from '@/hooks/useFarcasterContext';
+import { usePlayerStats } from '@/hooks/usePlayerStats';
+import { Share2 } from 'lucide-react';
+import { sdk } from '@farcaster/frame-sdk';
 
 export default function LeaderboardPage() {
+  const { context } = useFarcasterContext();
+  const { playerStats } = usePlayerStats();
+
+  const handleShareRank = async () => {
+    if (!playerStats) return;
+    try {
+      const rank = playerStats.rank;
+      const rankEmoji =
+        rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
+
+      const shareText = `${rankEmoji} I'm ranked ${rank} on the Mini Games leaderboard with ${playerStats.points.toLocaleString()} points!`;
+
+      await sdk.actions.composeCast({
+        text: shareText,
+        embeds: ['https://app.minigames.studio/leaderboard'],
+      });
+
+      if (context?.user?.fid) {
+        await fetch('/api/share-rank', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fid: context.user.fid }),
+        });
+      }
+    } catch (error) {
+      console.error('Failed to share rank:', error);
+    }
+  };
   useEffect(() => {
     // Track leaderboard view
     trackGameEvent.leaderboardView();
@@ -20,6 +52,15 @@ export default function LeaderboardPage() {
           <p className="text-gray-400">
             See how you stack up against other players
           </p>
+          {playerStats && context?.user?.fid && (
+            <button
+              onClick={handleShareRank}
+              className="mt-4 inline-flex items-center gap-1 px-3 py-2 text-xs bg-gray-700 hover:bg-gray-600 text-white rounded-md"
+            >
+              <Share2 className="w-3 h-3" />
+              Share My Rank
+            </button>
+          )}
         </div>
 
         <div className="space-y-6">
