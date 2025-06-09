@@ -7,6 +7,7 @@ import { useFarcasterContext } from '@/hooks/useFarcasterContext';
 import { CoinsList } from './components/coins-list';
 import { trackGameEvent, identifyUser, setUserProperties } from '@/lib/posthog';
 import { setSentryUser, sentryTracker } from '@/lib/sentry';
+import { savePlayerAndReferral, type PlayerData } from './server-actions';
 
 export default function App() {
   const { context, isReady } = useFarcasterContext({
@@ -76,81 +77,35 @@ export default function App() {
           Number.isInteger(sharerFid) &&
           sharerFid > 0;
 
-        // Save/update player data and determine if it's a new player atomically
-        let isNewPlayer = false;
-        let playerDataSaved = false;
-
-        try {
-          // Use the enhanced API that can tell us if the player is new
-          const response = await fetch('/api/players?includeNewFlag=true', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(userData),
-          });
-
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-          }
-
-          const result = await response.json();
-          isNewPlayer = result.isNew;
-          playerDataSaved = true;
-        } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message : 'Unknown error';
-          trackGameEvent.error('api_error', 'Failed to save user data', {
-            error: errorMessage,
-          });
-          sentryTracker.apiError(
-            error instanceof Error ? error : new Error(errorMessage),
-            {
-              endpoint: '/api/players',
-              method: 'POST',
-            }
-          );
-          // Default to false for safety - avoid duplicate referrals on error
-          isNewPlayer = false;
-        }
-
-        // Handle referral processing for new players with a valid referrer
-        // Only proceed if player data was successfully saved
-        if (
-          isNewPlayer &&
-          playerDataSaved &&
-          isValidSharerFid &&
-          sharerFid !== user.fid
-        ) {
+        const run = async () => {
           try {
-            const response = await fetch('/api/referral', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                sharerFid: sharerFid,
-                playerFid: user.fid,
-              }),
-            });
-
-            if (!response.ok) {
-              throw new Error(
-                `HTTP ${response.status}: ${response.statusText}`
-              );
-            }
+            await savePlayerAndReferral(
+              userData as PlayerData,
+              isValidSharerFid ? sharerFid : null
+            );
           } catch (error) {
             const errorMessage =
               error instanceof Error ? error.message : 'Unknown error';
-            trackGameEvent.error('api_error', 'Failed to process referral', {
+            trackGameEvent.error('api_error', 'Failed to save user data', {
               error: errorMessage,
             });
             sentryTracker.apiError(
               error instanceof Error ? error : new Error(errorMessage),
               {
-                endpoint: '/api/referral',
+                endpoint: 'server-action:savePlayerAndReferral',
                 method: 'POST',
               }
             );
           }
+        };
+
+        if (
+          typeof window !== 'undefined' &&
+          'requestIdleCallback' in window
+        ) {
+          (window as any).requestIdleCallback(run);
+        } else {
+          setTimeout(run, 0);
         }
       } else {
         console.warn('Missing required user data fields');
