@@ -73,22 +73,22 @@ export default function LeaderboardPage() {
   }, []);
 
   return (
-    <div className="max-w-lg mx-auto bg-gray-900 min-h-screen flex flex-col">
+    <div className="max-w-lg mx-auto min-h-screen flex flex-col bg-gradient-to-b from-black via-zinc-900 to-black text-white">
       <Header />
       <div className="px-4 pt-20 pb-8">
         <div className="text-center mb-8">
           <h1 className="text-xl font-bold text-white mb-2">Player Rankings</h1>
-          <p className="text-gray-400">
+          <p className="text-white/70">
             See how you stack up against other players
           </p>
           {playerStats && context?.user?.fid && (
             <button
               onClick={handleShareRank}
               disabled={isSharing}
-              className={`mt-4 inline-flex items-center gap-1 px-3 py-2 text-xs rounded-md text-white transition-colors ${
+              className={`mt-4 inline-flex items-center gap-1 px-3 py-2 text-xs rounded-2xl text-white transition-all duration-200 border border-white/20 backdrop-blur ${
                 isSharing
-                  ? 'bg-gray-600 cursor-not-allowed opacity-50'
-                  : 'bg-gray-700 hover:bg-gray-600'
+                  ? 'bg-white/10 cursor-not-allowed opacity-50'
+                  : 'bg-white/10 hover:brightness-110'
               }`}
             >
               <Share2
@@ -102,14 +102,14 @@ export default function LeaderboardPage() {
         <div className="space-y-6">
           {/* Top 10 Leaderboard */}
           <div>
-            <h2 className="text-sm font-semibold text-gray-200 mb-4">
+            <h2 className="text-sm font-semibold text-white mb-4">
               Top 5 Players
             </h2>
             <Leaderboard limit={5} />
           </div>
           {/* Full Leaderboard */}
           <div>
-            <h2 className="text-sm font-semibold text-gray-200 mb-4">
+            <h2 className="text-sm font-semibold text-white mb-4">
               All Players
             </h2>
             <Leaderboard />

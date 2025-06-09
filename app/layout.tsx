@@ -46,7 +46,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} dark`}>
-      <body className="antialiased bg-gray-900 text-white">
+      <body className="antialiased bg-black text-white">
         <Providers>{children}</Providers>
         <Toaster theme="dark" />
       </body>
