@@ -11,8 +11,8 @@ export function Header() {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between p-4 border-b border-gray-700 bg-gray-900">
-      <Link href="/" onClick={handleHomeClick}>
+    <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between p-4 backdrop-blur-md bg-black/20 border-b border-white/20 shadow-xl">
+      <Link href="/" onClick={handleHomeClick} className="hover:brightness-110 transition-all duration-200">
         <Sparkles className="w-6 h-6 text-purple-400" />
       </Link>
       <HeaderProfile />

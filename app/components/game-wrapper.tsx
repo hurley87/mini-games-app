@@ -192,10 +192,10 @@ export function GameWrapper({
 
   if (isLoadingZoraData) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="flex flex-col items-center space-y-4">
           <div className="animate-spin rounded-full h-12 w-12 border-2 border-gray-600 border-t-purple-500"></div>
-          <div className="text-gray-300">Loading...</div>
+          <div className="text-white/70">Loading...</div>
         </div>
       </div>
     );
@@ -204,19 +204,19 @@ export function GameWrapper({
   if (showGame) {
     return (
       <div className="flex flex-col h-full">
-        <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between p-2 border-b border-gray-700 bg-gray-900">
+        <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between p-2 backdrop-blur-md bg-black/20 border-b border-white/20 shadow-xl">
           <Button
             variant="ghost"
             size="sm"
             onClick={handleGameExit}
-            className="flex items-center gap-2 text-gray-400 hover:text-gray-100"
+            className="flex items-center gap-2 text-white/70 hover:brightness-110 transition-all duration-200"
           >
             <ArrowLeft size={20} />
             <span>Exit</span>
           </Button>
 
           {timeoutSeconds && (
-            <div className="flex items-center gap-2 text-gray-400">
+            <div className="flex items-center gap-2 text-white/70">
               <Clock size={16} />
               <span className="text-sm font-mono">
                 {Math.floor(remainingTime / 60)}:

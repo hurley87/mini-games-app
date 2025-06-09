@@ -73,14 +73,14 @@ export async function CoinsList() {
   } catch (error) {
     console.error('Error fetching coins with creators and Zora data:', error);
     return (
-      <div className="text-center text-red-400 py-8 bg-gray-900">
+      <div className="text-center text-red-400 py-8 bg-black/20 backdrop-blur rounded-2xl border border-white/20 shadow-xl mx-4 mt-4">
         <p>Failed to load coins</p>
       </div>
     );
   }
 
   return (
-    <main className="flex-1 overflow-auto container mx-auto px-4 py-12 max-w-6xl pt-20 bg-gray-900">
+    <main className="flex-1 overflow-auto container mx-auto px-4 py-12 pt-20 flex flex-col gap-4">
       {coins.map((coin) => (
         <CoinCard key={coin.id} coin={coin} />
       ))}
