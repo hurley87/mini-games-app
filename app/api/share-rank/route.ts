@@ -7,17 +7,20 @@ export async function POST(request: Request) {
   try {
     const { fid } = await request.json();
 
-    if (fid === null || fid === undefined) {
-      return NextResponse.json({ error: 'Missing fid' }, { status: 400 });
-    }
-
-    const fidNum = parseInt(fid as string, 10);
-    if (isNaN(fidNum) || fidNum < 0) {
+    // Validate that FID is provided and is a valid positive integer
+    if (
+      !fid ||
+      isNaN(Number(fid)) ||
+      Number(fid) <= 0 ||
+      !Number.isInteger(Number(fid))
+    ) {
       return NextResponse.json(
-        { error: 'Invalid fid - must be a non-negative number' },
+        { error: 'Invalid fid - must be a positive integer' },
         { status: 400 }
       );
     }
+
+    const fidNum = Number(fid);
 
     const player = await supabaseService.getPlayerByFid(fidNum);
     if (!player || player.length === 0) {
