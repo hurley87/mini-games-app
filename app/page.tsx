@@ -22,72 +22,114 @@ export default function App() {
 
       const user = context.user;
 
-        // Only proceed if user exists and all required fields are present
-        if (
-          user &&
-          user.fid &&
-          user.displayName &&
-          user.pfpUrl &&
-          user.username
-        ) {
-          const userData = {
-            fid: user.fid,
-            name: user.displayName,
-            pfp: user.pfpUrl,
-            username: user.username,
-            wallet_address: address,
-          };
+      // Only proceed if user exists and all required fields are present
+      if (
+        user &&
+        user.fid &&
+        user.displayName &&
+        user.pfpUrl &&
+        user.username
+      ) {
+        const userData = {
+          fid: user.fid,
+          name: user.displayName,
+          pfp: user.pfpUrl,
+          username: user.username,
+          wallet_address: address,
+        };
 
-          // Track user login event
-          trackGameEvent.userLogin(user.fid, user.username, address);
+        // Track user login event
+        trackGameEvent.userLogin(user.fid, user.username, address);
 
-          // Identify user in PostHog
-          identifyUser(user.fid.toString(), {
-            username: user.username,
-            display_name: user.displayName,
-            pfp_url: user.pfpUrl,
-            wallet_address: address,
+        // Identify user in PostHog
+        identifyUser(user.fid.toString(), {
+          username: user.username,
+          display_name: user.displayName,
+          pfp_url: user.pfpUrl,
+          wallet_address: address,
+        });
+
+        // Set user properties
+        setUserProperties({
+          fid: user.fid,
+          username: user.username,
+          display_name: user.displayName,
+          has_wallet: !!address,
+        });
+
+        // Set Sentry user context
+        setSentryUser({
+          id: user.fid.toString(),
+          username: user.username,
+          fid: user.fid,
+          wallet_address: address,
+        });
+
+        const params = new URLSearchParams(window.location.search);
+        const sharerFidParam = params.get('fid');
+
+        // Validate sharer FID parameter
+        const sharerFid = sharerFidParam ? Number(sharerFidParam) : null;
+        const isValidSharerFid =
+          sharerFid &&
+          !isNaN(sharerFid) &&
+          Number.isInteger(sharerFid) &&
+          sharerFid > 0;
+
+        // Save/update player data and determine if it's a new player atomically
+        let isNewPlayer = false;
+        let playerDataSaved = false;
+
+        try {
+          // Use the enhanced API that can tell us if the player is new
+          const response = await fetch('/api/players?includeNewFlag=true', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(userData),
           });
 
-          // Set user properties
-          setUserProperties({
-            fid: user.fid,
-            username: user.username,
-            display_name: user.displayName,
-            has_wallet: !!address,
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+
+          const result = await response.json();
+          isNewPlayer = result.isNew;
+          playerDataSaved = true;
+        } catch (error) {
+          const errorMessage =
+            error instanceof Error ? error.message : 'Unknown error';
+          trackGameEvent.error('api_error', 'Failed to save user data', {
+            error: errorMessage,
           });
-
-          // Set Sentry user context
-          setSentryUser({
-            id: user.fid.toString(),
-            username: user.username,
-            fid: user.fid,
-            wallet_address: address,
-          });
-
-          const params = new URLSearchParams(window.location.search);
-          const sharerFidParam = params.get('fid');
-
-          // Validate sharer FID parameter
-          const sharerFid = sharerFidParam ? Number(sharerFidParam) : null;
-          const isValidSharerFid =
-            sharerFid &&
-            !isNaN(sharerFid) &&
-            Number.isInteger(sharerFid) &&
-            sharerFid > 0;
-
-          // Save/update player data and determine if it's a new player atomically
-          let isNewPlayer = false;
-          let playerDataSaved = false;
-
-          try {
-            // Use the enhanced API that can tell us if the player is new
-            const response = await fetch('/api/players?includeNewFlag=true', {
+          sentryTracker.apiError(
+            error instanceof Error ? error : new Error(errorMessage),
+            {
+              endpoint: '/api/players',
               method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(userData),
+            }
+          );
+          // Default to false for safety - avoid duplicate referrals on error
+          isNewPlayer = false;
+        }
+
+        // Handle referral processing for new players with a valid referrer
+        // Only proceed if player data was successfully saved
+        if (
+          isNewPlayer &&
+          playerDataSaved &&
+          isValidSharerFid &&
+          sharerFid !== user.fid
+        ) {
+          try {
+            const response = await fetch('/api/referral', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                sharerFid: sharerFid,
+                playerFid: user.fid,
+              }),
             });
 
             if (!response.ok) {
@@ -95,76 +137,31 @@ export default function App() {
                 `HTTP ${response.status}: ${response.statusText}`
               );
             }
-
-            const result = await response.json();
-            isNewPlayer = result.isNew;
-            playerDataSaved = true;
           } catch (error) {
             const errorMessage =
               error instanceof Error ? error.message : 'Unknown error';
-            trackGameEvent.error('api_error', 'Failed to save user data', {
+            trackGameEvent.error('api_error', 'Failed to process referral', {
               error: errorMessage,
             });
             sentryTracker.apiError(
               error instanceof Error ? error : new Error(errorMessage),
               {
-                endpoint: '/api/players',
+                endpoint: '/api/referral',
                 method: 'POST',
               }
             );
-            // Default to false for safety - avoid duplicate referrals on error
-            isNewPlayer = false;
           }
-
-          // Handle referral processing for new players with a valid referrer
-          // Only proceed if player data was successfully saved
-          if (
-            isNewPlayer &&
-            playerDataSaved &&
-            isValidSharerFid &&
-            sharerFid !== user.fid
-          ) {
-            try {
-              const response = await fetch('/api/referral', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  sharerFid: sharerFid,
-                  playerFid: user.fid,
-                }),
-              });
-
-              if (!response.ok) {
-                throw new Error(
-                  `HTTP ${response.status}: ${response.statusText}`
-                );
-              }
-            } catch (error) {
-              const errorMessage =
-                error instanceof Error ? error.message : 'Unknown error';
-              trackGameEvent.error('api_error', 'Failed to process referral', {
-                error: errorMessage,
-              });
-              sentryTracker.apiError(
-                error instanceof Error ? error : new Error(errorMessage),
-                {
-                  endpoint: '/api/referral',
-                  method: 'POST',
-                }
-              );
-            }
-          }
-        } else {
-          console.warn('Missing required user data fields');
-          trackGameEvent.error(
-            'authentication_error',
-            'Missing required user data fields'
-          );
-          sentryTracker.authError('Missing required user data fields', {
-            fid: user?.fid,
-            username: user?.username,
-          });
         }
+      } else {
+        console.warn('Missing required user data fields');
+        trackGameEvent.error(
+          'authentication_error',
+          'Missing required user data fields'
+        );
+        sentryTracker.authError('Missing required user data fields', {
+          fid: user?.fid,
+          username: user?.username,
+        });
       }
     };
 
