@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Leaderboard } from '@/components/leaderboard';
 import { Header } from '@/app/components/header';
 import { trackGameEvent } from '@/lib/posthog';
@@ -12,9 +12,21 @@ import { sdk } from '@farcaster/frame-sdk';
 export default function LeaderboardPage() {
   const { context } = useFarcasterContext();
   const { playerStats } = usePlayerStats();
+  const [isSharing, setIsSharing] = useState(false);
+  const [lastShareTime, setLastShareTime] = useState<number | null>(null);
 
   const handleShareRank = async () => {
-    if (!playerStats) return;
+    if (!playerStats || isSharing) return;
+
+    // Prevent rapid sharing (cooldown of 30 seconds)
+    const now = Date.now();
+    if (lastShareTime && now - lastShareTime < 30000) {
+      console.log('Share cooldown active');
+      return;
+    }
+
+    setIsSharing(true);
+
     try {
       const rank = playerStats.rank;
       const rankEmoji =
@@ -22,20 +34,31 @@ export default function LeaderboardPage() {
 
       const shareText = `${rankEmoji} I'm ranked ${rank} on the Mini Games leaderboard with ${playerStats.points.toLocaleString()} points!`;
 
+      // Attempt to share via Farcaster
       await sdk.actions.composeCast({
         text: shareText,
         embeds: ['https://app.minigames.studio/leaderboard'],
       });
 
+      // Only award points if the share was successful (no error thrown)
       if (context?.user?.fid) {
-        await fetch('/api/share-rank', {
+        const response = await fetch('/api/share-rank', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ fid: context.user.fid }),
         });
+
+        if (!response.ok) {
+          throw new Error('Failed to award share points');
+        }
+
+        setLastShareTime(now);
       }
     } catch (error) {
       console.error('Failed to share rank:', error);
+      // Don't award points if share failed
+    } finally {
+      setIsSharing(false);
     }
   };
   useEffect(() => {
@@ -55,10 +78,17 @@ export default function LeaderboardPage() {
           {playerStats && context?.user?.fid && (
             <button
               onClick={handleShareRank}
-              className="mt-4 inline-flex items-center gap-1 px-3 py-2 text-xs bg-gray-700 hover:bg-gray-600 text-white rounded-md"
+              disabled={isSharing}
+              className={`mt-4 inline-flex items-center gap-1 px-3 py-2 text-xs rounded-md text-white transition-colors ${
+                isSharing
+                  ? 'bg-gray-600 cursor-not-allowed opacity-50'
+                  : 'bg-gray-700 hover:bg-gray-600'
+              }`}
             >
-              <Share2 className="w-3 h-3" />
-              Share My Rank
+              <Share2
+                className={`w-3 h-3 ${isSharing ? 'animate-spin' : ''}`}
+              />
+              {isSharing ? 'Sharing...' : 'Share My Rank'}
             </button>
           )}
         </div>
