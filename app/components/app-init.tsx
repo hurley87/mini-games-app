@@ -42,13 +42,6 @@ export function AppInit() {
           wallet_address: address,
         });
 
-        setUserProperties({
-          fid: user.fid,
-          username: user.username,
-          display_name: user.displayName,
-          has_wallet: !!address,
-        });
-
         setSentryUser({
           id: user.fid.toString(),
           username: user.username,
@@ -85,6 +78,15 @@ export function AppInit() {
           const result = await response.json();
           isNewPlayer = result.isNew;
           playerDataSaved = true;
+
+          // Update user properties with new player status
+          setUserProperties({
+            fid: user.fid,
+            username: user.username,
+            display_name: user.displayName,
+            has_wallet: !!address,
+            is_new_player: isNewPlayer,
+          });
         } catch (error) {
           const errorMessage =
             error instanceof Error ? error.message : 'Unknown error';
