@@ -1,290 +1,90 @@
-'use client';
+import { unstable_cache } from 'next/cache';
+import { getCoin } from '@zoralabs/coins-sdk';
+import { base } from 'viem/chains';
+import { supabaseService } from '@/lib/supabase';
+import { Coin, CoinWithCreator, ZoraCoinData } from '@/lib/types';
+import { CoinCard } from './coin-card';
 
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import {
-  ExternalLink,
-  Copy,
-  MoreHorizontal,
-  TrendingUp,
-  DollarSign,
-  Users,
-} from 'lucide-react';
-import { CoinWithCreator } from '@/lib/types';
-import { formatRelativeTime, formatCurrency, formatHolders } from '@/lib/utils';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { toast } from 'sonner';
-import { trackGameEvent } from '@/lib/posthog';
-import { sentryTracker } from '@/lib/sentry';
-
-export function CoinsList() {
-  const [coins, setCoins] = useState<CoinWithCreator[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchCoinsWithCreators = async () => {
-      try {
-        const response = await fetch('/api/coins');
-
-        if (!response.ok) {
-          const errorMessage = `HTTP error! status: ${response.status}`;
-          throw new Error(errorMessage);
-        }
-
-        const coinsData: CoinWithCreator[] = await response.json();
-        setCoins(coinsData);
-
-        // Track games list viewed
-        trackGameEvent.gamesList();
-      } catch (err) {
-        const errorMessage = 'Failed to load coins';
-        setError(errorMessage);
-        console.error('Error fetching coins:', err);
-
-        trackGameEvent.error('fetch_error', errorMessage, {
-          error: err instanceof Error ? err.message : 'Unknown error',
-        });
-
-        sentryTracker.apiError(
-          err instanceof Error ? err : new Error(errorMessage),
-          {
-            endpoint: '/api/coins',
-            method: 'GET',
-            status_code:
-              err instanceof Error && 'status' in err
-                ? (err as unknown as { status: number }).status
-                : undefined,
-          }
-        );
-      } finally {
-        setIsLoading(false);
-      }
+async function fetchZoraCoinData(
+  coinAddress: string
+): Promise<ZoraCoinData | undefined> {
+  try {
+    const response = await getCoin({ address: coinAddress, chain: base.id });
+    const zoraCoin = response.data?.zora20Token;
+    if (!zoraCoin) return undefined;
+    return {
+      volume24h: zoraCoin.volume24h,
+      marketCap: zoraCoin.marketCap,
+      uniqueHolders: zoraCoin.uniqueHolders,
     };
-
-    fetchCoinsWithCreators();
-  }, []);
-
-  const handleCopyAddress = (coin: CoinWithCreator) => {
-    try {
-      navigator.clipboard.writeText(coin.coin_address);
-      toast.success('Address copied to clipboard!');
-
-      // Track coin address copy
-      trackGameEvent.coinAddressCopy(coin.coin_address, coin.name);
-    } catch (error) {
-      toast.error('Failed to copy address');
-      sentryTracker.userActionError(
-        error instanceof Error ? error : new Error('Failed to copy address'),
-        {
-          action: 'copy_address',
-          element: 'coin_address',
-          page: 'coins_list',
-        }
-      );
-    }
-  };
-
-  const handleDexScreenerClick = (coin: CoinWithCreator) => {
-    try {
-      // Track DEX screener click
-      trackGameEvent.dexScreenerClick(coin.coin_address, coin.name);
-    } catch (error) {
-      sentryTracker.userActionError(
-        error instanceof Error
-          ? error
-          : new Error('Failed to track dex screener click'),
-        {
-          action: 'dex_screener_click',
-          element: 'external_link',
-          page: 'coins_list',
-        }
-      );
-    }
-  };
-
-  const handleGameCardView = (coin: CoinWithCreator) => {
-    try {
-      // Track game card view
-      trackGameEvent.gameCardView(
-        coin.id,
-        coin.name,
-        coin.creator?.username || `Creator ${coin.fid}`
-      );
-    } catch (error) {
-      sentryTracker.userActionError(
-        error instanceof Error
-          ? error
-          : new Error('Failed to track game card view'),
-        {
-          action: 'game_card_view',
-          element: 'game_card',
-          page: 'coins_list',
-        }
-      );
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px] bg-gray-900">
-        <div className="animate-spin rounded-full h-12 w-12 border-2 border-gray-600 border-t-purple-500"></div>
-      </div>
-    );
+  } catch (error) {
+    console.error(`Failed to fetch Zora data for coin ${coinAddress}:`, error);
+    return undefined;
   }
+}
 
-  if (error) {
+const getCoinsWithData = unstable_cache(
+  async () => {
+    const coins: Coin[] = await supabaseService.getCoins();
+    const coinsWithCreators: CoinWithCreator[] = await Promise.all(
+      coins.map(async (coin) => {
+        const [creatorResult, zoraResult] = await Promise.allSettled([
+          supabaseService.getCreatorByFID(coin.fid),
+          fetchZoraCoinData(coin.coin_address),
+        ]);
+
+        let creator = null;
+        if (creatorResult.status === 'fulfilled') {
+          creator = creatorResult.value[0] || null;
+        } else {
+          console.error(
+            `Failed to fetch creator for coin ${coin.fid}:`,
+            creatorResult.reason
+          );
+        }
+
+        let zoraData: ZoraCoinData | undefined = undefined;
+        if (zoraResult.status === 'fulfilled') {
+          zoraData = zoraResult.value;
+        } else {
+          console.error(
+            `Failed to fetch Zora data for coin ${coin.coin_address}:`,
+            zoraResult.reason
+          );
+        }
+
+        return {
+          ...coin,
+          creator,
+          zoraData,
+        } as CoinWithCreator;
+      })
+    );
+    return coinsWithCreators;
+  },
+  ['coins-with-data'],
+  { revalidate: 300 }
+);
+
+export async function CoinsList() {
+  let coins: CoinWithCreator[] = [];
+  try {
+    coins = await getCoinsWithData();
+  } catch (error) {
+    console.error('Error fetching coins with creators and Zora data:', error);
     return (
       <div className="text-center text-red-400 py-8 bg-gray-900">
-        <p>{error}</p>
+        <p>Failed to load coins</p>
       </div>
     );
   }
-
-  console.log('coins', coins);
 
   return (
     <main className="flex-1 overflow-auto container mx-auto px-4 py-12 max-w-6xl pt-20 bg-gray-900">
       {coins.map((coin) => (
-        <div key={coin.id} className="border-b border-gray-700 pb-4">
-          {/* Post Header */}
-          <div className="flex items-center justify-between p-4">
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <div className="w-10 h-10 rounded-full bg-gray-700 overflow-hidden">
-                  <Image
-                    src={
-                      coin.creator?.pfp || '/placeholder.svg?height=40&width=40'
-                    }
-                    alt={`${coin.creator?.username || 'Creator'} profile`}
-                    width={40}
-                    height={40}
-                    className="object-cover"
-                    onError={() => {
-                      sentryTracker.userActionError(
-                        'Failed to load creator profile image',
-                        {
-                          action: 'image_load_error',
-                          element: 'creator_pfp',
-                          page: 'coins_list',
-                        }
-                      );
-                    }}
-                  />
-                </div>
-              </div>
-              <span className="font-bold text-white">
-                {coin.creator?.username || `Creator ${coin.fid}`}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-gray-400 text-sm">
-                {formatRelativeTime(coin.created_at)}
-              </span>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button className="text-gray-400 hover:text-gray-200 p-1 rounded-full hover:bg-gray-700 transition-colors">
-                    <MoreHorizontal className="w-4 h-4" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent
-                  className="w-48 p-2 bg-gray-800 border border-gray-700"
-                  align="end"
-                >
-                  <div className="space-y-1">
-                    <button
-                      className="flex items-center gap-3 w-full px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 rounded-md transition-colors"
-                      onClick={() => handleCopyAddress(coin)}
-                    >
-                      <Copy className="w-4 h-4" />
-                      Copy address
-                    </button>
-                    <Link
-                      href={`https://dexscreener.com/base/${coin.coin_address}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={() => handleDexScreenerClick(coin)}
-                    >
-                      <button className="flex items-center gap-3 w-full px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 rounded-md transition-colors">
-                        <ExternalLink className="w-4 h-4" />
-                        DEX Screener
-                      </button>
-                    </Link>
-                  </div>
-                </PopoverContent>
-              </Popover>
-            </div>
-          </div>
-
-          {/* Post Image */}
-          <Image
-            src={coin.image || '/placeholder.svg?height=500&width=500'}
-            alt="Post image"
-            width={500}
-            height={500}
-            className="w-full aspect-square object-cover rounded-xl"
-            onClick={() => handleGameCardView(coin)}
-            onError={() => {
-              sentryTracker.userActionError('Failed to load game image', {
-                action: 'image_load_error',
-                element: 'game_image',
-                page: 'coins_list',
-              });
-            }}
-          />
-
-          <Link href={`/coins/${coin.id}`}>
-            <button
-              className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-semibold transition-colors w-full mt-4 text-xl py-4"
-              onClick={() => handleGameCardView(coin)}
-            >
-              Play
-            </button>
-          </Link>
-
-          {/* Post Title */}
-          <div className="px-4 pb-2 mt-4">
-            <h2 className="text-sm font-bold text-white">{coin.name}</h2>
-          </div>
-
-          {/* Post Actions */}
-          <div className="flex items-center justify-between px-4 ">
-            <div className="flex items-center gap-4">
-              {/* Zora Data Metrics */}
-              <div className="flex items-center gap-3 text-sm">
-                {/* 24h Volume */}
-                <div className="flex items-center gap-1 text-purple-400">
-                  <TrendingUp className="w-4 h-4" />
-                  <span className="font-medium">
-                    {formatCurrency(coin.zoraData?.volume24h)}
-                  </span>
-                </div>
-
-                {/* Market Cap */}
-                <div className="flex items-center gap-1 text-emerald-400">
-                  <DollarSign className="w-4 h-4" />
-                  <span className="font-medium">
-                    {formatCurrency(coin.zoraData?.marketCap)}
-                  </span>
-                </div>
-
-                {/* Unique Holders */}
-                <div className="flex items-center gap-1 text-blue-400">
-                  <Users className="w-4 h-4" />
-                  <span className="font-medium">
-                    {formatHolders(coin.zoraData?.uniqueHolders)}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <CoinCard key={coin.id} coin={coin} />
       ))}
     </main>
   );
 }
+
