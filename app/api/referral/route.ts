@@ -7,22 +7,19 @@ export async function POST(request: Request) {
   try {
     const { sharerFid, playerFid } = await request.json();
 
+    // Validate that both FIDs are provided and are valid positive integers
     if (
-      sharerFid === null ||
-      sharerFid === undefined ||
-      playerFid === null ||
-      playerFid === undefined
+      !sharerFid ||
+      !playerFid ||
+      isNaN(Number(sharerFid)) ||
+      isNaN(Number(playerFid)) ||
+      Number(sharerFid) <= 0 ||
+      Number(playerFid) <= 0 ||
+      !Number.isInteger(Number(sharerFid)) ||
+      !Number.isInteger(Number(playerFid))
     ) {
       return NextResponse.json(
-        { error: 'Missing sharerFid or playerFid' },
-        { status: 400 }
-      );
-    }
-
-    // Validate that sharerFid and playerFid are numeric
-    if (isNaN(Number(sharerFid)) || isNaN(Number(playerFid))) {
-      return NextResponse.json(
-        { error: 'Invalid sharerFid or playerFid - must be numeric' },
+        { error: 'Invalid sharerFid or playerFid - must be positive integers' },
         { status: 400 }
       );
     }
