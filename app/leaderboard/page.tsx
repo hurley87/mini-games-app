@@ -1,11 +1,72 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Leaderboard } from '@/components/leaderboard';
 import { Header } from '@/app/components/header';
 import { trackGameEvent } from '@/lib/posthog';
+import { useFarcasterContext } from '@/hooks/useFarcasterContext';
+import { usePlayerStats } from '@/hooks/usePlayerStats';
+import { Share2 } from 'lucide-react';
+import { sdk } from '@farcaster/frame-sdk';
 
 export default function LeaderboardPage() {
+  const { context } = useFarcasterContext();
+  const { playerStats } = usePlayerStats();
+  const [isSharing, setIsSharing] = useState(false);
+  const [lastShareTime, setLastShareTime] = useState<number | null>(null);
+
+  const handleShareRank = async () => {
+    if (!playerStats || isSharing) return;
+
+    // Prevent rapid sharing (cooldown of 30 seconds)
+    const now = Date.now();
+    if (lastShareTime && now - lastShareTime < 30000) {
+      console.log('Share cooldown active');
+      return;
+    }
+
+    setIsSharing(true);
+
+    try {
+      const rank = playerStats.rank;
+      const rankEmoji =
+        rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
+
+      const shareText = `${rankEmoji} I'm ranked ${rank} on the Mini Games leaderboard with ${playerStats.points.toLocaleString()} points!`;
+
+      // Attempt to share via Farcaster
+      await sdk.actions.composeCast({
+        text: shareText,
+        embeds: ['https://app.minigames.studio/leaderboard'],
+      });
+
+      // Set cooldown immediately after successful Farcaster share to prevent spam
+      setLastShareTime(now);
+
+      // Try to award points, but don't reset cooldown if this fails
+      if (context?.user?.fid) {
+        try {
+          const response = await fetch('/api/share-rank', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fid: context.user.fid }),
+          });
+
+          if (!response.ok) {
+            console.error('Failed to award share points:', response.statusText);
+          }
+        } catch (pointsError) {
+          console.error('Error awarding share points:', pointsError);
+          // Don't re-throw - we've already shared successfully and set cooldown
+        }
+      }
+    } catch (error) {
+      console.error('Failed to share rank:', error);
+      // Don't award points if share failed
+    } finally {
+      setIsSharing(false);
+    }
+  };
   useEffect(() => {
     // Track leaderboard view
     trackGameEvent.leaderboardView();
@@ -20,6 +81,22 @@ export default function LeaderboardPage() {
           <p className="text-gray-400">
             See how you stack up against other players
           </p>
+          {playerStats && context?.user?.fid && (
+            <button
+              onClick={handleShareRank}
+              disabled={isSharing}
+              className={`mt-4 inline-flex items-center gap-1 px-3 py-2 text-xs rounded-md text-white transition-colors ${
+                isSharing
+                  ? 'bg-gray-600 cursor-not-allowed opacity-50'
+                  : 'bg-gray-700 hover:bg-gray-600'
+              }`}
+            >
+              <Share2
+                className={`w-3 h-3 ${isSharing ? 'animate-spin' : ''}`}
+              />
+              {isSharing ? 'Sharing...' : 'Share My Rank'}
+            </button>
+          )}
         </div>
 
         <div className="space-y-6">
