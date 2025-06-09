@@ -40,19 +40,25 @@ export default function LeaderboardPage() {
         embeds: ['https://app.minigames.studio/leaderboard'],
       });
 
-      // Only award points if the share was successful (no error thrown)
+      // Set cooldown immediately after successful Farcaster share to prevent spam
+      setLastShareTime(now);
+
+      // Try to award points, but don't reset cooldown if this fails
       if (context?.user?.fid) {
-        const response = await fetch('/api/share-rank', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ fid: context.user.fid }),
-        });
+        try {
+          const response = await fetch('/api/share-rank', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fid: context.user.fid }),
+          });
 
-        if (!response.ok) {
-          throw new Error('Failed to award share points');
+          if (!response.ok) {
+            console.error('Failed to award share points:', response.statusText);
+          }
+        } catch (pointsError) {
+          console.error('Error awarding share points:', pointsError);
+          // Don't re-throw - we've already shared successfully and set cooldown
         }
-
-        setLastShareTime(now);
       }
     } catch (error) {
       console.error('Failed to share rank:', error);

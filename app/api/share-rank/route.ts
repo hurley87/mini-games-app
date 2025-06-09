@@ -7,13 +7,24 @@ export async function POST(request: Request) {
   try {
     const { fid } = await request.json();
 
-    if (!fid) {
+    if (fid === null || fid === undefined) {
       return NextResponse.json({ error: 'Missing fid' }, { status: 400 });
     }
 
     const fidNum = parseInt(fid as string, 10);
-    if (isNaN(fidNum)) {
-      return NextResponse.json({ error: 'Invalid fid' }, { status: 400 });
+    if (isNaN(fidNum) || fidNum < 0) {
+      return NextResponse.json(
+        { error: 'Invalid fid - must be a non-negative number' },
+        { status: 400 }
+      );
+    }
+
+    const player = await supabaseService.getPlayerByFid(fidNum);
+    if (!player || player.length === 0) {
+      return NextResponse.json(
+        { error: 'Player not found - please ensure you are registered' },
+        { status: 404 }
+      );
     }
 
     await supabaseService.incrementPlayerPoints(fidNum, 1);

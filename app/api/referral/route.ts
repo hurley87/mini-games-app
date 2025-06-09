@@ -7,7 +7,12 @@ export async function POST(request: Request) {
   try {
     const { sharerFid, playerFid } = await request.json();
 
-    if (!sharerFid || !playerFid) {
+    if (
+      sharerFid === null ||
+      sharerFid === undefined ||
+      playerFid === null ||
+      playerFid === undefined
+    ) {
       return NextResponse.json(
         { error: 'Missing sharerFid or playerFid' },
         { status: 400 }
