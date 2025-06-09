@@ -35,7 +35,9 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error('Error in queue processor:', error);
-    console.log('Processing queue', request);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Processing queue', request);
+    }
     return NextResponse.json(
       {
         success: false,

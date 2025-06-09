@@ -23,10 +23,12 @@ export async function POST(request: NextRequest) {
   try {
     const { fid, coinId, coinAddress, walletAddress } = await request.json();
 
-    console.log('fid', fid);
-    console.log('coinId', coinId);
-    console.log('coinAddress', coinAddress);
-    console.log('walletAddress', walletAddress);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('fid', fid);
+      console.log('coinId', coinId);
+      console.log('coinAddress', coinAddress);
+      console.log('walletAddress', walletAddress);
+    }
 
     if (!fid || !coinId || !coinAddress) {
       return NextResponse.json(

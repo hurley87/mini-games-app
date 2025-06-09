@@ -49,15 +49,21 @@ export async function POST(request: Request) {
         }
         break;
       case 'frame_removed':
-        console.log('Frame removed');
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('Frame removed');
+        }
         break;
       case 'notifications_enabled':
         if ('notificationDetails' in data) {
-          console.log('Notifications enabled:', data.notificationDetails);
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('Notifications enabled:', data.notificationDetails);
+          }
         }
         break;
       case 'notifications_disabled':
-        console.log('Notifications disabled');
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('Notifications disabled');
+        }
         break;
     }
 

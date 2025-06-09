@@ -26,13 +26,19 @@ async function processTransfers() {
         .eq('id', transfer.coin_id)
         .single();
 
-      console.log('coin', coin);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('coin', coin);
+      }
 
       const fid = transfer.fid;
-      console.log('fid', fid);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('fid', fid);
+      }
 
       const tokenCount = transfer.total_score;
-      console.log('tokenCount', tokenCount);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('tokenCount', tokenCount);
+      }
 
       if (coinError) {
         console.error('Error getting coin:', coinError);
@@ -41,7 +47,9 @@ async function processTransfers() {
 
       const coinAddress = coin.coin_address;
 
-      console.log('coinAddress', coinAddress);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('coinAddress', coinAddress);
+      }
 
       const account = await getWalletAccount(
         'q6pjcc0zexrczw37fm88rc3j',
@@ -54,7 +62,9 @@ async function processTransfers() {
       let playerWalletAddress = player?.[0]?.wallet_address;
 
       if (!player || player.length === 0 || !playerWalletAddress) {
-        console.log('Player info missing, fetching from Neynar');
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('Player info missing, fetching from Neynar');
+        }
         try {
           const user = await getUserByFid(fid);
           if (user) {
@@ -75,11 +85,15 @@ async function processTransfers() {
       }
 
       if (!playerWalletAddress) {
-        console.log('Player wallet address not found');
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('Player wallet address not found');
+        }
         continue;
       }
 
-      console.log('playerWalletAddress', playerWalletAddress);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('playerWalletAddress', playerWalletAddress);
+      }
 
       try {
         // Transfer tokens using ERC-20 transfer function
@@ -105,13 +119,19 @@ async function processTransfers() {
           account: account,
           chain: walletClient.chain,
         });
-        console.log('Transfer transaction hash:', hash);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('Transfer transaction hash:', hash);
+        }
         // Wait for transaction confirmation
         const publicClient = getPublicClient();
         const receipt = await publicClient.waitForTransactionReceipt({ hash });
-        console.log('receipt', receipt);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('receipt', receipt);
+        }
         if (receipt.status === 'success') {
-          console.log('Transfer successful for fid:', fid);
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('Transfer successful for fid:', fid);
+          }
           // Update the transfer status in the database
           await supabaseService
             .from('scores')
@@ -139,7 +159,9 @@ async function processTransfers() {
 
           const responseJson = await response.json();
 
-          console.log('response', responseJson);
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('response', responseJson);
+          }
         } else {
           console.error('Transfer failed for fid:', fid);
         }
