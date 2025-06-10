@@ -44,7 +44,6 @@ export function HeaderProfile() {
       const data = await response.json();
 
       if (data.success) {
-        console.log('Distributor data:', data.data);
         toast.success('Connected successfully!');
         trackGameEvent.userLogin(
           context?.user?.fid || 0,
@@ -170,7 +169,7 @@ export function HeaderProfile() {
       <Button
         onClick={handleConnect}
         disabled={isConnecting}
-        className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white border-purple-600"
+        className="flex items-center gap-2 bg-purple-600 hover:brightness-110 transition-all duration-200 text-white border border-white/20 rounded-2xl shadow-xl"
         variant="outline"
       >
         <Wallet className="w-4 h-4" />
@@ -178,18 +177,17 @@ export function HeaderProfile() {
       </Button>
     );
   }
-  console.log('address1', address);
 
   // Show profile drawer if connected
   return (
     <Drawer>
       <DrawerTrigger asChild>
-        <List className="w-6 h-6 text-gray-400 hover:text-purple-400 transition-colors cursor-pointer" />
+        <List className="w-6 h-6 text-white/70 hover:brightness-110 transition-all duration-200 cursor-pointer" />
       </DrawerTrigger>
-      <DrawerContent className="bg-gray-900 border-gray-700">
+      <DrawerContent className="bg-black/20 backdrop-blur-md border border-white/20 rounded-2xl shadow-xl">
         <div className="flex flex-col h-full">
           {/* Profile Section */}
-          <div className="p-6 border-b border-gray-700">
+          <div className="p-6 border-b border-white/20">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 overflow-hidden">
                 {userPfp ? (
@@ -225,7 +223,7 @@ export function HeaderProfile() {
                 {address && (
                   <button
                     onClick={() => copyAddress(address)}
-                    className="flex items-center gap-1 text-sm text-gray-400 hover:text-purple-400 transition-colors self-start"
+                    className="flex items-center gap-1 text-sm text-white/70 hover:brightness-110 transition-all duration-200 self-start"
                   >
                     <span>{formatAddress(address)}</span>
                     <Copy className="w-3 h-3" />
@@ -239,14 +237,14 @@ export function HeaderProfile() {
             {/* Menu Items */}
             <div className="space-y-6">
               <Link href="/" onClick={handleGamesNavigation}>
-                <div className="flex items-center gap-4 text-xl font-semibold text-white hover:text-purple-400 transition-colors">
+                <div className="flex items-center gap-4 text-xl font-semibold text-white hover:brightness-110 transition-all duration-200">
                   <Sparkles className="w-6 h-6" />
                   <span>Games</span>
                 </div>
               </Link>
 
               <Link
-                className="flex items-center gap-4 text-xl font-semibold text-white hover:text-purple-400 transition-colors cursor-pointer"
+                className="flex items-center gap-4 text-xl font-semibold text-white hover:brightness-110 transition-all duration-200 cursor-pointer"
                 href="/leaderboard"
                 onClick={handleLeaderboardNavigation}
               >
@@ -256,7 +254,7 @@ export function HeaderProfile() {
 
               <button
                 onClick={handleShareReferral}
-                className="flex items-center gap-4 text-xl font-semibold text-white hover:text-purple-400 transition-colors"
+                className="flex items-center gap-4 text-xl font-semibold text-white hover:brightness-110 transition-all duration-200"
               >
                 <Share2 className="w-6 h-6" />
                 <span>Invite Friends</span>
@@ -268,7 +266,7 @@ export function HeaderProfile() {
           <DrawerClose asChild>
             <Button
               variant="outline"
-              className="bg-gray-800 border-gray-600 text-white hover:bg-gray-700"
+              className="bg-white/10 backdrop-blur border border-white/20 rounded-2xl text-white hover:brightness-110 transition-all duration-200"
             >
               Close
             </Button>

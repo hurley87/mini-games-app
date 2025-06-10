@@ -55,9 +55,6 @@ export function Info({
   const { isConnected } = useAccount();
   const { connectors, connect } = useConnect();
 
-  console.log('imageUrl', imageUrl);
-  console.log('name', name);
-  console.log('creator', creator);
 
   useEffect(() => {
     if (isReady && !hasCheckedStatus && id && coinAddress) {
@@ -103,9 +100,9 @@ export function Info({
 
   if (!name) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-        <div className="bg-gray-800 rounded-2xl shadow-sm p-8 text-center max-w-md border border-gray-700">
-          <div className="text-gray-300">Please enter a game name</div>
+      <div className="min-h-screen bg-black flex items-center justify-center p-4">
+        <div className="bg-black/20 backdrop-blur rounded-2xl shadow-xl p-8 text-center max-w-md border border-white/20">
+          <div className="text-white/70">Please enter a game name</div>
         </div>
       </div>
     );
@@ -113,9 +110,9 @@ export function Info({
 
   if (!description) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-        <div className="bg-gray-800 rounded-2xl shadow-sm p-8 text-center max-w-md border border-gray-700">
-          <div className="text-gray-300">Please enter a game description</div>
+      <div className="min-h-screen bg-black flex items-center justify-center p-4">
+        <div className="bg-black/20 backdrop-blur rounded-2xl shadow-xl p-8 text-center max-w-md border border-white/20">
+          <div className="text-white/70">Please enter a game description</div>
         </div>
       </div>
     );
@@ -123,11 +120,11 @@ export function Info({
 
   if (!isReady || isLoading || !hasCheckedStatus) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-        <div className="bg-gray-800 rounded-2xl shadow-sm p-8 text-center max-w-md border border-gray-700">
+      <div className="min-h-screen bg-black flex items-center justify-center p-4">
+        <div className="bg-black/20 backdrop-blur rounded-2xl shadow-xl p-8 text-center max-w-md border border-white/20">
           <div className="flex flex-col items-center space-y-4">
             <div className="animate-spin rounded-full h-8 w-8 border-2 border-gray-600 border-t-blue-400"></div>
-            <div className="text-gray-300">Loading...</div>
+            <div className="text-white/70">Loading...</div>
           </div>
         </div>
       </div>
@@ -136,10 +133,10 @@ export function Info({
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-        <div className="bg-gray-800 rounded-2xl shadow-sm p-8 text-center max-w-md border border-gray-700">
+      <div className="min-h-screen bg-black flex items-center justify-center p-4">
+        <div className="bg-black/20 backdrop-blur rounded-2xl shadow-xl p-8 text-center max-w-md border border-white/20">
           <div className="text-red-400 font-medium">Error</div>
-          <div className="text-gray-300 mt-2">{error}</div>
+          <div className="text-white/70 mt-2">{error}</div>
         </div>
       </div>
     );
@@ -147,9 +144,9 @@ export function Info({
 
   if (!playStatus) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-        <div className="bg-gray-800 rounded-2xl shadow-sm p-8 text-center max-w-md border border-gray-700">
-          <div className="text-gray-300">Unable to check play status</div>
+      <div className="min-h-screen bg-black flex items-center justify-center p-4">
+        <div className="bg-black/20 backdrop-blur rounded-2xl shadow-xl p-8 text-center max-w-md border border-white/20">
+          <div className="text-white/70">Unable to check play status</div>
         </div>
       </div>
     );
@@ -158,10 +155,10 @@ export function Info({
   // Show different UI based on play status
   if (!playStatus.canPlay) {
     return (
-      <div className="min-h-screen bg-gray-900">
-        <div className="max-w-lg mx-auto bg-gray-900">
+      <div className="min-h-screen bg-black">
+      <div className="max-w-lg mx-auto bg-gradient-to-b from-black via-zinc-900 to-black">
           {/* Header with app icon and basic info */}
-          <div className="p-6 border-b border-gray-700">
+          <div className="p-6 border-b border-white/20">
             <div className="flex items-start space-x-4">
               {/* App Icon */}
               <div className="w-24 h-24 rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
@@ -191,7 +188,7 @@ export function Info({
                 <h1 className="text-2xl font-bold text-white leading-tight">
                   {name}
                 </h1>
-                <p className="text-sm text-gray-400 mt-1">${symbol}</p>
+                <p className="text-sm text-white/70 mt-1">${symbol}</p>
 
                 {/* Token Statistics */}
                 <div className="flex items-center gap-3 text-sm pt-2">
@@ -332,20 +329,20 @@ export function Info({
           </div>
 
           {/* Description */}
-          <div className="p-6 border-t border-gray-700">
+          <div className="p-6 border-t border-white/20">
             <h2 className="text-lg font-semibold text-white mb-3">
               About this game
             </h2>
-            <p className="text-sm text-gray-300 leading-relaxed">
+            <p className="text-sm text-white/70 leading-relaxed">
               {description}
             </p>
           </div>
 
           {/* Creator */}
-          <div className="p-6 border-t border-gray-700">
+          <div className="p-6 border-t border-white/20">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full bg-gray-700 overflow-hidden">
+                <div className="w-10 h-10 rounded-full bg-white/10 overflow-hidden">
                   {creator?.pfp ? (
                     <img
                       src={creator.pfp}
@@ -364,7 +361,7 @@ export function Info({
                   <p className="text-sm font-medium text-white">
                     {creator?.username || `Creator ${fid}`}
                   </p>
-                  <p className="text-xs text-gray-400">Game Creator</p>
+                  <p className="text-xs text-white/70">Game Creator</p>
                 </div>
               </div>
               <button
@@ -385,11 +382,11 @@ export function Info({
 
   // Player can play - show the normal play button
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen bg-black">
       <Header />
-      <div className="max-w-lg mx-auto bg-gray-900 pt-14">
+      <div className="max-w-lg mx-auto bg-gradient-to-b from-black via-zinc-900 to-black pt-14">
         {/* Header with app icon and basic info */}
-        <div className="p-6 border-b border-gray-700">
+        <div className="p-6 border-b border-white/20">
           <div className="flex items-start space-x-4">
             {/* App Icon */}
             <div className="w-24 h-24 rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
@@ -419,7 +416,7 @@ export function Info({
               <h1 className="text-2xl font-bold text-white leading-tight">
                 {name}
               </h1>
-              <p className="text-sm text-gray-400 mt-1">${symbol}</p>
+              <p className="text-sm text-white/70 mt-1">${symbol}</p>
 
               {/* Token Statistics */}
               <div className="flex items-center gap-3 text-sm pt-2">
@@ -543,21 +540,21 @@ export function Info({
         )}
 
         {/* Description */}
-        <div className="p-6 border-t border-gray-700 flex flex-col gap-6 items-center">
-          <p className="text-sm text-gray-300 leading-relaxed">{description}</p>
+        <div className="p-6 border-t border-white/20 flex flex-col gap-6 items-center">
+          <p className="text-sm text-white/70 leading-relaxed">{description}</p>
           <button
             onClick={handlePlay}
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-4 rounded-xl font-semibold shadow-md shadow-purple-500/20 text-lg"
+            className="w-full bg-purple-600 text-white px-4 py-4 rounded-2xl font-semibold shadow-xl shadow-purple-500/20 hover:brightness-110 transition-all duration-200 text-lg"
           >
             PLAY
           </button>
         </div>
 
         {/* Creator */}
-        <div className="p-6 border-t border-gray-700">
+        <div className="p-6 border-t border-white/20">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-full bg-gray-700 overflow-hidden">
+              <div className="w-10 h-10 rounded-full bg-white/10 overflow-hidden">
                 {creator?.pfp ? (
                   <img
                     src={creator.pfp}
@@ -576,7 +573,7 @@ export function Info({
                 <p className="text-sm font-medium text-white">
                   {creator?.username || `Creator ${fid}`}
                 </p>
-                <p className="text-xs text-gray-400">Game Creator</p>
+                <p className="text-xs text-white/70">Game Creator</p>
               </div>
             </div>
             <button

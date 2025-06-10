@@ -75,7 +75,7 @@ export function CoinLeaderboard({
 
   const getRankStyles = (rank: number, isCurrentUser: boolean) => {
     let baseStyles =
-      'flex items-center gap-4 p-4 hover:bg-gray-700 transition-colors';
+      'flex items-center gap-4 p-4 hover:brightness-110 transition-all duration-200';
 
     if (isCurrentUser) {
       baseStyles += ' bg-purple-900/30 border-l-4 border-purple-500';
@@ -131,8 +131,8 @@ export function CoinLeaderboard({
         </h2>
         <div className="text-center py-8">
           <Trophy className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-          <p className="text-gray-400 text-sm">No players yet</p>
-          <p className="text-gray-500 text-xs mt-1">
+          <p className="text-white/70 text-sm">No players yet</p>
+          <p className="text-white/60 text-xs mt-1">
             Be the first to play and earn points!
           </p>
         </div>
@@ -148,7 +148,7 @@ export function CoinLeaderboard({
         </h2>
         <button
           onClick={handleShareLeaderboard}
-          className="flex items-center gap-1 px-3 py-2 text-xs bg-gray-700 hover:bg-gray-600 text-white rounded-md transition-colors"
+          className="flex items-center gap-1 px-3 py-2 text-xs bg-white/10 backdrop-blur border border-white/20 rounded-2xl text-white hover:brightness-110 transition-all duration-200"
           title="Share leaderboard"
         >
           <Share2 className="w-3 h-3" />
@@ -156,7 +156,7 @@ export function CoinLeaderboard({
         </button>
       </div>
 
-      <div className="bg-gray-800 rounded-xl overflow-hidden border border-gray-700">
+      <div className="bg-black/20 backdrop-blur rounded-2xl overflow-hidden border border-white/20 shadow-xl">
         <div className="divide-y divide-gray-700">
           {leaderboard.map((player) => {
             const isCurrentUser = context?.user?.fid === player.fid;
@@ -167,7 +167,7 @@ export function CoinLeaderboard({
                 className={getRankStyles(player.rank, isCurrentUser)}
               >
                 {/* Rank */}
-                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-700 text-sm font-bold">
+                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-white/10 text-sm font-bold">
                   {getRankDisplay(player.rank)}
                 </div>
 
@@ -207,21 +207,21 @@ export function CoinLeaderboard({
                   {player.name && player.username && (
                     <button
                       onClick={() => handleViewProfile(player.fid)}
-                      className="text-sm text-gray-400 hover:text-blue-400 transition-colors truncate text-left block"
+                      className="text-sm text-white/70 hover:brightness-110 transition-all duration-200 truncate text-left block"
                       title="View profile"
                     >
                       @{player.username}
                     </button>
                   )}
                   <div className="flex items-center justify-between mt-1">
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-white/60">
                       {player.play_count}{' '}
                       {player.play_count === 1 ? 'play' : 'plays'}
                     </div>
                     {isCurrentUser && (
                       <button
                         onClick={() => handleSharePosition(player)}
-                        className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+                        className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-600 text-white rounded-2xl hover:brightness-110 transition-all duration-200"
                         title="Share your leaderboard position"
                       >
                         <Share2 className="w-3 h-3" />
@@ -236,7 +236,7 @@ export function CoinLeaderboard({
                   <div className="font-bold text-lg text-white">
                     {player.total_score.toLocaleString()}
                   </div>
-                  <div className="text-xs text-gray-400">points</div>
+                  <div className="text-xs text-white/70">points</div>
                 </div>
               </div>
             );
@@ -246,7 +246,7 @@ export function CoinLeaderboard({
 
       {leaderboard.length >= (limit || 10) && (
         <div className="text-center mt-4">
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-white/60">
             Showing top {limit || 10} players
           </p>
         </div>

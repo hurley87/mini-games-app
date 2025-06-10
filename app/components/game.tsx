@@ -49,7 +49,6 @@ export function Game({
   const { address, isConnected } = useAccount();
   const { connectors, connect } = useConnect();
 
-  console.log('address', address);
 
   useEffect(() => {
     const handleMessage = async (event: MessageEvent) => {
@@ -91,7 +90,6 @@ export function Game({
         if (response.ok) {
           const status = await response.json();
           setHasPlayedBefore(status.hasPlayed);
-          console.log('Play status check:', { hasPlayed: status.hasPlayed });
         }
       } catch (error) {
         console.error('Error checking play status:', error);
@@ -123,10 +121,6 @@ export function Game({
 
         const tokenBalance = balance > BigInt(0);
         setHasTokens(tokenBalance);
-        console.log('Token balance check:', {
-          balance: balance.toString(),
-          hasTokens: tokenBalance,
-        });
       } catch (error) {
         console.error('Error checking token balance:', error);
         setHasTokens(false);
@@ -168,26 +162,22 @@ export function Game({
 
   if (!id) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-gray-300">Please enter a game id</div>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-white/70">Please enter a game id</div>
       </div>
     );
   }
 
   const fid = context?.user?.fid;
 
-  // Debug logs
-  console.log('Game ID:', id);
-
   const iframeUrl = `/api/embed/${id}?fid=${fid}&coinId=${coinId}`;
-  console.log('Iframe URL:', iframeUrl);
 
   if (!isReady || checkingTokens || checkingPlayStatus) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="flex flex-col items-center space-y-4">
           <div className="animate-spin rounded-full h-12 w-12 border-2 border-gray-600 border-t-purple-500"></div>
-          <div className="text-gray-300">Loading...</div>
+          <div className="text-white/70">Loading...</div>
         </div>
       </div>
     );
@@ -196,11 +186,11 @@ export function Game({
   if (isGameOver) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm">
-        <div className="text-center p-8 rounded-2xl bg-gray-800/80 border border-gray-700 max-w-md w-full mx-4">
+        <div className="text-center p-8 rounded-2xl bg-black/80 backdrop-blur border border-white/20 shadow-xl max-w-md w-full mx-4">
           <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-500 mb-4">
             Game Over
           </h1>
-          <p className="text-xl text-gray-300 mb-4">{`Time's up!`}</p>
+          <p className="text-xl text-white/70 mb-4">{`Time's up!`}</p>
 
           {!hasPlayedBefore ? (
             // First-time player - encourage them to get tokens for full access
@@ -214,7 +204,7 @@ export function Game({
               {!isConnected ? (
                 <button
                   onClick={() => connect({ connector: connectors[0] })}
-                  className="w-full py-3 px-6 text-lg font-semibold rounded-xl bg-purple-600 hover:bg-purple-700 text-white transition-colors"
+                  className="w-full py-3 px-6 text-lg font-semibold rounded-2xl bg-purple-600 text-white hover:brightness-110 transition-all duration-200"
                 >
                   Connect Wallet
                 </button>
@@ -239,7 +229,7 @@ export function Game({
               </p>
               <button
                 onClick={() => setIsGameOver(false)}
-                className="w-full py-3 px-6 text-lg font-semibold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition-colors"
+                className="w-full py-3 px-6 text-lg font-semibold rounded-2xl bg-emerald-600 text-white hover:brightness-110 transition-all duration-200"
               >
                 Play Again
               </button>
@@ -253,7 +243,7 @@ export function Game({
               {!isConnected ? (
                 <button
                   onClick={() => connect({ connector: connectors[0] })}
-                  className="w-full py-3 px-6 text-lg font-semibold rounded-xl bg-purple-600 hover:bg-purple-700 text-white transition-colors"
+                  className="w-full py-3 px-6 text-lg font-semibold rounded-2xl bg-purple-600 text-white hover:brightness-110 transition-all duration-200"
                 >
                   Connect Wallet
                 </button>
@@ -276,12 +266,12 @@ export function Game({
   }
 
   return (
-    <div className="fixed inset-0 z-50 left-0 w-full h-full bg-gray-900 top-12">
+    <div className="fixed inset-0 z-50 left-0 w-full h-full bg-black top-12">
       {loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
+        <div className="absolute inset-0 flex items-center justify-center bg-black">
           <div className="flex flex-col items-center space-y-4">
             <div className="animate-spin rounded-full h-12 w-12 border-2 border-gray-600 border-t-purple-500"></div>
-            <p className="text-gray-300">Loading game...</p>
+            <p className="text-white/70">Loading game...</p>
           </div>
         </div>
       )}

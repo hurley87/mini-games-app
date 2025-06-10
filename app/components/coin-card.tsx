@@ -83,12 +83,12 @@ export function CoinCard({ coin }: CoinCardProps) {
   };
 
   return (
-    <div className="border-b border-gray-700 pb-4">
+    <div className="border-b border-white/20 pb-4">
       {/* Post Header */}
       <div className="flex items-center justify-between p-4">
         <div className="flex items-center gap-2">
           <div className="relative">
-            <div className="w-10 h-10 rounded-full bg-gray-700 overflow-hidden">
+            <div className="w-10 h-10 rounded-full bg-white/10 overflow-hidden">
               <Image
                 src={coin.creator?.pfp || '/placeholder.svg?height=40&width=40'}
                 alt={`${coin.creator?.username || 'Creator'} profile`}
@@ -113,22 +113,19 @@ export function CoinCard({ coin }: CoinCardProps) {
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-gray-400 text-sm">
+          <span className="text-white/70 text-sm">
             {formatRelativeTime(coin.created_at)}
           </span>
           <Popover>
             <PopoverTrigger asChild>
-              <button className="text-gray-400 hover:text-gray-200 p-1 rounded-full hover:bg-gray-700 transition-colors">
+              <button className="text-white/70 hover:brightness-110 p-1 rounded-full transition-all duration-200">
                 <MoreHorizontal className="w-4 h-4" />
               </button>
             </PopoverTrigger>
-            <PopoverContent
-              className="w-48 p-2 bg-gray-800 border border-gray-700"
-              align="end"
-            >
+            <PopoverContent className="w-48 p-2 bg-black/20 backdrop-blur border border-white/20 rounded-2xl shadow-xl" align="end">
               <div className="space-y-1">
                 <button
-                  className="flex items-center gap-3 w-full px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 rounded-md transition-colors"
+                  className="flex items-center gap-3 w-full px-3 py-2 text-sm text-white/70 hover:brightness-110 transition-all duration-200 rounded-md"
                   onClick={handleCopyAddress}
                 >
                   <Copy className="w-4 h-4" />
@@ -140,7 +137,7 @@ export function CoinCard({ coin }: CoinCardProps) {
                   rel="noopener noreferrer"
                   onClick={handleDexScreenerClick}
                 >
-                  <button className="flex items-center gap-3 w-full px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 rounded-md transition-colors">
+                  <button className="flex items-center gap-3 w-full px-3 py-2 text-sm text-white/70 hover:brightness-110 transition-all duration-200 rounded-md">
                     <ExternalLink className="w-4 h-4" />
                     DEX Screener
                   </button>
@@ -170,7 +167,7 @@ export function CoinCard({ coin }: CoinCardProps) {
 
       <Link href={`/coins/${coin.id}`}>
         <button
-          className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-semibold transition-colors w-full mt-4 text-xl py-4"
+          className="bg-purple-600 text-white rounded-2xl font-semibold w-full mt-4 text-xl py-4 hover:brightness-110 transition-all duration-200 shadow-xl"
           onClick={handleGameCardView}
         >
           Play

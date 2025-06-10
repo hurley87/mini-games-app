@@ -25,7 +25,6 @@ export function BuyCoinButton({
 }: BuyCoinButtonProps) {
   const { address } = useAccount();
 
-  console.log('address', address);
 
   // Create trade parameters
   const tradeParams = {
@@ -67,13 +66,13 @@ export function BuyCoinButton({
         onClick={() => writeContract(data!.request)}
         disabled={!data?.request || isPending || isConfirming}
         className={`
-          px-4 py-6 rounded-xl font-medium shadow-md shadow-purple-500/20
+          px-4 py-6 rounded-2xl font-medium shadow-xl shadow-purple-500/20
           ${
             !data?.request || isPending || isConfirming
-              ? 'bg-gray-600 cursor-not-allowed'
-              : 'bg-purple-600 hover:bg-purple-700'
+              ? 'bg-white/10 cursor-not-allowed'
+              : 'bg-purple-600 hover:brightness-110'
           }
-          text-white transition-colors text-xl
+          text-white transition-all duration-200 text-xl
         `}
       >
         {isPending
