@@ -1,9 +1,6 @@
 'use client';
 
-import {
-  useCoinLeaderboard,
-  CoinLeaderboardEntry,
-} from '@/hooks/useCoinLeaderboard';
+import { useCoinLeaderboard } from '@/hooks/useCoinLeaderboard';
 import { useFarcasterContext } from '@/hooks/useFarcasterContext';
 import { Trophy, Medal, Crown, Share2 } from 'lucide-react';
 import { sdk } from '@farcaster/frame-sdk';
@@ -27,28 +24,6 @@ export function CoinLeaderboard({
       await sdk.actions.viewProfile({ fid });
     } catch (error) {
       console.error('Failed to view profile:', error);
-    }
-  };
-
-  const handleSharePosition = async (player: CoinLeaderboardEntry) => {
-    try {
-      const rankEmoji =
-        player.rank === 1
-          ? '🥇'
-          : player.rank === 2
-            ? '🥈'
-            : player.rank === 3
-              ? '🥉'
-              : `#${player.rank}`;
-
-      const shareText = `${rankEmoji} I'm ${player.rank === 1 ? 'dominating' : player.rank <= 3 ? 'crushing it on' : `ranked #${player.rank} on`} the ${symbol} leaderboard!\n\n🎯 ${player.total_score.toLocaleString()} points across ${player.play_count} ${player.play_count === 1 ? 'play' : 'plays'}\n\nCome challenge me! 🎮`;
-
-      await sdk.actions.composeCast({
-        text: shareText,
-        embeds: [`https://app.minigames.studio/coins/${coinId}`],
-      });
-    } catch (error) {
-      console.error('Failed to share leaderboard position:', error);
     }
   };
 
