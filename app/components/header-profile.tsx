@@ -83,7 +83,6 @@ export function HeaderProfile() {
     }
   };
 
-
   // Helper function to format address
   const formatAddress = (address: string) => {
     if (!address) return '';
@@ -260,7 +259,6 @@ export function HeaderProfile() {
                 <Share2 className="w-6 h-6" />
                 <span>Invite Friends</span>
               </button>
-
             </div>
           </div>
         </div>

@@ -12,7 +12,11 @@ import {
 } from 'lucide-react';
 import { CoinWithCreator } from '@/lib/types';
 import { formatRelativeTime, formatCurrency, formatHolders } from '@/lib/utils';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { toast } from 'sonner';
 import { trackGameEvent } from '@/lib/posthog';
 import { sentryTracker } from '@/lib/sentry';
@@ -45,7 +49,9 @@ export function CoinCard({ coin }: CoinCardProps) {
       trackGameEvent.dexScreenerClick(coin.coin_address, coin.name);
     } catch (error) {
       sentryTracker.userActionError(
-        error instanceof Error ? error : new Error('Failed to track dex screener click'),
+        error instanceof Error
+          ? error
+          : new Error('Failed to track dex screener click'),
         {
           action: 'dex_screener_click',
           element: 'external_link',
@@ -64,7 +70,9 @@ export function CoinCard({ coin }: CoinCardProps) {
       );
     } catch (error) {
       sentryTracker.userActionError(
-        error instanceof Error ? error : new Error('Failed to track game card view'),
+        error instanceof Error
+          ? error
+          : new Error('Failed to track game card view'),
         {
           action: 'game_card_view',
           element: 'game_card',
@@ -88,11 +96,14 @@ export function CoinCard({ coin }: CoinCardProps) {
                 height={40}
                 className="object-cover"
                 onError={() => {
-                  sentryTracker.userActionError('Failed to load creator profile image', {
-                    action: 'image_load_error',
-                    element: 'creator_pfp',
-                    page: 'coins_list',
-                  });
+                  sentryTracker.userActionError(
+                    'Failed to load creator profile image',
+                    {
+                      action: 'image_load_error',
+                      element: 'creator_pfp',
+                      page: 'coins_list',
+                    }
+                  );
                 }}
               />
             </div>
@@ -200,4 +211,3 @@ export function CoinCard({ coin }: CoinCardProps) {
     </div>
   );
 }
-
