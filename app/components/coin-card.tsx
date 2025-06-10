@@ -9,6 +9,7 @@ import {
   TrendingUp,
   DollarSign,
   Users,
+  Link as LinkIcon,
 } from 'lucide-react';
 import { CoinWithCreator } from '@/lib/types';
 import { formatRelativeTime, formatCurrency, formatHolders } from '@/lib/utils';
@@ -38,6 +39,25 @@ export function CoinCard({ coin }: CoinCardProps) {
         {
           action: 'copy_address',
           element: 'coin_address',
+          page: 'coins_list',
+        }
+      );
+    }
+  };
+
+  const handleCopyLink = () => {
+    try {
+      const link = `https://app.minigames.studio/coins/${coin.id}`;
+      navigator.clipboard.writeText(link);
+      toast.success('Link copied to clipboard!');
+      trackGameEvent.coinLinkCopy(coin.id, coin.name);
+    } catch (error) {
+      toast.error('Failed to copy link');
+      sentryTracker.userActionError(
+        error instanceof Error ? error : new Error('Failed to copy link'),
+        {
+          action: 'copy_link',
+          element: 'coin_link',
           page: 'coins_list',
         }
       );
@@ -133,6 +153,13 @@ export function CoinCard({ coin }: CoinCardProps) {
                 >
                   <Copy className="w-4 h-4" />
                   Copy address
+                </button>
+                <button
+                  className="flex items-center gap-3 w-full px-3 py-2 text-sm text-white/70 hover:brightness-110 transition-all duration-200 rounded-md"
+                  onClick={handleCopyLink}
+                >
+                  <LinkIcon className="w-4 h-4" />
+                  Copy link
                 </button>
                 <Link
                   href={`https://dexscreener.com/base/${coin.coin_address}`}
