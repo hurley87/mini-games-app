@@ -14,15 +14,11 @@ import {
   Trophy,
   Coins,
   Share2,
-  Copy,
 } from 'lucide-react';
 import { formatCurrency, formatHolders, formatTokenBalance } from '@/lib/utils';
 import { sdk } from '@farcaster/frame-sdk';
 import { Header } from './header';
 import { CoinLeaderboard } from './coin-leaderboard';
-import { toast } from 'sonner';
-import { trackGameEvent } from '@/lib/posthog';
-import { sentryTracker } from '@/lib/sentry';
 
 interface InfoProps {
   name: string;
@@ -98,25 +94,6 @@ export function Info({
       });
     } catch (error) {
       console.error('Failed to share:', error);
-    }
-  };
-
-  const handleCopyLink = () => {
-    try {
-      const link = `https://app.minigames.studio/coins/${coinId}`;
-      navigator.clipboard.writeText(link);
-      toast.success('Link copied to clipboard!');
-      trackGameEvent.coinLinkCopy(coinId, name);
-    } catch (error) {
-      toast.error('Failed to copy link');
-      sentryTracker.userActionError(
-        error instanceof Error ? error : new Error('Failed to copy link'),
-        {
-          action: 'copy_link',
-          element: 'coin_link',
-          page: 'coin_info',
-        }
-      );
     }
   };
 
@@ -554,13 +531,6 @@ export function Info({
                   >
                     <Share2 className="w-3.5 h-3.5" />
                     Share
-                  </button>
-                  <button
-                    onClick={handleCopyLink}
-                    className="flex items-center justify-center gap-2 py-1 px-3 bg-white/10 hover:brightness-110 text-white text-xs font-medium rounded-full transition-colors"
-                  >
-                    <Copy className="w-3.5 h-3.5" />
-                    Copy Link
                   </button>
                 </div>
               </div>
