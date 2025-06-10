@@ -134,14 +134,27 @@ export const supabaseService = {
     if (record.points !== undefined) {
       params.p_points = record.points;
     } else {
+      // Attempt to preserve existing points, but handle errors gracefully
       const { data: existing, error: existingError } = await supabase
         .from('players')
         .select('points')
         .eq('fid', record.fid)
         .single();
 
-      if (!existingError && existing) {
+      if (!existingError && existing && typeof existing.points === 'number') {
+        // Only preserve points if they exist and are a valid number
         params.p_points = existing.points;
+      } else if (existingError && existingError.code !== 'PGRST116') {
+        // If there's a database error (not "player not found"), log but don't fail
+        // PGRST116 is "not found" error, which is expected for new players
+        console.warn(
+          'Could not fetch existing points for player:',
+          existingError
+        );
+        params.p_points = 0; // Default to 0 for safety
+      } else {
+        // New player or existing player with null/undefined points
+        params.p_points = 0;
       }
     }
 
