@@ -523,16 +523,16 @@ export function Info({
                       </div>
                     </div>
                   )}
-                </div>
 
-                {/* Share Button */}
-                <button
-                  onClick={handleShare}
-                  className="mt-4 flex items-center justify-center gap-2 w-full py-4 px-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-full transition-colors"
-                >
-                  <Share2 className="w-3.5 h-3.5" />
-                  Share Progress
-                </button>
+                  {/* Share Button */}
+                  <button
+                    onClick={handleShare}
+                    className="flex items-center justify-center gap-2 py-1 px-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-full transition-colors"
+                  >
+                    <Share2 className="w-3.5 h-3.5" />
+                    Share
+                  </button>
+                </div>
               </div>
             </div>
           </div>
