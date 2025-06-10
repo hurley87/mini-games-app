@@ -19,9 +19,6 @@ import { formatCurrency, formatHolders, formatTokenBalance } from '@/lib/utils';
 import { sdk } from '@farcaster/frame-sdk';
 import { Header } from './header';
 import { CoinLeaderboard } from './coin-leaderboard';
-import { toast } from 'sonner';
-import { trackGameEvent } from '@/lib/posthog';
-import { sentryTracker } from '@/lib/sentry';
 
 interface InfoProps {
   name: string;
