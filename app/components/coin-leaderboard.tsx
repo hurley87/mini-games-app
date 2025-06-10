@@ -114,7 +114,7 @@ export function CoinLeaderboard({
     return (
       <div className="p-6 border-t border-gray-700">
         <h2 className="text-lg font-semibold text-white mb-3">
-          🏆 ${symbol} Leaderboard
+          🏆 Leaderboard
         </h2>
         <div className="text-center py-4">
           <p className="text-red-400 text-sm">Failed to load leaderboard</p>
@@ -127,7 +127,7 @@ export function CoinLeaderboard({
     return (
       <div className="p-6 border-t border-gray-700">
         <h2 className="text-lg font-semibold text-white mb-3">
-          🏆 ${symbol} Leaderboard
+          🏆 Leaderboard
         </h2>
         <div className="text-center py-8">
           <Trophy className="w-12 h-12 text-gray-600 mx-auto mb-3" />
@@ -144,7 +144,8 @@ export function CoinLeaderboard({
     <div className="p-6 border-t border-gray-700">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-          <Trophy className="w-5 h-5 text-yellow-400" />${symbol} Leaderboard
+          <Trophy className="w-5 h-5 text-yellow-400" />
+          Leaderboard
         </h2>
         <button
           onClick={handleShareLeaderboard}
@@ -198,11 +199,6 @@ export function CoinLeaderboard({
                     >
                       {player.name || player.username}
                     </button>
-                    {isCurrentUser && (
-                      <span className="text-xs px-2 py-1 bg-purple-600 text-white rounded-full">
-                        You
-                      </span>
-                    )}
                   </div>
                   {player.name && player.username && (
                     <button
@@ -213,22 +209,6 @@ export function CoinLeaderboard({
                       @{player.username}
                     </button>
                   )}
-                  <div className="flex items-center justify-between mt-1">
-                    <div className="text-xs text-white/60">
-                      {player.play_count}{' '}
-                      {player.play_count === 1 ? 'play' : 'plays'}
-                    </div>
-                    {isCurrentUser && (
-                      <button
-                        onClick={() => handleSharePosition(player)}
-                        className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-600 text-white rounded-2xl hover:brightness-110 transition-all duration-200"
-                        title="Share your leaderboard position"
-                      >
-                        <Share2 className="w-3 h-3" />
-                        Share
-                      </button>
-                    )}
-                  </div>
                 </div>
 
                 {/* Score */}
@@ -236,7 +216,6 @@ export function CoinLeaderboard({
                   <div className="font-bold text-lg text-white">
                     {player.total_score.toLocaleString()}
                   </div>
-                  <div className="text-xs text-white/70">points</div>
                 </div>
               </div>
             );
