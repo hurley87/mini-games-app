@@ -44,7 +44,6 @@ export function HeaderProfile() {
       const data = await response.json();
 
       if (data.success) {
-        console.log('Distributor data:', data.data);
         toast.success('Connected successfully!');
         trackGameEvent.userLogin(
           context?.user?.fid || 0,
@@ -179,7 +178,6 @@ export function HeaderProfile() {
       </Button>
     );
   }
-  console.log('address1', address);
 
   // Show profile drawer if connected
   return (

@@ -237,7 +237,6 @@ export function GameWrapper({
     );
   }
 
-  console.log('fetchedZoraData', fetchedZoraData);
 
   return (
     <Info

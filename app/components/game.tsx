@@ -49,7 +49,6 @@ export function Game({
   const { address, isConnected } = useAccount();
   const { connectors, connect } = useConnect();
 
-  console.log('address', address);
 
   useEffect(() => {
     const handleMessage = async (event: MessageEvent) => {
@@ -91,7 +90,6 @@ export function Game({
         if (response.ok) {
           const status = await response.json();
           setHasPlayedBefore(status.hasPlayed);
-          console.log('Play status check:', { hasPlayed: status.hasPlayed });
         }
       } catch (error) {
         console.error('Error checking play status:', error);
@@ -123,10 +121,6 @@ export function Game({
 
         const tokenBalance = balance > BigInt(0);
         setHasTokens(tokenBalance);
-        console.log('Token balance check:', {
-          balance: balance.toString(),
-          hasTokens: tokenBalance,
-        });
       } catch (error) {
         console.error('Error checking token balance:', error);
         setHasTokens(false);
@@ -176,11 +170,7 @@ export function Game({
 
   const fid = context?.user?.fid;
 
-  // Debug logs
-  console.log('Game ID:', id);
-
   const iframeUrl = `/api/embed/${id}?fid=${fid}&coinId=${coinId}`;
-  console.log('Iframe URL:', iframeUrl);
 
   if (!isReady || checkingTokens || checkingPlayStatus) {
     return (
