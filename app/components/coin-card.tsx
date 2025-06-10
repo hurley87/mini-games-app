@@ -85,7 +85,7 @@ export function CoinCard({ coin }: CoinCardProps) {
   return (
     <div className="border-b border-white/20 pb-4">
       {/* Post Header */}
-      <div className="flex items-center justify-between p-4">
+      <div className="flex items-center justify-between pb-2">
         <div className="flex items-center gap-2">
           <div className="relative">
             <div className="w-10 h-10 rounded-full bg-white/10 overflow-hidden">
