@@ -133,6 +133,13 @@ export const trackGameEvent = {
     });
   },
 
+  coinLinkCopy: (coinId: string, coinName: string) => {
+    trackEvent('coin_link_copied', {
+      coin_id: coinId,
+      coin_name: coinName,
+    });
+  },
+
   dexScreenerClick: (coinAddress: string, coinName: string) => {
     trackEvent('dex_screener_clicked', {
       coin_address: coinAddress,
