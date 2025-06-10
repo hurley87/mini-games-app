@@ -25,7 +25,6 @@ export function BuyCoinButton({
 }: BuyCoinButtonProps) {
   const { address } = useAccount();
 
-  console.log('address', address);
 
   // Create trade parameters
   const tradeParams = {

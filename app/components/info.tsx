@@ -55,9 +55,6 @@ export function Info({
   const { isConnected } = useAccount();
   const { connectors, connect } = useConnect();
 
-  console.log('imageUrl', imageUrl);
-  console.log('name', name);
-  console.log('creator', creator);
 
   useEffect(() => {
     if (isReady && !hasCheckedStatus && id && coinAddress) {
