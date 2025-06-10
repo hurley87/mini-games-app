@@ -55,7 +55,6 @@ export function Info({
   const { isConnected } = useAccount();
   const { connectors, connect } = useConnect();
 
-
   useEffect(() => {
     if (isReady && !hasCheckedStatus && id && coinAddress) {
       checkPlayStatus(id, coinAddress);
@@ -156,7 +155,7 @@ export function Info({
   if (!playStatus.canPlay) {
     return (
       <div className="min-h-screen bg-black">
-      <div className="max-w-lg mx-auto bg-gradient-to-b from-black via-zinc-900 to-black">
+        <div className="max-w-lg mx-auto bg-gradient-to-b from-black via-zinc-900 to-black">
           {/* Header with app icon and basic info */}
           <div className="p-6 border-b border-white/20">
             <div className="flex items-start space-x-4">
@@ -529,7 +528,7 @@ export function Info({
                 {/* Share Button */}
                 <button
                   onClick={handleShare}
-                  className="mt-4 flex items-center justify-center gap-2 w-full py-4 px-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors"
+                  className="mt-4 flex items-center justify-center gap-2 w-full py-4 px-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-full transition-colors"
                 >
                   <Share2 className="w-3.5 h-3.5" />
                   Share Progress
@@ -544,7 +543,7 @@ export function Info({
           <p className="text-sm text-white/70 leading-relaxed">{description}</p>
           <button
             onClick={handlePlay}
-            className="w-full bg-purple-600 text-white px-4 py-4 rounded-2xl font-semibold shadow-xl shadow-purple-500/20 hover:brightness-110 transition-all duration-200 text-lg"
+            className="w-full bg-purple-600 text-white px-4 py-4 rounded-full font-semibold shadow-xl shadow-purple-500/20 hover:brightness-110 transition-all duration-200 text-lg"
           >
             PLAY
           </button>

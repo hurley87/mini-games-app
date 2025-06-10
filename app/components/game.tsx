@@ -49,7 +49,6 @@ export function Game({
   const { address, isConnected } = useAccount();
   const { connectors, connect } = useConnect();
 
-
   useEffect(() => {
     const handleMessage = async (event: MessageEvent) => {
       if (event.data && event.data.type === 'points-awarded') {
@@ -229,7 +228,7 @@ export function Game({
               </p>
               <button
                 onClick={() => setIsGameOver(false)}
-                className="w-full py-3 px-6 text-lg font-semibold rounded-2xl bg-emerald-600 text-white hover:brightness-110 transition-all duration-200"
+                className="w-full py-3 px-6 text-lg font-semibold rounded-full bg-emerald-600 text-white hover:brightness-110 transition-all duration-200"
               >
                 Play Again
               </button>
@@ -243,7 +242,7 @@ export function Game({
               {!isConnected ? (
                 <button
                   onClick={() => connect({ connector: connectors[0] })}
-                  className="w-full py-3 px-6 text-lg font-semibold rounded-2xl bg-purple-600 text-white hover:brightness-110 transition-all duration-200"
+                  className="w-full py-3 px-6 text-lg font-semibold rounded-full bg-purple-600 text-white hover:brightness-110 transition-all duration-200"
                 >
                   Connect Wallet
                 </button>

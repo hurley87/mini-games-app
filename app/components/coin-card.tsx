@@ -122,7 +122,10 @@ export function CoinCard({ coin }: CoinCardProps) {
                 <MoreHorizontal className="w-4 h-4" />
               </button>
             </PopoverTrigger>
-            <PopoverContent className="w-48 p-2 bg-black/20 backdrop-blur border border-white/20 rounded-2xl shadow-xl" align="end">
+            <PopoverContent
+              className="w-48 p-2 bg-black/20 backdrop-blur border border-white/20 rounded-2xl shadow-xl"
+              align="end"
+            >
               <div className="space-y-1">
                 <button
                   className="flex items-center gap-3 w-full px-3 py-2 text-sm text-white/70 hover:brightness-110 transition-all duration-200 rounded-md"
@@ -167,20 +170,15 @@ export function CoinCard({ coin }: CoinCardProps) {
 
       <Link href={`/coins/${coin.id}`}>
         <button
-          className="bg-purple-600 text-white rounded-2xl font-semibold w-full mt-4 text-xl py-4 hover:brightness-110 transition-all duration-200 shadow-xl"
+          className="bg-purple-600 text-white rounded-full font-semibold w-full mt-4 text-xl py-4 hover:brightness-110 transition-all duration-200 shadow-xl"
           onClick={handleGameCardView}
         >
-          Play
+          {coin.name}
         </button>
       </Link>
 
-      {/* Post Title */}
-      <div className="px-4 pb-2 mt-4">
-        <h2 className="text-sm font-bold text-white">{coin.name}</h2>
-      </div>
-
       {/* Post Actions */}
-      <div className="flex items-center justify-between px-4 ">
+      <div className="flex items-center justify-center py-4 ">
         <div className="flex items-center gap-4">
           {/* Zora Data Metrics */}
           <div className="flex items-center gap-3 text-sm">

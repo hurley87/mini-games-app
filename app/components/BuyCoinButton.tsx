@@ -25,7 +25,6 @@ export function BuyCoinButton({
 }: BuyCoinButtonProps) {
   const { address } = useAccount();
 
-
   // Create trade parameters
   const tradeParams = {
     direction: 'buy' as const,
@@ -66,7 +65,7 @@ export function BuyCoinButton({
         onClick={() => writeContract(data!.request)}
         disabled={!data?.request || isPending || isConfirming}
         className={`
-          px-4 py-6 rounded-2xl font-medium shadow-xl shadow-purple-500/20
+          px-4 py-6 rounded-full font-medium shadow-xl shadow-purple-500/20
           ${
             !data?.request || isPending || isConfirming
               ? 'bg-white/10 cursor-not-allowed'
