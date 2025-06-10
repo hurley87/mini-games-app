@@ -133,6 +133,16 @@ export const supabaseService = {
 
     if (record.points !== undefined) {
       params.p_points = record.points;
+    } else {
+      const { data: existing, error: existingError } = await supabase
+        .from('players')
+        .select('points')
+        .eq('fid', record.fid)
+        .single();
+
+      if (!existingError && existing) {
+        params.p_points = existing.points;
+      }
     }
 
     const { data, error } = await supabase.rpc(
