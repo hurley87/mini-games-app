@@ -47,7 +47,7 @@ export function Info({
   onPlay,
   coinId,
 }: InfoProps) {
-  const { isReady } = useFarcasterContext();
+  const { isReady } = useFarcasterContext({ autoAddFrame: true });
   const { playStatus, isLoading, error, checkPlayStatus, recordPlay } =
     usePlayStatus();
   const { playerStats, isLoading: isLoadingStats } = usePlayerStats();
