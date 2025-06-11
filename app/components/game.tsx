@@ -3,8 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { RoundResult } from './round-result';
 import { sdk } from '@farcaster/frame-sdk';
-import { BuyCoinButton } from './BuyCoinButton';
-import { useAccount, useConnect } from 'wagmi';
+import { useAccount } from 'wagmi';
 import { useFarcasterContext } from '@/hooks/useFarcasterContext';
 import { Address, createPublicClient, http } from 'viem';
 import { base } from 'viem/chains';
@@ -54,61 +53,16 @@ export function Game({
   const [hasPlayedBefore, setHasPlayedBefore] = useState(false);
   const [checkingPlayStatus, setCheckingPlayStatus] = useState(true);
   const [roundScore, setRoundScore] = useState<number | null>(null);
-  const [buyAmount, setBuyAmount] = useState('0.001');
   const [tokenDecimals, setTokenDecimals] = useState<number>(18); // Default to 18, will be fetched
   const { context, isReady } = useFarcasterContext({
     disableNativeGestures: true,
   });
   const { address, isConnected } = useAccount();
-  const { connectors, connect } = useConnect();
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
   // Define iframeUrl early to avoid declaration order issues
   const fid = context?.user?.fid;
   const iframeUrl = `/api/embed/${id}?fid=${fid}&coinId=${coinId}`;
-
-  // Validate and sanitize buy amount input (consistent with info.tsx)
-  const handleBuyAmountChange = (value: string) => {
-    // Allow empty string temporarily for user input
-    if (value === '') {
-      setBuyAmount('');
-      return;
-    }
-
-    // Remove any non-numeric characters except decimal point
-    const sanitized = value.replace(/[^0-9.]/g, '');
-
-    // Ensure only one decimal point
-    const parts = sanitized.split('.');
-    if (parts.length > 2) {
-      return; // Don't update if more than one decimal point
-    }
-
-    // Allow common intermediate values during typing
-    if (sanitized === '0' || sanitized === '.' || sanitized === '0.') {
-      setBuyAmount(sanitized);
-      return;
-    }
-
-    // Parse as number to validate
-    const numValue = parseFloat(sanitized);
-
-    // Allow any valid positive number or NaN (for incomplete inputs like "0.00")
-    if (!isNaN(numValue) && numValue >= 0) {
-      setBuyAmount(sanitized);
-    } else if (isNaN(numValue) && sanitized.match(/^0\.0*$/)) {
-      // Allow partial decimal inputs like "0.0", "0.00", etc.
-      setBuyAmount(sanitized);
-    }
-  };
-
-  // Get validated buy amount for BuyCoinButton - always returns a valid amount
-  const getValidatedBuyAmount = () => {
-    const numValue = parseFloat(buyAmount);
-    return !buyAmount || isNaN(numValue) || numValue < 0.001
-      ? '0.001'
-      : buyAmount;
-  };
 
   // Fetch token decimals when component mounts
   useEffect(() => {
