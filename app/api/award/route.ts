@@ -26,7 +26,13 @@ export async function POST(request: Request) {
   try {
     const { fid, coinId, score } = await request.json();
 
-    if (!fid || !coinId || typeof score !== 'number' || score <= 0) {
+    if (
+      !fid ||
+      !coinId ||
+      typeof score !== 'number' ||
+      !Number.isFinite(score) ||
+      score <= 0
+    ) {
       return NextResponse.json(
         { error: 'Missing required fields or invalid score' },
         { status: 400, headers }
