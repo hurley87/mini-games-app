@@ -141,26 +141,47 @@ async function processTransfers() {
             .eq('status', 'pending');
           const notifications = await supabaseService.getNotificationByFid(fid);
 
-          const notification = notifications[0];
+          if (notifications && notifications.length > 0) {
+            const notification = notifications[0];
 
-          const response = await fetch(notification.url, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              notificationId: crypto.randomUUID(),
-              title: `Check your wallet`,
-              body: `You earned ${tokenCount} ${coin.symbol} tokens`,
-              targetUrl: `https://app.minigames.studio/coins/${coin.id}`,
-              tokens: [notification.token],
-            } satisfies SendNotificationRequest),
-          });
+            if (notification.url && notification.token) {
+              try {
+                const response = await fetch(notification.url, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    notificationId: crypto.randomUUID(),
+                    title: `Check your wallet`,
+                    body: `You earned ${tokenCount} ${coin.symbol} tokens`,
+                    targetUrl: `https://app.minigames.studio/coins/${coin.id}`,
+                    tokens: [notification.token],
+                  } satisfies SendNotificationRequest),
+                });
 
-          const responseJson = await response.json();
+                const responseJson = await response.json();
 
-          if (process.env.NODE_ENV !== 'production') {
-            console.log('response', responseJson);
+                if (process.env.NODE_ENV !== 'production') {
+                  console.log('Notification sent successfully:', responseJson);
+                }
+              } catch (notificationError) {
+                console.error(
+                  'Error sending notification for fid:',
+                  fid,
+                  notificationError
+                );
+                // Don't stop processing other transfers if notification fails
+              }
+            } else {
+              if (process.env.NODE_ENV !== 'production') {
+                console.log('Notification data incomplete for fid:', fid);
+              }
+            }
+          } else {
+            if (process.env.NODE_ENV !== 'production') {
+              console.log('No notification settings found for fid:', fid);
+            }
           }
         } else {
           console.error('Transfer failed for fid:', fid);
