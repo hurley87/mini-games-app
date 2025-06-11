@@ -57,7 +57,7 @@ export function Game({
     const handleMessage = async (event: MessageEvent) => {
       console.log('event', event);
       if (event.data && event.data.type === 'points-awarded') {
-        const { score } = event.data;
+        const score = event.data.score;
         console.log('score', score);
         try {
           await sdk.haptics.impactOccurred('medium');
@@ -65,7 +65,6 @@ export function Game({
           console.error('Error triggering haptic:', error);
         }
 
-        const score = event.data.score;
         if (typeof score === 'number') {
           setRoundScore(score);
           setIsGameOver(true);
