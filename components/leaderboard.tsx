@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { PlayerRank } from '@/lib/supabase';
+import { sdk } from '@farcaster/frame-sdk';
 
 interface LeaderboardProps {
   limit?: number;
@@ -20,6 +21,14 @@ export function Leaderboard({
   );
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const handleViewProfile = async (fid: number) => {
+    try {
+      await sdk.actions.viewProfile({ fid });
+    } catch (error) {
+      console.error('Failed to view profile:', error);
+    }
+  };
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
@@ -145,17 +154,27 @@ export function Leaderboard({
               )}
             </div>
 
-            {/* Player Info */}
-            <div className="flex-1 min-w-0">
-              <div className="font-semibold text-white truncate">
+          {/* Player Info */}
+          <div className="flex-1 min-w-0">
+            <div className="font-semibold text-white truncate">
+              <button
+                onClick={() => handleViewProfile(player.fid)}
+                className="text-white hover:text-blue-400 transition-colors truncate text-left"
+                title="View profile"
+              >
                 {player.name || player.username}
-              </div>
-              {player.name && player.username && (
-                <div className="text-sm text-white/70 truncate">
-                  @{player.username}
-                </div>
-              )}
+              </button>
             </div>
+            {player.name && player.username && (
+              <button
+                onClick={() => handleViewProfile(player.fid)}
+                className="text-sm text-white/70 hover:brightness-110 transition-all duration-200 truncate text-left block"
+                title="View profile"
+              >
+                @{player.username}
+              </button>
+            )}
+          </div>
 
             {/* Points */}
             <div className="text-right">
@@ -195,12 +214,22 @@ export function Leaderboard({
               {/* Player Info */}
               <div className="flex-1 min-w-0">
                 <div className="font-semibold text-white truncate">
-                  {currentPlayerRank.name || currentPlayerRank.username}
+                  <button
+                    onClick={() => handleViewProfile(currentPlayerRank.fid)}
+                    className="text-white hover:text-blue-400 transition-colors truncate text-left"
+                    title="View profile"
+                  >
+                    {currentPlayerRank.name || currentPlayerRank.username}
+                  </button>
                 </div>
                 {currentPlayerRank.name && currentPlayerRank.username && (
-                  <div className="text-sm text-white/70 truncate">
+                  <button
+                    onClick={() => handleViewProfile(currentPlayerRank.fid)}
+                    className="text-sm text-white/70 hover:brightness-110 transition-all duration-200 truncate text-left block"
+                    title="View profile"
+                  >
                     @{currentPlayerRank.username}
-                  </div>
+                  </button>
                 )}
               </div>
 
