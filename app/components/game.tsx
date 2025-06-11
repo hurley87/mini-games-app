@@ -150,15 +150,16 @@ export function Game({
 
         if (typeof score === 'number') {
           setRoundScore(score);
-          setIsGameOver(true);
-          onRoundComplete?.(score);
         }
+      } else if (event.data && event.data.type === 'game-over') {
+        setIsGameOver(true);
+        onRoundComplete?.(roundScore || 0);
       }
     };
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [onRoundComplete, iframeUrl]);
+  }, [onRoundComplete, iframeUrl, roundScore]);
 
   // Check if player has played this game before
   useEffect(() => {
@@ -263,6 +264,7 @@ export function Game({
     if (shouldApplyTimeout) {
       const timer = setTimeout(() => {
         setIsGameOver(true);
+        onRoundComplete?.(roundScore || 0);
       }, timeoutSeconds * 1000);
 
       return () => clearTimeout(timer);
@@ -274,6 +276,8 @@ export function Game({
     checkingTokens,
     checkingPlayStatus,
     isGameOver,
+    onRoundComplete,
+    roundScore,
   ]);
 
   if (!id) {
