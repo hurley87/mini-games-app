@@ -162,14 +162,14 @@ export function CoinCard({ coin }: CoinCardProps) {
                   Copy link
                 </button>
                 <Link
-                  href={`https://dexscreener.com/base/${coin.coin_address}`}
+                  href={`https://zora.co/coin/base:${coin.coin_address}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={handleDexScreenerClick}
                 >
                   <button className="flex items-center gap-3 w-full px-3 py-2 text-sm text-white/70 hover:brightness-110 transition-all duration-200 rounded-md">
                     <ExternalLink className="w-4 h-4" />
-                    DEX Screener
+                    Trade on Zora
                   </button>
                 </Link>
               </div>
