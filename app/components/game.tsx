@@ -6,7 +6,7 @@ import { sdk } from '@farcaster/frame-sdk';
 import { BuyCoinButton } from './BuyCoinButton';
 import { useAccount, useConnect } from 'wagmi';
 import { useFarcasterContext } from '@/hooks/useFarcasterContext';
-import { Address, createPublicClient, http, parseEther } from 'viem';
+import { Address, createPublicClient, http } from 'viem';
 import { base } from 'viem/chains';
 
 // Create a public client for reading blockchain data
@@ -23,9 +23,14 @@ const ERC20_ABI = [
     inputs: [{ name: 'account', type: 'address' }],
     outputs: [{ name: 'balance', type: 'uint256' }],
   },
+  {
+    name: 'decimals',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ name: 'decimals', type: 'uint8' }],
+  },
 ] as const;
-
-const MIN_TOKENS = parseEther('0.001');
 
 interface GameProps {
   id: string;
@@ -50,82 +55,70 @@ export function Game({
   const [checkingPlayStatus, setCheckingPlayStatus] = useState(true);
   const [roundScore, setRoundScore] = useState<number | null>(null);
   const [buyAmount, setBuyAmount] = useState('0.001');
+  const [tokenDecimals, setTokenDecimals] = useState<number>(18); // Default to 18, will be fetched
   const { context, isReady } = useFarcasterContext({
     disableNativeGestures: true,
   });
   const { address, isConnected } = useAccount();
   const { connectors, connect } = useConnect();
 
-  // Validate and sanitize buy amount input
+  // Validate and sanitize buy amount input (consistent with info.tsx)
   const handleBuyAmountChange = (value: string) => {
-    // Trim whitespace
-    const trimmed = value.trim();
-
-    // If empty after trimming, set to minimum
-    if (trimmed === '') {
-      setBuyAmount('0.001');
+    // Allow empty string temporarily for user input
+    if (value === '') {
+      setBuyAmount('');
       return;
     }
 
     // Remove any non-numeric characters except decimal point
-    const sanitized = trimmed.replace(/[^0-9.]/g, '');
+    const sanitized = value.replace(/[^0-9.]/g, '');
 
-    // If sanitization removed everything, set to minimum
-    if (sanitized === '' || sanitized === '.') {
-      setBuyAmount('0.001');
-      return;
-    }
-
-    // Ensure only one decimal point and no leading/trailing dots
+    // Ensure only one decimal point
     const parts = sanitized.split('.');
-    if (
-      parts.length > 2 ||
-      sanitized.startsWith('.') ||
-      sanitized.endsWith('.')
-    ) {
-      return; // Don't update if invalid decimal format
+    if (parts.length > 2) {
+      return; // Don't update if more than one decimal point
     }
 
     // Parse as number to validate
     const numValue = parseFloat(sanitized);
 
-    // Only allow valid positive numbers
-    if (isNaN(numValue) || numValue <= 0) {
-      setBuyAmount('0.001');
-      return;
-    }
-
-    // If the number is less than minimum, allow for user input experience
-    // but ensure it's a valid number format
-    if (numValue < 0.001) {
-      // Only allow if it's a partial input (like user typing "0.000...")
-      if (sanitized.includes('.') && sanitized.split('.')[1].length <= 6) {
-        setBuyAmount(sanitized);
-      } else {
-        setBuyAmount('0.001');
-      }
-    } else {
-      // Valid number >= 0.001
+    // Only update if it's a valid number and >= 0.001
+    if (!isNaN(numValue) && numValue >= 0.001) {
+      setBuyAmount(sanitized);
+    } else if (!isNaN(numValue) && numValue > 0) {
+      // Allow values > 0 but < 0.001 for user input experience
       setBuyAmount(sanitized);
     }
   };
 
   // Get validated buy amount for BuyCoinButton - always returns a valid amount
   const getValidatedBuyAmount = () => {
-    if (!buyAmount) {
-      return '0.001';
-    }
-
     const numValue = parseFloat(buyAmount);
-
-    // Return minimum if invalid or below threshold
-    if (isNaN(numValue) || numValue < 0.001) {
-      return '0.001';
-    }
-
-    // Return the current value if valid
-    return buyAmount;
+    return !buyAmount || isNaN(numValue) || numValue < 0.001
+      ? '0.001'
+      : buyAmount;
   };
+
+  // Fetch token decimals when component mounts
+  useEffect(() => {
+    const fetchTokenDecimals = async () => {
+      if (!coinAddress) return;
+
+      try {
+        const decimals = await publicClient.readContract({
+          address: coinAddress as Address,
+          abi: ERC20_ABI,
+          functionName: 'decimals',
+        });
+        setTokenDecimals(Number(decimals));
+      } catch (error) {
+        console.error('Error fetching token decimals:', error);
+        // Keep default of 18 if fetch fails
+      }
+    };
+
+    fetchTokenDecimals();
+  }, [coinAddress]);
 
   useEffect(() => {
     const handleMessage = async (event: MessageEvent) => {
@@ -185,7 +178,7 @@ export function Game({
     if (isReady && context?.user?.fid) {
       checkPlayStatus();
     }
-  }, [context?.user?.fid, id, coinAddress, address, isReady]);
+  }, [context?.user?.fid, id, coinId, coinAddress, address, isReady]);
 
   // Check token balance
   useEffect(() => {
@@ -203,7 +196,8 @@ export function Game({
           args: [address as Address],
         });
 
-        const tokenBalance = balance >= MIN_TOKENS;
+        const minimumTokens = BigInt(Math.floor(0.001 * 10 ** tokenDecimals));
+        const tokenBalance = balance >= minimumTokens;
         setHasTokens(tokenBalance);
       } catch (error) {
         console.error('Error checking token balance:', error);
@@ -218,7 +212,7 @@ export function Game({
     } else {
       setCheckingTokens(false);
     }
-  }, [address, coinAddress, isConnected]);
+  }, [address, coinAddress, isConnected, tokenDecimals]);
 
   // Set timeout logic:
   // - First-time players always get 10-second preview (regardless of tokens)
@@ -326,9 +320,8 @@ export function Game({
                     value={buyAmount}
                     onChange={(e) => handleBuyAmountChange(e.target.value)}
                     onBlur={() => {
-                      // Ensure valid value on blur
-                      const numValue = parseFloat(buyAmount);
-                      if (!buyAmount || isNaN(numValue) || numValue < 0.001) {
+                      // Set to minimum if empty or invalid on blur
+                      if (!buyAmount || parseFloat(buyAmount) < 0.001) {
                         setBuyAmount('0.001');
                       }
                     }}
@@ -385,9 +378,8 @@ export function Game({
                     value={buyAmount}
                     onChange={(e) => handleBuyAmountChange(e.target.value)}
                     onBlur={() => {
-                      // Ensure valid value on blur
-                      const numValue = parseFloat(buyAmount);
-                      if (!buyAmount || isNaN(numValue) || numValue < 0.001) {
+                      // Set to minimum if empty or invalid on blur
+                      if (!buyAmount || parseFloat(buyAmount) < 0.001) {
                         setBuyAmount('0.001');
                       }
                     }}

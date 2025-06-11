@@ -73,14 +73,20 @@ export function Info({
       return; // Don't update if more than one decimal point
     }
 
+    // Allow common intermediate values during typing
+    if (sanitized === '0' || sanitized === '.' || sanitized === '0.') {
+      setBuyAmount(sanitized);
+      return;
+    }
+
     // Parse as number to validate
     const numValue = parseFloat(sanitized);
 
-    // Only update if it's a valid number and >= 0.001
-    if (!isNaN(numValue) && numValue >= 0.001) {
+    // Allow any valid positive number or NaN (for incomplete inputs like "0.00")
+    if (!isNaN(numValue) && numValue >= 0) {
       setBuyAmount(sanitized);
-    } else if (!isNaN(numValue) && numValue > 0) {
-      // Allow values > 0 but < 0.001 for user input experience
+    } else if (isNaN(numValue) && sanitized.match(/^0\.0*$/)) {
+      // Allow partial decimal inputs like "0.0", "0.00", etc.
       setBuyAmount(sanitized);
     }
   };
