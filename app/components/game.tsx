@@ -196,7 +196,14 @@ export function Game({
           args: [address as Address],
         });
 
-        const minimumTokens = BigInt(Math.floor(0.001 * 10 ** tokenDecimals));
+        // Calculate minimum tokens: 0.001 * 10^decimals using BigInt to avoid floating-point precision issues
+        // 0.001 = 1 / 1000, so we need 10^(decimals-3) tokens
+        const exponent = tokenDecimals - 3;
+        const minimumTokens =
+          exponent >= 0
+            ? BigInt(10 ** exponent) // For decimals >= 3
+            : BigInt(1); // For decimals < 3, minimum is 1 unit
+
         const tokenBalance = balance >= minimumTokens;
         setHasTokens(tokenBalance);
       } catch (error) {
@@ -334,6 +341,7 @@ export function Game({
                     coinAddress={coinAddress}
                     amount={getValidatedBuyAmount()}
                     symbol=""
+                    decimals={tokenDecimals}
                     onSuccess={() => {
                       // Recheck both play status and token balance after purchase
                       setCheckingTokens(true);
@@ -392,6 +400,7 @@ export function Game({
                     coinAddress={coinAddress}
                     amount={getValidatedBuyAmount()}
                     symbol=""
+                    decimals={tokenDecimals}
                     onSuccess={() => {
                       // Recheck token balance after purchase
                       setCheckingTokens(true);

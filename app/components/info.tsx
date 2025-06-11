@@ -7,6 +7,8 @@ import { usePlayerStats } from '@/hooks/usePlayerStats';
 import { BuyCoinButton } from './BuyCoinButton';
 import { useAccount, useConnect } from 'wagmi';
 import { ZoraCoinData, Creator } from '@/lib/types';
+import { Address, createPublicClient, http } from 'viem';
+import { base } from 'viem/chains';
 import {
   DollarSign,
   TrendingUp,
@@ -19,6 +21,22 @@ import { formatCurrency, formatHolders, formatTokenBalance } from '@/lib/utils';
 import { sdk } from '@farcaster/frame-sdk';
 import { Header } from './header';
 import { CoinLeaderboard } from './coin-leaderboard';
+
+// Create a public client for reading blockchain data
+const publicClient = createPublicClient({
+  chain: base,
+  transport: http(),
+});
+
+const ERC20_ABI = [
+  {
+    name: 'decimals',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ name: 'decimals', type: 'uint8' }],
+  },
+] as const;
 
 interface InfoProps {
   name: string;
@@ -53,6 +71,7 @@ export function Info({
   const { playerStats, isLoading: isLoadingStats } = usePlayerStats();
   const [hasCheckedStatus, setHasCheckedStatus] = useState(false);
   const [buyAmount, setBuyAmount] = useState('0.001');
+  const [tokenDecimals, setTokenDecimals] = useState<number>(18); // Default to 18, will be fetched
   const { isConnected } = useAccount();
   const { connectors, connect } = useConnect();
 
@@ -105,6 +124,27 @@ export function Info({
       setHasCheckedStatus(true);
     }
   }, [isReady, hasCheckedStatus, id, coinAddress, checkPlayStatus]);
+
+  // Fetch token decimals when component mounts
+  useEffect(() => {
+    const fetchTokenDecimals = async () => {
+      if (!coinAddress) return;
+
+      try {
+        const decimals = await publicClient.readContract({
+          address: coinAddress as Address,
+          abi: ERC20_ABI,
+          functionName: 'decimals',
+        });
+        setTokenDecimals(Number(decimals));
+      } catch (error) {
+        console.error('Error fetching token decimals:', error);
+        // Keep default of 18 if fetch fails
+      }
+    };
+
+    fetchTokenDecimals();
+  }, [coinAddress]);
 
   const handlePlay = async () => {
     if (!playStatus) return;
@@ -382,6 +422,7 @@ export function Info({
                   coinAddress={coinAddress}
                   amount={getValidatedBuyAmount()}
                   symbol={symbol}
+                  decimals={tokenDecimals}
                   onSuccess={() => {
                     setHasCheckedStatus(false);
                   }}

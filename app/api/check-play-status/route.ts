@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseService } from '@/lib/supabase';
-import { Address, createPublicClient, http, parseEther } from 'viem';
+import { Address, createPublicClient, http } from 'viem';
 import { base } from 'viem/chains';
 
 // Create a public client for reading blockchain data
@@ -17,9 +17,14 @@ const ERC20_ABI = [
     inputs: [{ name: 'account', type: 'address' }],
     outputs: [{ name: 'balance', type: 'uint256' }],
   },
+  {
+    name: 'decimals',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ name: 'decimals', type: 'uint8' }],
+  },
 ] as const;
-
-const MIN_TOKENS = parseEther('0.001');
 
 export async function POST(request: NextRequest) {
   try {
@@ -63,14 +68,29 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      const balance = await publicClient.readContract({
-        address: coinAddress as Address,
-        abi: ERC20_ABI,
-        functionName: 'balanceOf',
-        args: [walletAddress as Address],
-      });
+      // Fetch token decimals and balance in parallel
+      const [balance, decimals] = await Promise.all([
+        publicClient.readContract({
+          address: coinAddress as Address,
+          abi: ERC20_ABI,
+          functionName: 'balanceOf',
+          args: [walletAddress as Address],
+        }),
+        publicClient.readContract({
+          address: coinAddress as Address,
+          abi: ERC20_ABI,
+          functionName: 'decimals',
+        }),
+      ]);
 
-      const hasTokens = balance >= MIN_TOKENS;
+      // Calculate minimum tokens: 0.001 * 10^decimals using BigInt to avoid floating-point precision issues
+      // 0.001 = 1 / 1000, so we need 10^(decimals-3) tokens
+      const exponent = Number(decimals) - 3;
+      const minimumTokens =
+        exponent >= 0
+          ? BigInt(10 ** exponent) // For decimals >= 3
+          : BigInt(1); // For decimals < 3, minimum is 1 unit
+      const hasTokens = balance >= minimumTokens;
 
       return NextResponse.json({
         canPlay: hasTokens,
