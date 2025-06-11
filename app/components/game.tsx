@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { RoundResult } from './round-result';
 import { sdk } from '@farcaster/frame-sdk';
 import { BuyCoinButton } from './BuyCoinButton';
@@ -61,6 +61,11 @@ export function Game({
   });
   const { address, isConnected } = useAccount();
   const { connectors, connect } = useConnect();
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+
+  // Define iframeUrl early to avoid declaration order issues
+  const fid = context?.user?.fid;
+  const iframeUrl = `/api/embed/${id}?fid=${fid}&coinId=${coinId}`;
 
   // Validate and sanitize buy amount input (consistent with info.tsx)
   const handleBuyAmountChange = (value: string) => {
@@ -128,10 +133,15 @@ export function Game({
 
   useEffect(() => {
     const handleMessage = async (event: MessageEvent) => {
-      console.log('event', event);
+      if (
+        event.source !== iframeRef.current?.contentWindow ||
+        event.origin !== new URL(iframeUrl, window.location.origin).origin
+      ) {
+        return;
+      }
+
       if (event.data && event.data.type === 'points-awarded') {
         const score = event.data.score;
-        console.log('score', score);
         try {
           await sdk.haptics.impactOccurred('medium');
         } catch (error) {
@@ -148,7 +158,7 @@ export function Game({
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [onRoundComplete]);
+  }, [onRoundComplete, iframeUrl]);
 
   // Check if player has played this game before
   useEffect(() => {
@@ -273,10 +283,6 @@ export function Game({
       </div>
     );
   }
-
-  const fid = context?.user?.fid;
-
-  const iframeUrl = `/api/embed/${id}?fid=${fid}&coinId=${coinId}`;
 
   if (!isReady || checkingTokens || checkingPlayStatus) {
     return (
@@ -447,6 +453,7 @@ export function Game({
         </div>
       )}
       <iframe
+        ref={iframeRef}
         src={iframeUrl}
         sandbox="allow-scripts allow-same-origin"
         style={{
