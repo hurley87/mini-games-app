@@ -46,6 +46,28 @@ export function GameWrapper({
   const [remainingTime, setRemainingTime] = useState(timeoutSeconds);
   const gameStartTime = useRef<number | null>(null);
 
+  const handleRoundComplete = (score: number) => {
+    try {
+      const sessionTime = gameStartTime.current
+        ? Math.round((Date.now() - gameStartTime.current) / 1000)
+        : 0;
+
+      trackGameEvent.gameComplete(id, name, score, sessionTime);
+    } catch (error) {
+      sentryTracker.gameError(
+        error instanceof Error
+          ? error
+          : new Error('Failed to track round complete'),
+        {
+          game_id: id,
+          game_name: name,
+          coin_address: coinAddress,
+          action: 'round_complete',
+        }
+      );
+    }
+  };
+
   // Set Sentry context for this game
   useEffect(() => {
     setSentryTags({
@@ -231,12 +253,12 @@ export function GameWrapper({
             timeoutSeconds={timeoutSeconds}
             coinAddress={coinAddress}
             coinId={coinId}
+            onRoundComplete={handleRoundComplete}
           />
         </div>
       </div>
     );
   }
-
 
   return (
     <Info

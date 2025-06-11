@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { RoundResult } from './round-result';
 import { sdk } from '@farcaster/frame-sdk';
 import { BuyCoinButton } from './BuyCoinButton';
 import { useAccount, useConnect } from 'wagmi';
@@ -29,6 +30,7 @@ interface GameProps {
   timeoutSeconds?: number;
   coinAddress: string;
   coinId: string;
+  onRoundComplete?: (score: number) => void;
 }
 
 export function Game({
@@ -36,6 +38,7 @@ export function Game({
   timeoutSeconds = 10,
   coinAddress,
   coinId,
+  onRoundComplete,
 }: GameProps) {
   const [loading, setLoading] = useState(true);
   const [isGameOver, setIsGameOver] = useState(false);
@@ -43,6 +46,7 @@ export function Game({
   const [checkingTokens, setCheckingTokens] = useState(true);
   const [hasPlayedBefore, setHasPlayedBefore] = useState(false);
   const [checkingPlayStatus, setCheckingPlayStatus] = useState(true);
+  const [roundScore, setRoundScore] = useState<number | null>(null);
   const { context, isReady } = useFarcasterContext({
     disableNativeGestures: true,
   });
@@ -57,12 +61,19 @@ export function Game({
         } catch (error) {
           console.error('Error triggering haptic:', error);
         }
+
+        const score = event.data.score;
+        if (typeof score === 'number') {
+          setRoundScore(score);
+          setIsGameOver(true);
+          onRoundComplete?.(score);
+        }
       }
     };
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, []);
+  }, [onRoundComplete]);
 
   // Check if player has played this game before
   useEffect(() => {
@@ -139,7 +150,7 @@ export function Game({
   // - First-time players always get 10-second preview (regardless of tokens)
   // - Returning players only get unlimited if they have tokens
   useEffect(() => {
-    if (checkingTokens || checkingPlayStatus) return; // Wait for all checks to complete
+    if (checkingTokens || checkingPlayStatus || isGameOver) return; // Wait for all checks to complete
 
     const shouldApplyTimeout =
       !hasPlayedBefore || (hasPlayedBefore && !hasTokens);
@@ -157,6 +168,7 @@ export function Game({
     hasPlayedBefore,
     checkingTokens,
     checkingPlayStatus,
+    isGameOver,
   ]);
 
   if (!id) {
@@ -183,6 +195,30 @@ export function Game({
   }
 
   if (isGameOver) {
+    if (roundScore !== null) {
+      const handleShare = async () => {
+        try {
+          await sdk.actions.composeCast({
+            text: `I scored ${roundScore} points!`,
+            embeds: [`https://app.minigames.studio/coins/${coinId}`],
+          });
+        } catch (error) {
+          console.error('Failed to share score:', error);
+        }
+      };
+
+      return (
+        <RoundResult
+          score={roundScore}
+          onShare={handleShare}
+          onPlayAgain={() => {
+            setRoundScore(null);
+            setIsGameOver(false);
+          }}
+        />
+      );
+    }
+
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm">
         <div className="text-center p-8 rounded-2xl bg-black/80 backdrop-blur border border-white/20 shadow-xl max-w-md w-full mx-4">
