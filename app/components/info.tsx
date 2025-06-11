@@ -56,6 +56,43 @@ export function Info({
   const { isConnected } = useAccount();
   const { connectors, connect } = useConnect();
 
+  // Validate and sanitize buy amount input
+  const handleBuyAmountChange = (value: string) => {
+    // Allow empty string temporarily for user input
+    if (value === '') {
+      setBuyAmount('');
+      return;
+    }
+
+    // Remove any non-numeric characters except decimal point
+    const sanitized = value.replace(/[^0-9.]/g, '');
+
+    // Ensure only one decimal point
+    const parts = sanitized.split('.');
+    if (parts.length > 2) {
+      return; // Don't update if more than one decimal point
+    }
+
+    // Parse as number to validate
+    const numValue = parseFloat(sanitized);
+
+    // Only update if it's a valid number and >= 0.001
+    if (!isNaN(numValue) && numValue >= 0.001) {
+      setBuyAmount(sanitized);
+    } else if (!isNaN(numValue) && numValue > 0) {
+      // Allow values > 0 but < 0.001 for user input experience
+      setBuyAmount(sanitized);
+    }
+  };
+
+  // Get validated buy amount for BuyCoinButton
+  const getValidatedBuyAmount = () => {
+    const numValue = parseFloat(buyAmount);
+    return !buyAmount || isNaN(numValue) || numValue < 0.001
+      ? '0.001'
+      : buyAmount;
+  };
+
   useEffect(() => {
     if (isReady && !hasCheckedStatus && id && coinAddress) {
       checkPlayStatus(id, coinAddress);
@@ -320,16 +357,24 @@ export function Info({
             ) : (
               <div className="flex flex-col gap-2">
                 <input
-                  type="number"
-                  step="0.001"
-                  min="0.001"
+                  type="text"
+                  placeholder="0.001"
                   value={buyAmount}
-                  onChange={(e) => setBuyAmount(e.target.value)}
-                  className="w-full px-3 py-2 rounded-md text-black"
+                  onChange={(e) => handleBuyAmountChange(e.target.value)}
+                  onBlur={() => {
+                    // Set to minimum if empty or invalid on blur
+                    if (!buyAmount || parseFloat(buyAmount) < 0.001) {
+                      setBuyAmount('0.001');
+                    }
+                  }}
+                  className="w-full px-3 py-2 rounded-md text-black border-2 border-gray-300 focus:border-blue-500 focus:outline-none"
                 />
+                <div className="text-xs text-white/70">
+                  Minimum: 0.001 tokens
+                </div>
                 <BuyCoinButton
                   coinAddress={coinAddress}
-                  amount={buyAmount}
+                  amount={getValidatedBuyAmount()}
                   symbol={symbol}
                   onSuccess={() => {
                     setHasCheckedStatus(false);

@@ -56,6 +56,77 @@ export function Game({
   const { address, isConnected } = useAccount();
   const { connectors, connect } = useConnect();
 
+  // Validate and sanitize buy amount input
+  const handleBuyAmountChange = (value: string) => {
+    // Trim whitespace
+    const trimmed = value.trim();
+
+    // If empty after trimming, set to minimum
+    if (trimmed === '') {
+      setBuyAmount('0.001');
+      return;
+    }
+
+    // Remove any non-numeric characters except decimal point
+    const sanitized = trimmed.replace(/[^0-9.]/g, '');
+
+    // If sanitization removed everything, set to minimum
+    if (sanitized === '' || sanitized === '.') {
+      setBuyAmount('0.001');
+      return;
+    }
+
+    // Ensure only one decimal point and no leading/trailing dots
+    const parts = sanitized.split('.');
+    if (
+      parts.length > 2 ||
+      sanitized.startsWith('.') ||
+      sanitized.endsWith('.')
+    ) {
+      return; // Don't update if invalid decimal format
+    }
+
+    // Parse as number to validate
+    const numValue = parseFloat(sanitized);
+
+    // Only allow valid positive numbers
+    if (isNaN(numValue) || numValue <= 0) {
+      setBuyAmount('0.001');
+      return;
+    }
+
+    // If the number is less than minimum, allow for user input experience
+    // but ensure it's a valid number format
+    if (numValue < 0.001) {
+      // Only allow if it's a partial input (like user typing "0.000...")
+      if (sanitized.includes('.') && sanitized.split('.')[1].length <= 6) {
+        setBuyAmount(sanitized);
+      } else {
+        setBuyAmount('0.001');
+      }
+    } else {
+      // Valid number >= 0.001
+      setBuyAmount(sanitized);
+    }
+  };
+
+  // Get validated buy amount for BuyCoinButton - always returns a valid amount
+  const getValidatedBuyAmount = () => {
+    if (!buyAmount) {
+      return '0.001';
+    }
+
+    const numValue = parseFloat(buyAmount);
+
+    // Return minimum if invalid or below threshold
+    if (isNaN(numValue) || numValue < 0.001) {
+      return '0.001';
+    }
+
+    // Return the current value if valid
+    return buyAmount;
+  };
+
   useEffect(() => {
     const handleMessage = async (event: MessageEvent) => {
       if (event.data && event.data.type === 'points-awarded') {
@@ -250,16 +321,25 @@ export function Game({
               ) : (
                 <div className="flex flex-col gap-2">
                   <input
-                    type="number"
-                    step="0.001"
-                    min="0.001"
+                    type="text"
+                    placeholder="0.001"
                     value={buyAmount}
-                    onChange={(e) => setBuyAmount(e.target.value)}
-                    className="w-full px-3 py-2 rounded-md text-black"
+                    onChange={(e) => handleBuyAmountChange(e.target.value)}
+                    onBlur={() => {
+                      // Ensure valid value on blur
+                      const numValue = parseFloat(buyAmount);
+                      if (!buyAmount || isNaN(numValue) || numValue < 0.001) {
+                        setBuyAmount('0.001');
+                      }
+                    }}
+                    className="w-full px-3 py-2 rounded-md text-black border-2 border-gray-300 focus:border-blue-500 focus:outline-none"
                   />
+                  <div className="text-xs text-white/70">
+                    Minimum: 0.001 tokens
+                  </div>
                   <BuyCoinButton
                     coinAddress={coinAddress}
-                    amount={buyAmount}
+                    amount={getValidatedBuyAmount()}
                     symbol=""
                     onSuccess={() => {
                       // Recheck both play status and token balance after purchase
@@ -300,16 +380,25 @@ export function Game({
               ) : (
                 <div className="flex flex-col gap-2">
                   <input
-                    type="number"
-                    step="0.001"
-                    min="0.001"
+                    type="text"
+                    placeholder="0.001"
                     value={buyAmount}
-                    onChange={(e) => setBuyAmount(e.target.value)}
-                    className="w-full px-3 py-2 rounded-md text-black"
+                    onChange={(e) => handleBuyAmountChange(e.target.value)}
+                    onBlur={() => {
+                      // Ensure valid value on blur
+                      const numValue = parseFloat(buyAmount);
+                      if (!buyAmount || isNaN(numValue) || numValue < 0.001) {
+                        setBuyAmount('0.001');
+                      }
+                    }}
+                    className="w-full px-3 py-2 rounded-md text-black border-2 border-gray-300 focus:border-blue-500 focus:outline-none"
                   />
+                  <div className="text-xs text-white/70">
+                    Minimum: 0.001 tokens
+                  </div>
                   <BuyCoinButton
                     coinAddress={coinAddress}
-                    amount={buyAmount}
+                    amount={getValidatedBuyAmount()}
                     symbol=""
                     onSuccess={() => {
                       // Recheck token balance after purchase
