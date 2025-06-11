@@ -17,6 +17,13 @@ const ERC20_ABI = [
     inputs: [{ name: 'account', type: 'address' }],
     outputs: [{ name: 'balance', type: 'uint256' }],
   },
+  {
+    name: 'decimals',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ name: 'decimals', type: 'uint8' }],
+  },
 ] as const;
 
 export async function POST(request: NextRequest) {
@@ -61,14 +68,41 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      const balance = await publicClient.readContract({
-        address: coinAddress as Address,
-        abi: ERC20_ABI,
-        functionName: 'balanceOf',
-        args: [walletAddress as Address],
-      });
+      // Fetch token decimals and balance in parallel
+      const [balance, decimals] = await Promise.all([
+        publicClient.readContract({
+          address: coinAddress as Address,
+          abi: ERC20_ABI,
+          functionName: 'balanceOf',
+          args: [walletAddress as Address],
+        }),
+        publicClient.readContract({
+          address: coinAddress as Address,
+          abi: ERC20_ABI,
+          functionName: 'decimals',
+        }),
+      ]);
 
-      const hasTokens = balance > BigInt(0);
+      // Calculate minimum tokens: 0.001 * 10^decimals using BigInt to avoid floating-point precision issues
+      // 0.001 = 1 / 1000, so we need 10^(decimals-3) tokens
+      const exponent = Number(decimals) - 3;
+
+      // Helper function to calculate 10^n using BigInt to maintain precision for high decimals
+      const powerOfTenBigInt = (exp: number): bigint => {
+        if (exp <= 0) return BigInt(1);
+        let result = BigInt(1);
+        const base = BigInt(10);
+        for (let i = 0; i < exp; i++) {
+          result *= base;
+        }
+        return result;
+      };
+
+      const minimumTokens =
+        exponent >= 0
+          ? powerOfTenBigInt(exponent) // For decimals >= 3
+          : BigInt(1); // For decimals < 3, minimum is 1 unit
+      const hasTokens = balance >= minimumTokens;
 
       return NextResponse.json({
         canPlay: hasTokens,
