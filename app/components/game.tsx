@@ -23,6 +23,13 @@ const ERC20_ABI = [
     inputs: [{ name: 'account', type: 'address' }],
     outputs: [{ name: 'balance', type: 'uint256' }],
   },
+  {
+    name: 'decimals',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ name: 'decimals', type: 'uint8' }],
+  },
 ] as const;
 
 interface GameProps {
@@ -47,11 +54,77 @@ export function Game({
   const [hasPlayedBefore, setHasPlayedBefore] = useState(false);
   const [checkingPlayStatus, setCheckingPlayStatus] = useState(true);
   const [roundScore, setRoundScore] = useState<number | null>(null);
+  const [buyAmount, setBuyAmount] = useState('0.001');
+  const [tokenDecimals, setTokenDecimals] = useState<number>(18); // Default to 18, will be fetched
   const { context, isReady } = useFarcasterContext({
     disableNativeGestures: true,
   });
   const { address, isConnected } = useAccount();
   const { connectors, connect } = useConnect();
+
+  // Validate and sanitize buy amount input (consistent with info.tsx)
+  const handleBuyAmountChange = (value: string) => {
+    // Allow empty string temporarily for user input
+    if (value === '') {
+      setBuyAmount('');
+      return;
+    }
+
+    // Remove any non-numeric characters except decimal point
+    const sanitized = value.replace(/[^0-9.]/g, '');
+
+    // Ensure only one decimal point
+    const parts = sanitized.split('.');
+    if (parts.length > 2) {
+      return; // Don't update if more than one decimal point
+    }
+
+    // Allow common intermediate values during typing
+    if (sanitized === '0' || sanitized === '.' || sanitized === '0.') {
+      setBuyAmount(sanitized);
+      return;
+    }
+
+    // Parse as number to validate
+    const numValue = parseFloat(sanitized);
+
+    // Allow any valid positive number or NaN (for incomplete inputs like "0.00")
+    if (!isNaN(numValue) && numValue >= 0) {
+      setBuyAmount(sanitized);
+    } else if (isNaN(numValue) && sanitized.match(/^0\.0*$/)) {
+      // Allow partial decimal inputs like "0.0", "0.00", etc.
+      setBuyAmount(sanitized);
+    }
+  };
+
+  // Get validated buy amount for BuyCoinButton - always returns a valid amount
+  const getValidatedBuyAmount = () => {
+    const numValue = parseFloat(buyAmount);
+    return !buyAmount || isNaN(numValue) || numValue < 0.001
+      ? '0.001'
+      : buyAmount;
+  };
+
+  // Fetch token decimals when component mounts
+  useEffect(() => {
+    const fetchTokenDecimals = async () => {
+      if (!coinAddress) return;
+
+      try {
+        const decimals = await publicClient.readContract({
+          address: coinAddress as Address,
+          abi: ERC20_ABI,
+          functionName: 'decimals',
+        });
+        setTokenDecimals(Number(decimals));
+      } catch (error) {
+        console.error('Error fetching token decimals:', error);
+        // Keep default of 18 if fetch fails
+      }
+    };
+
+    fetchTokenDecimals();
+  }, [coinAddress]);
 
   useEffect(() => {
     const handleMessage = async (event: MessageEvent) => {
@@ -113,7 +186,7 @@ export function Game({
     if (isReady && context?.user?.fid) {
       checkPlayStatus();
     }
-  }, [context?.user?.fid, id, coinAddress, address, isReady]);
+  }, [context?.user?.fid, id, coinId, coinAddress, address, isReady]);
 
   // Check token balance
   useEffect(() => {
@@ -131,7 +204,27 @@ export function Game({
           args: [address as Address],
         });
 
-        const tokenBalance = balance > BigInt(0);
+        // Calculate minimum tokens: 0.001 * 10^decimals using BigInt to avoid floating-point precision issues
+        // 0.001 = 1 / 1000, so we need 10^(decimals-3) tokens
+        const exponent = tokenDecimals - 3;
+
+        // Helper function to calculate 10^n using BigInt to maintain precision for high decimals
+        const powerOfTenBigInt = (exp: number): bigint => {
+          if (exp <= 0) return BigInt(1);
+          let result = BigInt(1);
+          const base = BigInt(10);
+          for (let i = 0; i < exp; i++) {
+            result *= base;
+          }
+          return result;
+        };
+
+        const minimumTokens =
+          exponent >= 0
+            ? powerOfTenBigInt(exponent) // For decimals >= 3
+            : BigInt(1); // For decimals < 3, minimum is 1 unit
+
+        const tokenBalance = balance >= minimumTokens;
         setHasTokens(tokenBalance);
       } catch (error) {
         console.error('Error checking token balance:', error);
@@ -146,7 +239,7 @@ export function Game({
     } else {
       setCheckingTokens(false);
     }
-  }, [address, coinAddress, isConnected]);
+  }, [address, coinAddress, isConnected, tokenDecimals]);
 
   // Set timeout logic:
   // - First-time players always get 10-second preview (regardless of tokens)
@@ -236,7 +329,8 @@ export function Game({
                 🎉 Thanks for trying the game!
               </p>
               <p className="text-sm text-amber-400 mb-4">
-                Want unlimited access? Get tokens to play without time limits!
+                Want unlimited access? Buy at least 0.001 tokens to play without
+                time limits!
               </p>
               {!isConnected ? (
                 <button
@@ -246,16 +340,36 @@ export function Game({
                   Connect Wallet
                 </button>
               ) : (
-                <BuyCoinButton
-                  coinAddress={coinAddress}
-                  symbol=""
-                  onSuccess={() => {
-                    // Recheck both play status and token balance after purchase
-                    setCheckingTokens(true);
-                    setCheckingPlayStatus(true);
-                    setIsGameOver(false);
-                  }}
-                />
+                <div className="flex flex-col gap-2">
+                  <input
+                    type="text"
+                    placeholder="0.001"
+                    value={buyAmount}
+                    onChange={(e) => handleBuyAmountChange(e.target.value)}
+                    onBlur={() => {
+                      // Set to minimum if empty or invalid on blur
+                      if (!buyAmount || parseFloat(buyAmount) < 0.001) {
+                        setBuyAmount('0.001');
+                      }
+                    }}
+                    className="w-full px-3 py-2 rounded-md text-black border-2 border-gray-300 focus:border-blue-500 focus:outline-none"
+                  />
+                  <div className="text-xs text-white/70">
+                    Minimum: 0.001 tokens
+                  </div>
+                  <BuyCoinButton
+                    coinAddress={coinAddress}
+                    amount={getValidatedBuyAmount()}
+                    symbol=""
+                    decimals={tokenDecimals}
+                    onSuccess={() => {
+                      // Recheck both play status and token balance after purchase
+                      setCheckingTokens(true);
+                      setCheckingPlayStatus(true);
+                      setIsGameOver(false);
+                    }}
+                  />
+                </div>
               )}
             </div>
           ) : hasTokens ? (
@@ -275,7 +389,7 @@ export function Game({
             // Returning player without tokens - needs to buy
             <div className="space-y-4">
               <p className="text-sm text-amber-400 mb-4">
-                You need tokens to continue playing this game.
+                You need at least 0.001 tokens to continue playing this game.
               </p>
               {!isConnected ? (
                 <button
@@ -285,15 +399,35 @@ export function Game({
                   Connect Wallet
                 </button>
               ) : (
-                <BuyCoinButton
-                  coinAddress={coinAddress}
-                  symbol=""
-                  onSuccess={() => {
-                    // Recheck token balance after purchase
-                    setCheckingTokens(true);
-                    setIsGameOver(false);
-                  }}
-                />
+                <div className="flex flex-col gap-2">
+                  <input
+                    type="text"
+                    placeholder="0.001"
+                    value={buyAmount}
+                    onChange={(e) => handleBuyAmountChange(e.target.value)}
+                    onBlur={() => {
+                      // Set to minimum if empty or invalid on blur
+                      if (!buyAmount || parseFloat(buyAmount) < 0.001) {
+                        setBuyAmount('0.001');
+                      }
+                    }}
+                    className="w-full px-3 py-2 rounded-md text-black border-2 border-gray-300 focus:border-blue-500 focus:outline-none"
+                  />
+                  <div className="text-xs text-white/70">
+                    Minimum: 0.001 tokens
+                  </div>
+                  <BuyCoinButton
+                    coinAddress={coinAddress}
+                    amount={getValidatedBuyAmount()}
+                    symbol=""
+                    decimals={tokenDecimals}
+                    onSuccess={() => {
+                      // Recheck token balance after purchase
+                      setCheckingTokens(true);
+                      setIsGameOver(false);
+                    }}
+                  />
+                </div>
               )}
             </div>
           )}

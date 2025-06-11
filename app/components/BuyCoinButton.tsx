@@ -6,7 +6,7 @@ import {
   useWriteContract,
   useWaitForTransactionReceipt,
 } from 'wagmi';
-import { Address, parseEther } from 'viem';
+import { Address } from 'viem';
 import { useAccount } from 'wagmi';
 import { useEffect } from 'react';
 
@@ -14,16 +14,58 @@ interface BuyCoinButtonProps {
   coinAddress: string;
   amount?: string;
   symbol: string;
+  decimals: number;
   onSuccess?: () => void;
 }
 
 export function BuyCoinButton({
   coinAddress,
-  amount = '0.0005',
+  amount = '0.001',
   symbol,
+  decimals,
   onSuccess,
 }: BuyCoinButtonProps) {
   const { address } = useAccount();
+
+  // Calculate token amount in base units using string-based arithmetic to avoid floating-point precision issues
+  const calculateTokenAmount = (
+    tokenAmount: string,
+    tokenDecimals: number
+  ): bigint => {
+    // Remove leading/trailing whitespace and validate input
+    const cleanAmount = tokenAmount.trim();
+
+    if (!cleanAmount || cleanAmount === '0' || cleanAmount === '0.') {
+      return BigInt(0);
+    }
+
+    // Check for valid decimal format (positive numbers only)
+    if (!/^\d+(\.\d+)?$/.test(cleanAmount)) {
+      return BigInt(0);
+    }
+
+    // Split into integer and decimal parts
+    const [integerPart = '0', decimalPart = ''] = cleanAmount.split('.');
+
+    // Pad decimal part with zeros to match token decimals, or truncate if too long
+    let adjustedDecimalPart = decimalPart.padEnd(tokenDecimals, '0');
+
+    // If input has more decimals than token supports, truncate (don't round to avoid precision loss)
+    if (adjustedDecimalPart.length > tokenDecimals) {
+      adjustedDecimalPart = adjustedDecimalPart.slice(0, tokenDecimals);
+    }
+
+    // Combine integer and decimal parts to create the full amount string
+    const fullAmountStr = integerPart + adjustedDecimalPart;
+
+    // Convert to BigInt, handling potential conversion errors
+    try {
+      const result = BigInt(fullAmountStr);
+      return result > BigInt(0) ? result : BigInt(0);
+    } catch {
+      return BigInt(0);
+    }
+  };
 
   // Create trade parameters
   const tradeParams = {
@@ -31,7 +73,7 @@ export function BuyCoinButton({
     target: coinAddress as Address,
     args: {
       recipient: address as Address,
-      orderSize: parseEther(amount),
+      orderSize: calculateTokenAmount(amount, decimals),
       minAmountOut: BigInt(0),
       tradeReferrer: '0xbD78783a26252bAf756e22f0DE764dfDcDa7733c' as Address,
     },

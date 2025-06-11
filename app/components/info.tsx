@@ -7,6 +7,8 @@ import { usePlayerStats } from '@/hooks/usePlayerStats';
 import { BuyCoinButton } from './BuyCoinButton';
 import { useAccount, useConnect } from 'wagmi';
 import { ZoraCoinData, Creator } from '@/lib/types';
+import { Address, createPublicClient, http } from 'viem';
+import { base } from 'viem/chains';
 import {
   DollarSign,
   TrendingUp,
@@ -19,6 +21,22 @@ import { formatCurrency, formatHolders, formatTokenBalance } from '@/lib/utils';
 import { sdk } from '@farcaster/frame-sdk';
 import { Header } from './header';
 import { CoinLeaderboard } from './coin-leaderboard';
+
+// Create a public client for reading blockchain data
+const publicClient = createPublicClient({
+  chain: base,
+  transport: http(),
+});
+
+const ERC20_ABI = [
+  {
+    name: 'decimals',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ name: 'decimals', type: 'uint8' }],
+  },
+] as const;
 
 interface InfoProps {
   name: string;
@@ -52,8 +70,53 @@ export function Info({
     usePlayStatus();
   const { playerStats, isLoading: isLoadingStats } = usePlayerStats();
   const [hasCheckedStatus, setHasCheckedStatus] = useState(false);
+  const [buyAmount, setBuyAmount] = useState('0.001');
+  const [tokenDecimals, setTokenDecimals] = useState<number>(18); // Default to 18, will be fetched
   const { isConnected } = useAccount();
   const { connectors, connect } = useConnect();
+
+  // Validate and sanitize buy amount input
+  const handleBuyAmountChange = (value: string) => {
+    // Allow empty string temporarily for user input
+    if (value === '') {
+      setBuyAmount('');
+      return;
+    }
+
+    // Remove any non-numeric characters except decimal point
+    const sanitized = value.replace(/[^0-9.]/g, '');
+
+    // Ensure only one decimal point
+    const parts = sanitized.split('.');
+    if (parts.length > 2) {
+      return; // Don't update if more than one decimal point
+    }
+
+    // Allow common intermediate values during typing
+    if (sanitized === '0' || sanitized === '.' || sanitized === '0.') {
+      setBuyAmount(sanitized);
+      return;
+    }
+
+    // Parse as number to validate
+    const numValue = parseFloat(sanitized);
+
+    // Allow any valid positive number or NaN (for incomplete inputs like "0.00")
+    if (!isNaN(numValue) && numValue >= 0) {
+      setBuyAmount(sanitized);
+    } else if (isNaN(numValue) && sanitized.match(/^0\.0*$/)) {
+      // Allow partial decimal inputs like "0.0", "0.00", etc.
+      setBuyAmount(sanitized);
+    }
+  };
+
+  // Get validated buy amount for BuyCoinButton
+  const getValidatedBuyAmount = () => {
+    const numValue = parseFloat(buyAmount);
+    return !buyAmount || isNaN(numValue) || numValue < 0.001
+      ? '0.001'
+      : buyAmount;
+  };
 
   useEffect(() => {
     if (isReady && !hasCheckedStatus && id && coinAddress) {
@@ -61,6 +124,27 @@ export function Info({
       setHasCheckedStatus(true);
     }
   }, [isReady, hasCheckedStatus, id, coinAddress, checkPlayStatus]);
+
+  // Fetch token decimals when component mounts
+  useEffect(() => {
+    const fetchTokenDecimals = async () => {
+      if (!coinAddress) return;
+
+      try {
+        const decimals = await publicClient.readContract({
+          address: coinAddress as Address,
+          abi: ERC20_ABI,
+          functionName: 'decimals',
+        });
+        setTokenDecimals(Number(decimals));
+      } catch (error) {
+        console.error('Error fetching token decimals:', error);
+        // Keep default of 18 if fetch fails
+      }
+    };
+
+    fetchTokenDecimals();
+  }, [coinAddress]);
 
   const handlePlay = async () => {
     if (!playStatus) return;
@@ -241,7 +325,7 @@ export function Info({
                     Premium Access Required
                   </h3>
                   <p className="text-xs text-amber-300 mt-1">
-                    You need to own {symbol} tokens to play.
+                    You need at least 0.001 {symbol} tokens to play.
                   </p>
                 </div>
               </div>
@@ -317,13 +401,33 @@ export function Info({
                 Connect Wallet
               </button>
             ) : (
-              <BuyCoinButton
-                coinAddress={coinAddress}
-                symbol={symbol}
-                onSuccess={() => {
-                  setHasCheckedStatus(false);
-                }}
-              />
+              <div className="flex flex-col gap-2">
+                <input
+                  type="text"
+                  placeholder="0.001"
+                  value={buyAmount}
+                  onChange={(e) => handleBuyAmountChange(e.target.value)}
+                  onBlur={() => {
+                    // Set to minimum if empty or invalid on blur
+                    if (!buyAmount || parseFloat(buyAmount) < 0.001) {
+                      setBuyAmount('0.001');
+                    }
+                  }}
+                  className="w-full px-3 py-2 rounded-md text-black border-2 border-gray-300 focus:border-blue-500 focus:outline-none"
+                />
+                <div className="text-xs text-white/70">
+                  Minimum: 0.001 tokens
+                </div>
+                <BuyCoinButton
+                  coinAddress={coinAddress}
+                  amount={getValidatedBuyAmount()}
+                  symbol={symbol}
+                  decimals={tokenDecimals}
+                  onSuccess={() => {
+                    setHasCheckedStatus(false);
+                  }}
+                />
+              </div>
             )}
           </div>
 
