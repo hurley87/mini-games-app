@@ -53,7 +53,6 @@ export function GameWrapper({
         : 0;
 
       trackGameEvent.gameComplete(id, name, score, sessionTime);
-      gameStartTime.current = Date.now();
     } catch (error) {
       sentryTracker.gameError(
         error instanceof Error
@@ -260,7 +259,6 @@ export function GameWrapper({
       </div>
     );
   }
-
 
   return (
     <Info
