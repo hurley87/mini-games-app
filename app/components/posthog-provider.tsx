@@ -49,6 +49,7 @@ export function PostHogProvider({ children }: PostHogProviderProps) {
 function getPageName(pathname: string): string {
   if (pathname === '/') return 'Home';
   if (pathname === '/leaderboard') return 'Leaderboard';
+  if (pathname === '/info') return 'Info';
   if (pathname.startsWith('/coins/')) return 'Game';
   if (pathname.startsWith('/info/')) return 'Game Info';
 
