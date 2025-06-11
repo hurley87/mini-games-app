@@ -300,149 +300,27 @@ export function Game({
   }
 
   if (isGameOver) {
-    if (roundScore !== null) {
-      const handleShare = async () => {
-        try {
-          await sdk.actions.composeCast({
-            text: `I scored ${roundScore} points!`,
-            embeds: [`https://app.minigames.studio/coins/${coinId}`],
-          });
-        } catch (error) {
-          console.error('Failed to share score:', error);
-        }
-      };
-
-      return (
-        <RoundResult
-          score={roundScore}
-          onShare={handleShare}
-          onPlayAgain={() => {
-            setRoundScore(null);
-            setIsGameOver(false);
-          }}
-        />
-      );
-    }
+    const finalScore = roundScore || 0;
+    const handleShare = async () => {
+      try {
+        await sdk.actions.composeCast({
+          text: `I scored ${finalScore} points!`,
+          embeds: [`https://app.minigames.studio/coins/${coinId}`],
+        });
+      } catch (error) {
+        console.error('Failed to share score:', error);
+      }
+    };
 
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm">
-        <div className="text-center p-8 rounded-2xl bg-black/80 backdrop-blur border border-white/20 shadow-xl max-w-md w-full mx-4">
-          <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-500 mb-4">
-            Game Over
-          </h1>
-          <p className="text-xl text-white/70 mb-4">{`Time's up!`}</p>
-
-          {!hasPlayedBefore ? (
-            // First-time player - encourage them to get tokens for full access
-            <div className="space-y-4">
-              <p className="text-sm text-green-400 mb-2">
-                🎉 Thanks for trying the game!
-              </p>
-              <p className="text-sm text-amber-400 mb-4">
-                Want unlimited access? Buy at least 0.001 tokens to play without
-                time limits!
-              </p>
-              {!isConnected ? (
-                <button
-                  onClick={() => connect({ connector: connectors[0] })}
-                  className="w-full py-3 px-6 text-lg font-semibold rounded-2xl bg-purple-600 text-white hover:brightness-110 transition-all duration-200"
-                >
-                  Connect Wallet
-                </button>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  <input
-                    type="text"
-                    placeholder="0.001"
-                    value={buyAmount}
-                    onChange={(e) => handleBuyAmountChange(e.target.value)}
-                    onBlur={() => {
-                      // Set to minimum if empty or invalid on blur
-                      if (!buyAmount || parseFloat(buyAmount) < 0.001) {
-                        setBuyAmount('0.001');
-                      }
-                    }}
-                    className="w-full px-3 py-2 rounded-md text-black border-2 border-gray-300 focus:border-blue-500 focus:outline-none"
-                  />
-                  <div className="text-xs text-white/70">
-                    Minimum: 0.001 tokens
-                  </div>
-                  <BuyCoinButton
-                    coinAddress={coinAddress}
-                    amount={getValidatedBuyAmount()}
-                    symbol=""
-                    decimals={tokenDecimals}
-                    onSuccess={() => {
-                      // Recheck both play status and token balance after purchase
-                      setCheckingTokens(true);
-                      setCheckingPlayStatus(true);
-                      setIsGameOver(false);
-                    }}
-                  />
-                </div>
-              )}
-            </div>
-          ) : hasTokens ? (
-            // Returning player with tokens - unlimited play
-            <div className="space-y-4">
-              <p className="text-sm text-purple-400">
-                🎮 You own tokens for this game!
-              </p>
-              <button
-                onClick={() => setIsGameOver(false)}
-                className="w-full py-3 px-6 text-lg font-semibold rounded-full bg-emerald-600 text-white hover:brightness-110 transition-all duration-200"
-              >
-                Play Again
-              </button>
-            </div>
-          ) : (
-            // Returning player without tokens - needs to buy
-            <div className="space-y-4">
-              <p className="text-sm text-amber-400 mb-4">
-                You need at least 0.001 tokens to continue playing this game.
-              </p>
-              {!isConnected ? (
-                <button
-                  onClick={() => connect({ connector: connectors[0] })}
-                  className="w-full py-3 px-6 text-lg font-semibold rounded-full bg-purple-600 text-white hover:brightness-110 transition-all duration-200"
-                >
-                  Connect Wallet
-                </button>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  <input
-                    type="text"
-                    placeholder="0.001"
-                    value={buyAmount}
-                    onChange={(e) => handleBuyAmountChange(e.target.value)}
-                    onBlur={() => {
-                      // Set to minimum if empty or invalid on blur
-                      if (!buyAmount || parseFloat(buyAmount) < 0.001) {
-                        setBuyAmount('0.001');
-                      }
-                    }}
-                    className="w-full px-3 py-2 rounded-md text-black border-2 border-gray-300 focus:border-blue-500 focus:outline-none"
-                  />
-                  <div className="text-xs text-white/70">
-                    Minimum: 0.001 tokens
-                  </div>
-                  <BuyCoinButton
-                    coinAddress={coinAddress}
-                    amount={getValidatedBuyAmount()}
-                    symbol=""
-                    decimals={tokenDecimals}
-                    onSuccess={() => {
-                      // Recheck token balance after purchase
-                      setCheckingTokens(true);
-                      setIsGameOver(false);
-                    }}
-                  />
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
+      <RoundResult
+        score={finalScore}
+        onShare={handleShare}
+        onPlayAgain={() => {
+          setRoundScore(null);
+          setIsGameOver(false);
+        }}
+      />
     );
   }
 
