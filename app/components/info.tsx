@@ -52,6 +52,7 @@ export function Info({
     usePlayStatus();
   const { playerStats, isLoading: isLoadingStats } = usePlayerStats();
   const [hasCheckedStatus, setHasCheckedStatus] = useState(false);
+  const [buyAmount, setBuyAmount] = useState('0.001');
   const { isConnected } = useAccount();
   const { connectors, connect } = useConnect();
 
@@ -241,7 +242,7 @@ export function Info({
                     Premium Access Required
                   </h3>
                   <p className="text-xs text-amber-300 mt-1">
-                    You need to own {symbol} tokens to play.
+                    You need at least 0.001 {symbol} tokens to play.
                   </p>
                 </div>
               </div>
@@ -317,13 +318,24 @@ export function Info({
                 Connect Wallet
               </button>
             ) : (
-              <BuyCoinButton
-                coinAddress={coinAddress}
-                symbol={symbol}
-                onSuccess={() => {
-                  setHasCheckedStatus(false);
-                }}
-              />
+              <div className="flex flex-col gap-2">
+                <input
+                  type="number"
+                  step="0.001"
+                  min="0.001"
+                  value={buyAmount}
+                  onChange={(e) => setBuyAmount(e.target.value)}
+                  className="w-full px-3 py-2 rounded-md text-black"
+                />
+                <BuyCoinButton
+                  coinAddress={coinAddress}
+                  amount={buyAmount}
+                  symbol={symbol}
+                  onSuccess={() => {
+                    setHasCheckedStatus(false);
+                  }}
+                />
+              </div>
             )}
           </div>
 

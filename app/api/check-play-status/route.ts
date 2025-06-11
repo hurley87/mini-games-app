@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseService } from '@/lib/supabase';
-import { Address, createPublicClient, http } from 'viem';
+import { Address, createPublicClient, http, parseEther } from 'viem';
 import { base } from 'viem/chains';
 
 // Create a public client for reading blockchain data
@@ -18,6 +18,8 @@ const ERC20_ABI = [
     outputs: [{ name: 'balance', type: 'uint256' }],
   },
 ] as const;
+
+const MIN_TOKENS = parseEther('0.001');
 
 export async function POST(request: NextRequest) {
   try {
@@ -68,7 +70,7 @@ export async function POST(request: NextRequest) {
         args: [walletAddress as Address],
       });
 
-      const hasTokens = balance > BigInt(0);
+      const hasTokens = balance >= MIN_TOKENS;
 
       return NextResponse.json({
         canPlay: hasTokens,

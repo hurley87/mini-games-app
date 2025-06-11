@@ -6,7 +6,7 @@ import { sdk } from '@farcaster/frame-sdk';
 import { BuyCoinButton } from './BuyCoinButton';
 import { useAccount, useConnect } from 'wagmi';
 import { useFarcasterContext } from '@/hooks/useFarcasterContext';
-import { Address, createPublicClient, http } from 'viem';
+import { Address, createPublicClient, http, parseEther } from 'viem';
 import { base } from 'viem/chains';
 
 // Create a public client for reading blockchain data
@@ -24,6 +24,8 @@ const ERC20_ABI = [
     outputs: [{ name: 'balance', type: 'uint256' }],
   },
 ] as const;
+
+const MIN_TOKENS = parseEther('0.001');
 
 interface GameProps {
   id: string;
@@ -47,6 +49,7 @@ export function Game({
   const [hasPlayedBefore, setHasPlayedBefore] = useState(false);
   const [checkingPlayStatus, setCheckingPlayStatus] = useState(true);
   const [roundScore, setRoundScore] = useState<number | null>(null);
+  const [buyAmount, setBuyAmount] = useState('0.001');
   const { context, isReady } = useFarcasterContext({
     disableNativeGestures: true,
   });
@@ -129,7 +132,7 @@ export function Game({
           args: [address as Address],
         });
 
-        const tokenBalance = balance > BigInt(0);
+        const tokenBalance = balance >= MIN_TOKENS;
         setHasTokens(tokenBalance);
       } catch (error) {
         console.error('Error checking token balance:', error);
@@ -234,7 +237,8 @@ export function Game({
                 🎉 Thanks for trying the game!
               </p>
               <p className="text-sm text-amber-400 mb-4">
-                Want unlimited access? Get tokens to play without time limits!
+                Want unlimited access? Buy at least 0.001 tokens to play without
+                time limits!
               </p>
               {!isConnected ? (
                 <button
@@ -244,16 +248,27 @@ export function Game({
                   Connect Wallet
                 </button>
               ) : (
-                <BuyCoinButton
-                  coinAddress={coinAddress}
-                  symbol=""
-                  onSuccess={() => {
-                    // Recheck both play status and token balance after purchase
-                    setCheckingTokens(true);
-                    setCheckingPlayStatus(true);
-                    setIsGameOver(false);
-                  }}
-                />
+                <div className="flex flex-col gap-2">
+                  <input
+                    type="number"
+                    step="0.001"
+                    min="0.001"
+                    value={buyAmount}
+                    onChange={(e) => setBuyAmount(e.target.value)}
+                    className="w-full px-3 py-2 rounded-md text-black"
+                  />
+                  <BuyCoinButton
+                    coinAddress={coinAddress}
+                    amount={buyAmount}
+                    symbol=""
+                    onSuccess={() => {
+                      // Recheck both play status and token balance after purchase
+                      setCheckingTokens(true);
+                      setCheckingPlayStatus(true);
+                      setIsGameOver(false);
+                    }}
+                  />
+                </div>
               )}
             </div>
           ) : hasTokens ? (
@@ -273,7 +288,7 @@ export function Game({
             // Returning player without tokens - needs to buy
             <div className="space-y-4">
               <p className="text-sm text-amber-400 mb-4">
-                You need tokens to continue playing this game.
+                You need at least 0.001 tokens to continue playing this game.
               </p>
               {!isConnected ? (
                 <button
@@ -283,15 +298,26 @@ export function Game({
                   Connect Wallet
                 </button>
               ) : (
-                <BuyCoinButton
-                  coinAddress={coinAddress}
-                  symbol=""
-                  onSuccess={() => {
-                    // Recheck token balance after purchase
-                    setCheckingTokens(true);
-                    setIsGameOver(false);
-                  }}
-                />
+                <div className="flex flex-col gap-2">
+                  <input
+                    type="number"
+                    step="0.001"
+                    min="0.001"
+                    value={buyAmount}
+                    onChange={(e) => setBuyAmount(e.target.value)}
+                    className="w-full px-3 py-2 rounded-md text-black"
+                  />
+                  <BuyCoinButton
+                    coinAddress={coinAddress}
+                    amount={buyAmount}
+                    symbol=""
+                    onSuccess={() => {
+                      // Recheck token balance after purchase
+                      setCheckingTokens(true);
+                      setIsGameOver(false);
+                    }}
+                  />
+                </div>
               )}
             </div>
           )}

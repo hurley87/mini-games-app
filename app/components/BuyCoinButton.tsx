@@ -19,7 +19,7 @@ interface BuyCoinButtonProps {
 
 export function BuyCoinButton({
   coinAddress,
-  amount = '0.0005',
+  amount = '0.001',
   symbol,
   onSuccess,
 }: BuyCoinButtonProps) {
