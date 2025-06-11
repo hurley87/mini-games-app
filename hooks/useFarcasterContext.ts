@@ -42,7 +42,7 @@ export function useFarcasterContext(options: UseFarcasterContextOptions = {}) {
 
   useEffect(() => {
     const handleAddFrame = async () => {
-      if (context && !context.client?.added) {
+      if (context && options.autoAddFrame && !context.client?.added) {
         try {
           await sdk.actions.addFrame();
         } catch (error) {
