@@ -9,7 +9,15 @@ import {
 } from '@/app/components/ui/drawer';
 import { Button } from '@/app/components/ui/button';
 import Image from 'next/image';
-import { List, Trophy, Wallet, Copy, Sparkles, Share2 } from 'lucide-react';
+import {
+  List,
+  Trophy,
+  Wallet,
+  Copy,
+  Sparkles,
+  Share2,
+  Info as InfoIcon,
+} from 'lucide-react';
 import { useState } from 'react';
 import { useFarcasterContext } from '@/hooks/useFarcasterContext';
 import { toast } from 'sonner';
@@ -142,6 +150,21 @@ export function HeaderProfile() {
     }
   };
 
+  const handleInfoNavigation = () => {
+    try {
+      trackGameEvent.navigationClick('info', 'header_profile');
+    } catch (error) {
+      sentryTracker.userActionError(
+        error instanceof Error ? error : new Error('Failed to track navigation'),
+        {
+          action: 'navigate_info',
+          element: 'navigation_link',
+          page: 'header_profile',
+        }
+      );
+    }
+  };
+
   const handleShareReferral = async () => {
     if (!context?.user?.fid) return;
     try {
@@ -250,6 +273,15 @@ export function HeaderProfile() {
               >
                 <Trophy className="w-6 h-6" />
                 <span>Leaderboard</span>
+              </Link>
+
+              <Link
+                className="flex items-center gap-4 text-xl font-semibold text-white hover:brightness-110 transition-all duration-200 cursor-pointer"
+                href="/info"
+                onClick={handleInfoNavigation}
+              >
+                <InfoIcon className="w-6 h-6" />
+                <span>How It Works</span>
               </Link>
 
               <button
