@@ -51,8 +51,10 @@ export function Game({
 
   useEffect(() => {
     const handleMessage = async (event: MessageEvent) => {
+      console.log('event', event);
       if (event.data && event.data.type === 'points-awarded') {
         const { score } = event.data;
+        console.log('score', score);
         try {
           await sdk.haptics.impactOccurred('medium');
         } catch (error) {
