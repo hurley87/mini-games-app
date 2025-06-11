@@ -63,6 +63,10 @@ export function Game({
   const { connectors, connect } = useConnect();
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
+  // Define iframeUrl early to avoid declaration order issues
+  const fid = context?.user?.fid;
+  const iframeUrl = `/api/embed/${id}?fid=${fid}&coinId=${coinId}`;
+
   // Validate and sanitize buy amount input (consistent with info.tsx)
   const handleBuyAmountChange = (value: string) => {
     // Allow empty string temporarily for user input
@@ -279,10 +283,6 @@ export function Game({
       </div>
     );
   }
-
-  const fid = context?.user?.fid;
-
-  const iframeUrl = `/api/embed/${id}?fid=${fid}&coinId=${coinId}`;
 
   if (!isReady || checkingTokens || checkingPlayStatus) {
     return (
