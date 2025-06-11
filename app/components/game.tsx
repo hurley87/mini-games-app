@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { RoundResult } from './round-result';
 import { sdk } from '@farcaster/frame-sdk';
 import { useAccount } from 'wagmi';
 import { useFarcasterContext } from '@/hooks/useFarcasterContext';
@@ -253,29 +252,9 @@ export function Game({
     );
   }
 
+  // Game over state is now handled by GameWrapper
   if (isGameOver) {
-    const finalScore = roundScore || 0;
-    const handleShare = async () => {
-      try {
-        await sdk.actions.composeCast({
-          text: `I scored ${finalScore} points!`,
-          embeds: [`https://app.minigames.studio/coins/${coinId}`],
-        });
-      } catch (error) {
-        console.error('Failed to share score:', error);
-      }
-    };
-
-    return (
-      <RoundResult
-        score={finalScore}
-        onShare={handleShare}
-        onPlayAgain={() => {
-          setRoundScore(null);
-          setIsGameOver(false);
-        }}
-      />
-    );
+    return null; // Let GameWrapper handle the result display
   }
 
   return (

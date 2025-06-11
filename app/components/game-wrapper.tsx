@@ -3,12 +3,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { Info } from './info';
 import { Game } from './game';
+import { RoundResult } from './round-result';
 import { getCoin } from '@zoralabs/coins-sdk';
 import { base } from 'viem/chains';
 import { ZoraCoinData, Creator } from '@/lib/types';
 import { ArrowLeft, Clock } from 'lucide-react';
 import { Button } from './ui/button';
-import { trackGameEvent } from '@/lib/posthog';
+import { trackGameEvent, trackEvent } from '@/lib/posthog';
 import { sentryTracker, setSentryTags } from '@/lib/sentry';
 
 interface GameWrapperProps {
@@ -39,6 +40,8 @@ export function GameWrapper({
   coinId,
 }: GameWrapperProps) {
   const [showGame, setShowGame] = useState(false);
+  const [showResult, setShowResult] = useState(false);
+  const [finalScore, setFinalScore] = useState(0);
   const [fetchedZoraData, setFetchedZoraData] = useState<
     ZoraCoinData | undefined
   >(zoraData);
@@ -51,6 +54,10 @@ export function GameWrapper({
       const sessionTime = gameStartTime.current
         ? Math.round((Date.now() - gameStartTime.current) / 1000)
         : 0;
+
+      setFinalScore(score);
+      setShowGame(false);
+      setShowResult(true);
 
       trackGameEvent.gameComplete(id, name, score, sessionTime);
     } catch (error) {
@@ -156,6 +163,7 @@ export function GameWrapper({
         : 0;
 
       setShowGame(false);
+      setShowResult(false);
 
       // Track game exit
       trackGameEvent.gameExit(id, name, sessionTime);
@@ -174,6 +182,71 @@ export function GameWrapper({
     }
   };
 
+  // Handle share functionality
+  const handleShare = async () => {
+    try {
+      const shareText = `🎮 Just scored ${finalScore} points playing ${name}!\n\nPlay the game: ${window.location.href}`;
+
+      if (navigator.share) {
+        await navigator.share({
+          title: `${name} - Mini Game`,
+          text: shareText,
+          url: window.location.href,
+        });
+      } else {
+        // Fallback to clipboard
+        await navigator.clipboard.writeText(shareText);
+        // You could show a toast notification here
+        console.log('Share text copied to clipboard');
+      }
+
+      // Track share action using custom event
+      trackEvent('game_result_shared', {
+        game_id: id,
+        game_name: name,
+        score: finalScore,
+        coin_address: coinAddress,
+      });
+    } catch (error) {
+      console.error('Failed to share:', error);
+      sentryTracker.gameError(
+        error instanceof Error ? error : new Error('Failed to share result'),
+        {
+          game_id: id,
+          game_name: name,
+          coin_address: coinAddress,
+          action: 'share_result',
+        }
+      );
+    }
+  };
+
+  // Handle play again
+  const handlePlayAgain = () => {
+    try {
+      setShowResult(false);
+      setFinalScore(0);
+      handleGameStart();
+
+      // Track play again action using custom event
+      trackEvent('game_play_again', {
+        game_id: id,
+        game_name: name,
+        coin_address: coinAddress,
+      });
+    } catch (error) {
+      sentryTracker.gameError(
+        error instanceof Error ? error : new Error('Failed to restart game'),
+        {
+          game_id: id,
+          game_name: name,
+          coin_address: coinAddress,
+          action: 'play_again',
+        }
+      );
+    }
+  };
+
   useEffect(() => {
     if (!showGame || !timeoutSeconds) return;
 
@@ -182,13 +255,16 @@ export function GameWrapper({
       setRemainingTime((prev) => {
         if (prev <= 1) {
           try {
-            // Game timed out
+            // Game timed out - show result with score 0
             const sessionTime = gameStartTime.current
               ? Math.round((Date.now() - gameStartTime.current) / 1000)
               : 0;
 
-            trackGameEvent.gameExit(id, name, sessionTime);
+            setFinalScore(0);
             setShowGame(false);
+            setShowResult(true);
+
+            trackGameEvent.gameComplete(id, name, 0, sessionTime);
             gameStartTime.current = null;
           } catch (error) {
             sentryTracker.gameError(
@@ -220,6 +296,16 @@ export function GameWrapper({
           <div className="text-white/70">Loading...</div>
         </div>
       </div>
+    );
+  }
+
+  if (showResult) {
+    return (
+      <RoundResult
+        score={finalScore}
+        onShare={handleShare}
+        onPlayAgain={handlePlayAgain}
+      />
     );
   }
 
