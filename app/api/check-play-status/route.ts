@@ -86,9 +86,21 @@ export async function POST(request: NextRequest) {
       // Calculate minimum tokens: 0.001 * 10^decimals using BigInt to avoid floating-point precision issues
       // 0.001 = 1 / 1000, so we need 10^(decimals-3) tokens
       const exponent = Number(decimals) - 3;
+
+      // Helper function to calculate 10^n using BigInt to maintain precision for high decimals
+      const powerOfTenBigInt = (exp: number): bigint => {
+        if (exp <= 0) return BigInt(1);
+        let result = BigInt(1);
+        const base = BigInt(10);
+        for (let i = 0; i < exp; i++) {
+          result *= base;
+        }
+        return result;
+      };
+
       const minimumTokens =
         exponent >= 0
-          ? BigInt(10 ** exponent) // For decimals >= 3
+          ? powerOfTenBigInt(exponent) // For decimals >= 3
           : BigInt(1); // For decimals < 3, minimum is 1 unit
       const hasTokens = balance >= minimumTokens;
 
