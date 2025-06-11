@@ -26,9 +26,15 @@ export async function POST(request: Request) {
   try {
     const { fid, coinId, score } = await request.json();
 
-    if (!fid || !coinId || typeof score !== 'number') {
+    if (
+      !fid ||
+      !coinId ||
+      typeof score !== 'number' ||
+      !Number.isFinite(score) ||
+      score <= 0
+    ) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Missing required fields or invalid score' },
         { status: 400, headers }
       );
     }
@@ -53,7 +59,7 @@ export async function POST(request: Request) {
       {
         fid,
         coin_id: coinId,
-        score: 1,
+        score,
       },
     ]);
 
@@ -67,7 +73,7 @@ export async function POST(request: Request) {
 
     // Then, increment the player's points
     try {
-      await supabaseService.incrementPlayerPoints(Number(fid), 1);
+      await supabaseService.incrementPlayerPoints(Number(fid), score);
     } catch (error) {
       console.error('Error updating points:', error);
       return NextResponse.json(
