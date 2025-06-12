@@ -1,13 +1,40 @@
 import { NextResponse } from 'next/server';
 import { supabaseService } from '@/lib/supabase';
+import { FarcasterAuth } from '@/lib/auth';
+import { SecurityService } from '@/lib/security';
+import { RateLimiter } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   try {
+    // 1. Verify authentication (optional until SDK is upgraded to 0.0.61+)
+    let authenticatedFid: number | undefined;
+    try {
+      authenticatedFid = await FarcasterAuth.requireAuth(request);
+    } catch (error) {
+      console.warn(
+        'Authentication failed (optional until SDK upgrade):',
+        error
+      );
+      // TODO: Make authentication mandatory when SDK is upgraded to 0.0.61+
+    }
+
     const { fid } = await request.json();
 
-    // Validate that FID is provided and is a valid positive integer
+    // 2. If authenticated, verify the FID matches
+    if (authenticatedFid && fid !== authenticatedFid) {
+      console.error('FID mismatch:', {
+        requested: fid,
+        authenticated: authenticatedFid,
+      });
+      return NextResponse.json(
+        { error: 'Unauthorized: FID mismatch' },
+        { status: 403 }
+      );
+    }
+
+    // 3. Validate that FID is provided and is a valid positive integer
     if (
       !fid ||
       isNaN(Number(fid)) ||
@@ -22,6 +49,31 @@ export async function POST(request: Request) {
 
     const fidNum = Number(fid);
 
+    // 4. Check rate limit for sharing
+    const rateLimitResult = await RateLimiter.checkRateLimit(
+      `share-rank:${fidNum}`,
+      10, // 10 shares per hour max
+      3600 // 1 hour window
+    );
+
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        {
+          error: 'Rate limit exceeded',
+          retryAfter: rateLimitResult.reset,
+        },
+        { status: 429 }
+      );
+    }
+
+    // 5. Verify FID exists on Farcaster
+    const fidExists = await SecurityService.verifyFidExists(fidNum);
+    if (!fidExists) {
+      console.error('Invalid FID - does not exist on Farcaster:', fidNum);
+      return NextResponse.json({ error: 'Invalid FID' }, { status: 400 });
+    }
+
+    // 6. Check if player exists in our system
     const player = await supabaseService.getPlayerByFid(fidNum);
     if (!player || player.length === 0) {
       return NextResponse.json(
@@ -30,9 +82,33 @@ export async function POST(request: Request) {
       );
     }
 
+    // 7. Check daily points limit (sharing gives 1 point)
+    const dailyLimitResult = await RateLimiter.checkDailyPointsLimit(
+      fidNum,
+      1,
+      10000 // 10,000 points per day limit
+    );
+
+    if (!dailyLimitResult.success) {
+      return NextResponse.json(
+        {
+          error: 'Daily points limit exceeded',
+          limit: dailyLimitResult.limit,
+          remaining: dailyLimitResult.remaining,
+          resetAt: dailyLimitResult.reset,
+        },
+        { status: 429 }
+      );
+    }
+
+    // 8. Award the point
     await supabaseService.incrementPlayerPoints(fidNum, 1);
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({
+      success: true,
+      pointsAwarded: 1,
+      dailyPointsRemaining: dailyLimitResult.remaining,
+    });
   } catch (error) {
     console.error('Error awarding share points:', error);
     return NextResponse.json(
