@@ -37,6 +37,7 @@ interface GameProps {
   coinAddress: string;
   coinId: string;
   onRoundComplete?: (score: number) => void;
+  forceEnd?: boolean;
 }
 
 export function Game({
@@ -45,6 +46,7 @@ export function Game({
   coinAddress,
   coinId,
   onRoundComplete,
+  forceEnd = false,
 }: GameProps) {
   const [loading, setLoading] = useState(true);
   const [isGameOver, setIsGameOver] = useState(false);
@@ -96,6 +98,8 @@ export function Game({
 
       if (event.data && event.data.type === 'points-awarded') {
         const score = event.data.score;
+        console.log('🎯 Game: Points awarded message received:', score);
+
         try {
           await sdk.haptics.impactOccurred('medium');
         } catch (error) {
@@ -103,9 +107,24 @@ export function Game({
         }
 
         if (typeof score === 'number') {
-          setRoundScore(score);
+          // Accumulate points instead of overwriting
+          setRoundScore((prev) => {
+            const newScore = (prev || 0) + score;
+            console.log(
+              '🎯 Game: Accumulating score from',
+              prev,
+              'to',
+              newScore,
+              '(+' + score + ')'
+            );
+            return newScore;
+          });
         }
       } else if (event.data && event.data.type === 'game-over') {
+        console.log(
+          '🏁 Game: Game over message received, final score:',
+          roundScore
+        );
         setIsGameOver(true);
         onRoundComplete?.(roundScore || 0);
       }
@@ -216,9 +235,16 @@ export function Game({
       !hasPlayedBefore || (hasPlayedBefore && !hasTokens);
 
     if (shouldApplyTimeout) {
+      console.log('⏰ Game: Setting timeout for', timeoutSeconds, 'seconds');
       const timer = setTimeout(() => {
+        console.log('⏰ Game: Timeout reached, ending game');
         setIsGameOver(true);
-        onRoundComplete?.(roundScore || 0);
+        // Get the current score when timeout occurs
+        setRoundScore((currentScore) => {
+          console.log('⏰ Game: Final score at timeout:', currentScore);
+          onRoundComplete?.(currentScore || 0);
+          return currentScore;
+        });
       }, timeoutSeconds * 1000);
 
       return () => clearTimeout(timer);
@@ -233,6 +259,19 @@ export function Game({
     onRoundComplete,
     roundScore,
   ]);
+
+  // Handle forced game end from GameWrapper
+  useEffect(() => {
+    if (forceEnd && !isGameOver) {
+      console.log('🚨 Game: Forced to end by GameWrapper');
+      setIsGameOver(true);
+      setRoundScore((currentScore) => {
+        console.log('🚨 Game: Final score at forced end:', currentScore);
+        onRoundComplete?.(currentScore || 0);
+        return currentScore;
+      });
+    }
+  }, [forceEnd, isGameOver, onRoundComplete]);
 
   if (!id) {
     return (
