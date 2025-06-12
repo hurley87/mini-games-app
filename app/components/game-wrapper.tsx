@@ -247,6 +247,32 @@ export function GameWrapper({
     }
   };
 
+  // Handle exit to games list
+  const handleExit = () => {
+    try {
+      // Track exit action
+      trackEvent('game_result_exit', {
+        game_id: id,
+        game_name: name,
+        final_score: finalScore,
+        coin_address: coinAddress,
+      });
+
+      // Navigate to home/games list
+      window.location.href = '/';
+    } catch (error) {
+      sentryTracker.gameError(
+        error instanceof Error ? error : new Error('Failed to exit game'),
+        {
+          game_id: id,
+          game_name: name,
+          coin_address: coinAddress,
+          action: 'exit_result',
+        }
+      );
+    }
+  };
+
   useEffect(() => {
     if (!showGame || !timeoutSeconds) return;
 
@@ -305,6 +331,7 @@ export function GameWrapper({
         score={finalScore}
         onShare={handleShare}
         onPlayAgain={handlePlayAgain}
+        onExit={handleExit}
       />
     );
   }
