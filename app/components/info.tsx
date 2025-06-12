@@ -22,6 +22,7 @@ import { sdk } from '@farcaster/frame-sdk';
 import { Header } from './header';
 import { CoinLeaderboard } from './coin-leaderboard';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { PREMIUM_THRESHOLD } from '@/lib/config';
 
 // Create a public client for reading blockchain data
 const publicClient = createPublicClient({
@@ -71,7 +72,7 @@ export function Info({
     usePlayStatus();
   const { playerStats, isLoading: isLoadingStats } = usePlayerStats();
   const [hasCheckedStatus, setHasCheckedStatus] = useState(false);
-  const [buyAmount, setBuyAmount] = useState('0.001');
+  const [buyAmount, setBuyAmount] = useState('0.01');
   const [tokenDecimals, setTokenDecimals] = useState<number>(18); // Default to 18, will be fetched
   const { isConnected } = useAccount();
   const { connectors, connect } = useConnect();
@@ -93,20 +94,11 @@ export function Info({
       return; // Don't update if more than one decimal point
     }
 
-    // Allow common intermediate values during typing
-    if (sanitized === '0' || sanitized === '.' || sanitized === '0.') {
-      setBuyAmount(sanitized);
-      return;
-    }
-
     // Parse as number to validate
     const numValue = parseFloat(sanitized);
 
-    // Allow any valid positive number or NaN (for incomplete inputs like "0.00")
+    // Allow any valid positive number
     if (!isNaN(numValue) && numValue >= 0) {
-      setBuyAmount(sanitized);
-    } else if (isNaN(numValue) && sanitized.match(/^0\.0*$/)) {
-      // Allow partial decimal inputs like "0.0", "0.00", etc.
       setBuyAmount(sanitized);
     }
   };
@@ -114,8 +106,8 @@ export function Info({
   // Get validated buy amount for BuyCoinButton
   const getValidatedBuyAmount = () => {
     const numValue = parseFloat(buyAmount);
-    return !buyAmount || isNaN(numValue) || numValue < 0.001
-      ? '0.001'
+    return !buyAmount || isNaN(numValue) || numValue < 0.01
+      ? '0.01'
       : buyAmount;
   };
 
@@ -326,7 +318,8 @@ export function Info({
                     Premium Access Required
                   </h3>
                   <p className="text-xs text-amber-300 mt-1">
-                    You need at least 0.001 {symbol} tokens to play.
+                    You need at least {PREMIUM_THRESHOLD.toLocaleString()}{' '}
+                    {symbol} tokens to play.
                   </p>
                 </div>
               </div>
@@ -405,20 +398,18 @@ export function Info({
               <div className="flex flex-col gap-2">
                 <input
                   type="text"
-                  placeholder="0.001"
+                  placeholder="0.01"
                   value={buyAmount}
                   onChange={(e) => handleBuyAmountChange(e.target.value)}
                   onBlur={() => {
                     // Set to minimum if empty or invalid on blur
-                    if (!buyAmount || parseFloat(buyAmount) < 0.001) {
-                      setBuyAmount('0.001');
+                    if (!buyAmount || parseFloat(buyAmount) < 0.01) {
+                      setBuyAmount('0.01');
                     }
                   }}
                   className="w-full px-3 py-2 rounded-md text-black border-2 border-gray-300 focus:border-blue-500 focus:outline-none"
                 />
-                <div className="text-xs text-white/70">
-                  Minimum: 0.001 tokens
-                </div>
+                <div className="text-xs text-white/70">Minimum: 0.01 ETH</div>
                 <BuyCoinButton
                   coinAddress={coinAddress}
                   amount={getValidatedBuyAmount()}

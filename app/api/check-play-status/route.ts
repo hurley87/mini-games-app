@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseService } from '@/lib/supabase';
 import { Address, createPublicClient, http } from 'viem';
 import { base } from 'viem/chains';
+import { PREMIUM_THRESHOLD } from '@/lib/config';
 
 // Create a public client for reading blockchain data
 const publicClient = createPublicClient({
@@ -83,11 +84,8 @@ export async function POST(request: NextRequest) {
         }),
       ]);
 
-      // Calculate minimum tokens: 0.001 * 10^decimals using BigInt to avoid floating-point precision issues
-      // 0.001 = 1 / 1000, so we need 10^(decimals-3) tokens
-      const exponent = Number(decimals) - 3;
-
-      // Helper function to calculate 10^n using BigInt to maintain precision for high decimals
+      // Calculate minimum tokens: PREMIUM_THRESHOLD * 10^decimals using BigInt
+      // Helper function to calculate 10^n using BigInt
       const powerOfTenBigInt = (exp: number): bigint => {
         if (exp <= 0) return BigInt(1);
         let result = BigInt(1);
@@ -99,9 +97,7 @@ export async function POST(request: NextRequest) {
       };
 
       const minimumTokens =
-        exponent >= 0
-          ? powerOfTenBigInt(exponent) // For decimals >= 3
-          : BigInt(1); // For decimals < 3, minimum is 1 unit
+        BigInt(PREMIUM_THRESHOLD) * powerOfTenBigInt(Number(decimals));
       const hasTokens = balance >= minimumTokens;
 
       return NextResponse.json({

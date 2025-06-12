@@ -16,35 +16,17 @@ export function RoundResult({
   onShare,
   onExit,
 }: RoundResultProps) {
-  // Determine score tier for different animations/messages
-  const getScoreData = (score: number) => {
-    if (score >= 100)
-      return { tier: 'legendary', emoji: '🔥', message: 'Legendary!' };
-    if (score >= 50)
-      return { tier: 'amazing', emoji: '⭐', message: 'Amazing!' };
-    if (score >= 25)
-      return { tier: 'great', emoji: '🎉', message: 'Great job!' };
-    if (score >= 10)
-      return { tier: 'good', emoji: '👍', message: 'Nice work!' };
-    return { tier: 'tryagain', emoji: '💪', message: 'Keep trying!' };
-  };
-
-  const scoreData = getScoreData(score);
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md">
       <div className="text-center p-8 rounded-3xl bg-black/20 backdrop-blur-xl border border-white/20 shadow-2xl max-w-md w-full mx-4 space-y-8 animate-in fade-in-0 zoom-in-95 duration-500">
         {/* Animated emoji */}
-        <div className="text-6xl animate-bounce">{scoreData.emoji}</div>
+        <div className="text-6xl animate-bounce">⭐</div>
 
         {/* Title and score */}
         <div className="space-y-3">
           <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-400 animate-pulse">
             Round Complete!
           </h1>
-          <p className="text-lg text-white/80 font-medium">
-            {scoreData.message}
-          </p>
           <div className="relative">
             <div className="text-4xl font-bold text-white mb-2">
               {score.toLocaleString()}
