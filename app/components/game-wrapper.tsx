@@ -13,6 +13,7 @@ import { trackGameEvent, trackEvent } from '@/lib/posthog';
 import { sentryTracker, setSentryTags } from '@/lib/sentry';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { sdk } from '@farcaster/frame-sdk';
+import { TOKEN_MULTIPLIER } from '@/lib/config';
 
 interface GameWrapperProps {
   id: string;
@@ -200,7 +201,9 @@ export function GameWrapper({
             : finalScore >= 10
               ? '🎉'
               : '🎮';
-      const shareText = `${scoreEmoji} Just scored ${finalScore} points playing ${name}!\n\nThink you can beat my score? 🎯`;
+      const shareText = `${scoreEmoji} Just earned ${(
+        finalScore * TOKEN_MULTIPLIER
+      ).toLocaleString()} $${symbol} tokens playing ${name}!\n\nThink you can beat my score? 🎯`;
 
       // Use Farcaster SDK to compose cast
       await sdk.actions.composeCast({
@@ -292,6 +295,7 @@ export function GameWrapper({
         score={finalScore}
         onShare={handleShare}
         onExit={handleExit}
+        symbol={symbol}
       />
     );
   }
