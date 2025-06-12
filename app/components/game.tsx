@@ -9,10 +9,12 @@ import { base } from 'viem/chains';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { PREMIUM_THRESHOLD } from '@/lib/config';
 
+const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL!;
+
 // Create a public client for reading blockchain data
 const publicClient = createPublicClient({
   chain: base,
-  transport: http(),
+  transport: http(rpcUrl),
 });
 
 const ERC20_ABI = [

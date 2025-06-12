@@ -4,10 +4,12 @@ import { Address, createPublicClient, http } from 'viem';
 import { base } from 'viem/chains';
 import { PREMIUM_THRESHOLD } from '@/lib/config';
 
+const rpcUrl = process.env.RPC_URL!;
+
 // Create a public client for reading blockchain data
 const publicClient = createPublicClient({
   chain: base,
-  transport: http(),
+  transport: http(rpcUrl),
 });
 
 const ERC20_ABI = [

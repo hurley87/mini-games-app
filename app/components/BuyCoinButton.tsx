@@ -63,11 +63,11 @@ export function BuyCoinButton({
     <div className="flex flex-col gap-2">
       <button
         onClick={() => writeContract(data!.request)}
-        disabled={!data?.request || isPending || isConfirming}
+        disabled={isPending || isConfirming}
         className={`
           px-4 py-6 rounded-full font-medium shadow-xl shadow-purple-500/20
           ${
-            !data?.request || isPending || isConfirming
+            isPending || isConfirming
               ? 'bg-white/10 cursor-not-allowed'
               : 'bg-purple-600 hover:brightness-110'
           }
