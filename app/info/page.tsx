@@ -143,8 +143,8 @@ export default function InfoPage() {
                       Zora-Powered Tokens
                     </h3>
                     <p className="text-sm text-white/70">
-                      Every game deploys its own token on Zora L2, enabling
-                      instant trading and low fees
+                      Every game deploys its own token on Base using Zora,
+                      enabling instant trading and low fees
                     </p>
                   </div>
                 </div>
