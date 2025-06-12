@@ -6,7 +6,7 @@ import {
   useWriteContract,
   useWaitForTransactionReceipt,
 } from 'wagmi';
-import { Address } from 'viem';
+import { Address, parseEther } from 'viem';
 import { useAccount } from 'wagmi';
 import { useEffect } from 'react';
 
@@ -25,53 +25,13 @@ export function BuyCoinButton({
 }: BuyCoinButtonProps) {
   const { address } = useAccount();
 
-  // Calculate ETH amount in wei using string-based arithmetic to avoid floating-point precision issues
-  const calculateEthAmount = (ethAmount: string): bigint => {
-    // Remove leading/trailing whitespace and validate input
-    const cleanAmount = ethAmount.trim();
-
-    if (!cleanAmount || cleanAmount === '0' || cleanAmount === '0.') {
-      return BigInt(0);
-    }
-
-    // Check for valid decimal format (positive numbers only)
-    if (!/^\d+(\.\d+)?$/.test(cleanAmount)) {
-      return BigInt(0);
-    }
-
-    // Split into integer and decimal parts
-    const [integerPart = '0', decimalPart = ''] = cleanAmount.split('.');
-
-    // ETH always has 18 decimals
-    const ethDecimals = 18;
-
-    // Pad decimal part with zeros to match ETH decimals, or truncate if too long
-    let adjustedDecimalPart = decimalPart.padEnd(ethDecimals, '0');
-
-    // If input has more decimals than ETH supports, truncate (don't round to avoid precision loss)
-    if (adjustedDecimalPart.length > ethDecimals) {
-      adjustedDecimalPart = adjustedDecimalPart.slice(0, ethDecimals);
-    }
-
-    // Combine integer and decimal parts to create the full amount string
-    const fullAmountStr = integerPart + adjustedDecimalPart;
-
-    // Convert to BigInt, handling potential conversion errors
-    try {
-      const result = BigInt(fullAmountStr);
-      return result > BigInt(0) ? result : BigInt(0);
-    } catch {
-      return BigInt(0);
-    }
-  };
-
   // Create trade parameters
   const tradeParams = {
     direction: 'buy' as const,
     target: coinAddress as Address,
     args: {
       recipient: address as Address,
-      orderSize: calculateEthAmount(amount),
+      orderSize: parseEther(amount),
       minAmountOut: BigInt(0),
       tradeReferrer: '0xbD78783a26252bAf756e22f0DE764dfDcDa7733c' as Address,
     },
