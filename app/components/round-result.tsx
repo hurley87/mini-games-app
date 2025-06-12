@@ -31,8 +31,8 @@ export function RoundResult({
   const scoreData = getScoreData(score);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm">
-      <div className="text-center p-8 rounded-3xl bg-gradient-to-br from-purple-900/90 to-pink-900/90 backdrop-blur-lg border border-white/20 shadow-2xl max-w-md w-full mx-4 space-y-8 animate-in fade-in-0 zoom-in-95 duration-500">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md">
+      <div className="text-center p-8 rounded-3xl bg-black/20 backdrop-blur-xl border border-white/20 shadow-2xl max-w-md w-full mx-4 space-y-8 animate-in fade-in-0 zoom-in-95 duration-500">
         {/* Animated emoji */}
         <div className="text-6xl animate-bounce">{scoreData.emoji}</div>
 
@@ -64,14 +64,14 @@ export function RoundResult({
           <div className="flex justify-center gap-3">
             <button
               onClick={onShare}
-              className="flex items-center gap-2 px-6 py-3 text-sm font-semibold rounded-full bg-gradient-to-r from-purple-600 to-purple-700 text-white hover:from-purple-500 hover:to-purple-600 transition-all duration-200 transform hover:scale-105 hover:shadow-lg active:scale-95"
+              className="flex items-center gap-2 px-6 py-3 text-sm font-semibold rounded-full bg-purple-500/20 backdrop-blur-sm border border-purple-400/30 text-white hover:bg-purple-400/30 hover:border-purple-300/50 transition-all duration-200 transform hover:scale-105 hover:shadow-lg active:scale-95"
             >
               <Share2 className="w-4 h-4" />
               Share Score
             </button>
             <button
               onClick={onPlayAgain}
-              className="flex items-center gap-2 px-6 py-3 text-sm font-semibold rounded-full bg-gradient-to-r from-emerald-600 to-emerald-700 text-white hover:from-emerald-500 hover:to-emerald-600 transition-all duration-200 transform hover:scale-105 hover:shadow-lg active:scale-95"
+              className="flex items-center gap-2 px-6 py-3 text-sm font-semibold rounded-full bg-emerald-500/20 backdrop-blur-sm border border-emerald-400/30 text-white hover:bg-emerald-400/30 hover:border-emerald-300/50 transition-all duration-200 transform hover:scale-105 hover:shadow-lg active:scale-95"
             >
               <RotateCcw className="w-4 h-4" />
               Play Again
