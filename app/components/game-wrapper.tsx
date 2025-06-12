@@ -11,6 +11,7 @@ import { ArrowLeft, Clock } from 'lucide-react';
 import { Button } from './ui/button';
 import { trackGameEvent, trackEvent } from '@/lib/posthog';
 import { sentryTracker, setSentryTags } from '@/lib/sentry';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface GameWrapperProps {
   id: string;
@@ -318,7 +319,7 @@ export function GameWrapper({
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="flex flex-col items-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-2 border-gray-600 border-t-purple-500"></div>
+          <LoadingSpinner />
           <div className="text-white/70">Loading...</div>
         </div>
       </div>

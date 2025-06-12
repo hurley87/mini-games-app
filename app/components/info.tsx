@@ -21,6 +21,7 @@ import { formatCurrency, formatHolders, formatTokenBalance } from '@/lib/utils';
 import { sdk } from '@farcaster/frame-sdk';
 import { Header } from './header';
 import { CoinLeaderboard } from './coin-leaderboard';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 // Create a public client for reading blockchain data
 const publicClient = createPublicClient({
@@ -206,7 +207,7 @@ export function Info({
       <div className="min-h-screen bg-black flex items-center justify-center p-4">
         <div className="bg-black/20 backdrop-blur rounded-2xl shadow-xl p-8 text-center max-w-md border border-white/20">
           <div className="flex flex-col items-center space-y-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-2 border-gray-600 border-t-blue-400"></div>
+            <LoadingSpinner className="h-8 w-8" />
             <div className="text-white/70">Loading...</div>
           </div>
         </div>

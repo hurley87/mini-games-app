@@ -6,6 +6,7 @@ import { useAccount } from 'wagmi';
 import { useFarcasterContext } from '@/hooks/useFarcasterContext';
 import { Address, createPublicClient, http } from 'viem';
 import { base } from 'viem/chains';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 // Create a public client for reading blockchain data
 const publicClient = createPublicClient({
@@ -245,7 +246,7 @@ export function Game({
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="flex flex-col items-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-2 border-gray-600 border-t-purple-500"></div>
+          <LoadingSpinner />
           <div className="text-white/70">Loading...</div>
         </div>
       </div>
@@ -262,7 +263,7 @@ export function Game({
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center bg-black">
           <div className="flex flex-col items-center space-y-4">
-            <div className="animate-spin rounded-full h-12 w-12 border-2 border-gray-600 border-t-purple-500"></div>
+            <LoadingSpinner />
             <p className="text-white/70">Loading game...</p>
           </div>
         </div>
