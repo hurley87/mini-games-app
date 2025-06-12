@@ -4,6 +4,7 @@ import { useCoinLeaderboard } from '@/hooks/useCoinLeaderboard';
 import { useFarcasterContext } from '@/hooks/useFarcasterContext';
 import { Trophy, Medal, Crown, Share2 } from 'lucide-react';
 import { sdk } from '@farcaster/frame-sdk';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface CoinLeaderboardProps {
   coinId: string;
@@ -79,7 +80,7 @@ export function CoinLeaderboard({
     return (
       <div className="p-6 border-t border-gray-700">
         <div className="flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-2 border-gray-600 border-t-purple-400"></div>
+          <LoadingSpinner className="h-8 w-8" />
         </div>
       </div>
     );

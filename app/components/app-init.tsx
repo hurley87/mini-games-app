@@ -5,6 +5,7 @@ import { useAccount } from 'wagmi';
 import { useFarcasterContext } from '@/hooks/useFarcasterContext';
 import { trackGameEvent, identifyUser, setUserProperties } from '@/lib/posthog';
 import { setSentryUser, sentryTracker } from '@/lib/sentry';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 export function AppInit() {
   const { context, isReady } = useFarcasterContext({ autoAddFrame: true });
@@ -162,7 +163,7 @@ export function AppInit() {
     return (
       <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
         <div className="flex flex-col items-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-2 border-gray-600 border-t-purple-500"></div>
+          <LoadingSpinner />
           <div className="text-white/70">Loading...</div>
         </div>
       </div>
