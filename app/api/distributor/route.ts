@@ -208,7 +208,6 @@ async function processTransfers() {
   }
 }
 
-// Handle GET requests (for Vercel cron jobs)
 export async function GET() {
   return await processTransfers();
 }
