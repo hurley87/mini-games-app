@@ -95,6 +95,8 @@ export function Game({
 
       if (event.data && event.data.type === 'points-awarded') {
         const score = event.data.score;
+        console.log('🎯 Game: Points awarded message received:', score);
+
         try {
           await sdk.haptics.impactOccurred('medium');
         } catch (error) {
@@ -103,8 +105,13 @@ export function Game({
 
         if (typeof score === 'number') {
           setRoundScore(score);
+          console.log('🎯 Game: Round score set to:', score);
         }
       } else if (event.data && event.data.type === 'game-over') {
+        console.log(
+          '🏁 Game: Game over message received, final score:',
+          roundScore
+        );
         setIsGameOver(true);
         onRoundComplete?.(roundScore || 0);
       }
@@ -215,7 +222,12 @@ export function Game({
       !hasPlayedBefore || (hasPlayedBefore && !hasTokens);
 
     if (shouldApplyTimeout) {
+      console.log('⏰ Game: Setting timeout for', timeoutSeconds, 'seconds');
       const timer = setTimeout(() => {
+        console.log(
+          '⏰ Game: Timeout reached, ending game with score:',
+          roundScore
+        );
         setIsGameOver(true);
         onRoundComplete?.(roundScore || 0);
       }, timeoutSeconds * 1000);

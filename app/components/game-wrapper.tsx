@@ -11,6 +11,7 @@ import { ArrowLeft, Clock } from 'lucide-react';
 import { Button } from './ui/button';
 import { trackGameEvent, trackEvent } from '@/lib/posthog';
 import { sentryTracker, setSentryTags } from '@/lib/sentry';
+import { sdk } from '@farcaster/frame-sdk';
 
 interface GameWrapperProps {
   id: string;
@@ -51,6 +52,8 @@ export function GameWrapper({
 
   const handleRoundComplete = (score: number) => {
     try {
+      console.log('🎮 GameWrapper: Round complete with score:', score);
+
       const sessionTime = gameStartTime.current
         ? Math.round((Date.now() - gameStartTime.current) / 1000)
         : 0;
@@ -185,20 +188,21 @@ export function GameWrapper({
   // Handle share functionality
   const handleShare = async () => {
     try {
-      const shareText = `🎮 Just scored ${finalScore} points playing ${name}!\n\nPlay the game: ${window.location.href}`;
+      const scoreEmoji =
+        finalScore >= 50
+          ? '🔥'
+          : finalScore >= 25
+            ? '⭐'
+            : finalScore >= 10
+              ? '🎉'
+              : '🎮';
+      const shareText = `${scoreEmoji} Just scored ${finalScore} points playing ${name}!\n\nThink you can beat my score? 🎯`;
 
-      if (navigator.share) {
-        await navigator.share({
-          title: `${name} - Mini Game`,
-          text: shareText,
-          url: window.location.href,
-        });
-      } else {
-        // Fallback to clipboard
-        await navigator.clipboard.writeText(shareText);
-        // You could show a toast notification here
-        console.log('Share text copied to clipboard');
-      }
+      // Use Farcaster SDK to compose cast
+      await sdk.actions.composeCast({
+        text: shareText,
+        embeds: [window.location.href],
+      });
 
       // Track share action using custom event
       trackEvent('game_result_shared', {
@@ -273,6 +277,7 @@ export function GameWrapper({
     }
   };
 
+  // Timer display only - let Game component handle actual timeout logic
   useEffect(() => {
     if (!showGame || !timeoutSeconds) return;
 
@@ -280,31 +285,6 @@ export function GameWrapper({
     const interval = setInterval(() => {
       setRemainingTime((prev) => {
         if (prev <= 1) {
-          try {
-            // Game timed out - show result with score 0
-            const sessionTime = gameStartTime.current
-              ? Math.round((Date.now() - gameStartTime.current) / 1000)
-              : 0;
-
-            setFinalScore(0);
-            setShowGame(false);
-            setShowResult(true);
-
-            trackGameEvent.gameComplete(id, name, 0, sessionTime);
-            gameStartTime.current = null;
-          } catch (error) {
-            sentryTracker.gameError(
-              error instanceof Error
-                ? error
-                : new Error('Failed to handle game timeout'),
-              {
-                game_id: id,
-                game_name: name,
-                coin_address: coinAddress,
-                action: 'game_timeout',
-              }
-            );
-          }
           return 0;
         }
         return prev - 1;
@@ -312,7 +292,7 @@ export function GameWrapper({
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [showGame, timeoutSeconds, id, name, coinAddress]);
+  }, [showGame, timeoutSeconds]);
 
   if (isLoadingZoraData) {
     return (
