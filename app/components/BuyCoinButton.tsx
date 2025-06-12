@@ -14,7 +14,6 @@ interface BuyCoinButtonProps {
   coinAddress: string;
   amount?: string;
   symbol: string;
-  decimals: number;
   onSuccess?: () => void;
 }
 
@@ -22,18 +21,14 @@ export function BuyCoinButton({
   coinAddress,
   amount = '0.001',
   symbol,
-  decimals,
   onSuccess,
 }: BuyCoinButtonProps) {
   const { address } = useAccount();
 
-  // Calculate token amount in base units using string-based arithmetic to avoid floating-point precision issues
-  const calculateTokenAmount = (
-    tokenAmount: string,
-    tokenDecimals: number
-  ): bigint => {
+  // Calculate ETH amount in wei using string-based arithmetic to avoid floating-point precision issues
+  const calculateEthAmount = (ethAmount: string): bigint => {
     // Remove leading/trailing whitespace and validate input
-    const cleanAmount = tokenAmount.trim();
+    const cleanAmount = ethAmount.trim();
 
     if (!cleanAmount || cleanAmount === '0' || cleanAmount === '0.') {
       return BigInt(0);
@@ -47,12 +42,15 @@ export function BuyCoinButton({
     // Split into integer and decimal parts
     const [integerPart = '0', decimalPart = ''] = cleanAmount.split('.');
 
-    // Pad decimal part with zeros to match token decimals, or truncate if too long
-    let adjustedDecimalPart = decimalPart.padEnd(tokenDecimals, '0');
+    // ETH always has 18 decimals
+    const ethDecimals = 18;
 
-    // If input has more decimals than token supports, truncate (don't round to avoid precision loss)
-    if (adjustedDecimalPart.length > tokenDecimals) {
-      adjustedDecimalPart = adjustedDecimalPart.slice(0, tokenDecimals);
+    // Pad decimal part with zeros to match ETH decimals, or truncate if too long
+    let adjustedDecimalPart = decimalPart.padEnd(ethDecimals, '0');
+
+    // If input has more decimals than ETH supports, truncate (don't round to avoid precision loss)
+    if (adjustedDecimalPart.length > ethDecimals) {
+      adjustedDecimalPart = adjustedDecimalPart.slice(0, ethDecimals);
     }
 
     // Combine integer and decimal parts to create the full amount string
@@ -73,7 +71,7 @@ export function BuyCoinButton({
     target: coinAddress as Address,
     args: {
       recipient: address as Address,
-      orderSize: calculateTokenAmount(amount, decimals),
+      orderSize: calculateEthAmount(amount),
       minAmountOut: BigInt(0),
       tradeReferrer: '0xbD78783a26252bAf756e22f0DE764dfDcDa7733c' as Address,
     },
