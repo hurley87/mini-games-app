@@ -7,6 +7,7 @@ import { supabaseService } from '@/lib/supabase';
 import { getUserByFid } from '@/lib/neynar';
 import { SendNotificationRequest } from '@farcaster/frame-node';
 import { NextResponse } from 'next/server';
+import { TOKEN_MULTIPLIER } from '@/lib/config';
 
 // Route configuration
 export const runtime = 'nodejs';
@@ -114,7 +115,7 @@ async function processTransfers() {
           functionName: 'transfer',
           args: [
             playerWalletAddress as `0x${string}`,
-            BigInt(tokenCount) * BigInt(10 ** 18),
+            BigInt(tokenCount * TOKEN_MULTIPLIER) * BigInt(10 ** 18),
           ],
           account: account,
           chain: walletClient.chain,

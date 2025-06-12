@@ -228,32 +228,6 @@ export function GameWrapper({
     }
   };
 
-  // Handle play again
-  const handlePlayAgain = () => {
-    try {
-      setShowResult(false);
-      setFinalScore(0);
-      handleGameStart();
-
-      // Track play again action using custom event
-      trackEvent('game_play_again', {
-        game_id: id,
-        game_name: name,
-        coin_address: coinAddress,
-      });
-    } catch (error) {
-      sentryTracker.gameError(
-        error instanceof Error ? error : new Error('Failed to restart game'),
-        {
-          game_id: id,
-          game_name: name,
-          coin_address: coinAddress,
-          action: 'play_again',
-        }
-      );
-    }
-  };
-
   // Handle exit to games list
   const handleExit = () => {
     try {
@@ -316,7 +290,6 @@ export function GameWrapper({
       <RoundResult
         score={finalScore}
         onShare={handleShare}
-        onPlayAgain={handlePlayAgain}
         onExit={handleExit}
       />
     );

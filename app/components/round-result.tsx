@@ -1,20 +1,15 @@
 'use client';
 
-import { Share2, Home, RotateCcw } from 'lucide-react';
+import { Share2, Home } from 'lucide-react';
+import { TOKEN_MULTIPLIER } from '@/lib/config';
 
 interface RoundResultProps {
   score: number;
   onShare: () => void;
-  onPlayAgain: () => void;
   onExit?: () => void;
 }
 
-export function RoundResult({
-  score,
-  onShare,
-  onPlayAgain,
-  onExit,
-}: RoundResultProps) {
+export function RoundResult({ score, onShare, onExit }: RoundResultProps) {
   // Determine score tier for different animations/messages
   const getScoreData = (score: number) => {
     if (score >= 100)
@@ -64,17 +59,10 @@ export function RoundResult({
           <div className="flex justify-center gap-3">
             <button
               onClick={onShare}
-              className="flex items-center gap-2 px-6 py-3 text-sm font-semibold rounded-full bg-purple-500/20 backdrop-blur-sm border border-purple-400/30 text-white hover:bg-purple-400/30 hover:border-purple-300/50 transition-all duration-200 transform hover:scale-105 hover:shadow-lg active:scale-95"
+              className="flex items-center gap-2 px-6 py-3 text-sm font-semibold rounded-full bg-purple-500/20 backdrop-blur-sm border border-purple-400/30 text-white hover:bg-purple-400/30 hover:border-purple-300/50 transition-all duration-200 transform hover:scale-105 hover:shadow-lg active:scale-95 w-full"
             >
               <Share2 className="w-4 h-4" />
               Share Score
-            </button>
-            <button
-              onClick={onPlayAgain}
-              className="flex items-center gap-2 px-6 py-3 text-sm font-semibold rounded-full bg-emerald-500/20 backdrop-blur-sm border border-emerald-400/30 text-white hover:bg-emerald-400/30 hover:border-emerald-300/50 transition-all duration-200 transform hover:scale-105 hover:shadow-lg active:scale-95"
-            >
-              <RotateCcw className="w-4 h-4" />
-              Play Again
             </button>
           </div>
 
@@ -89,8 +77,9 @@ export function RoundResult({
         </div>
 
         {/* Fun footer message */}
-        <div className="text-xs text-white/50 font-medium">
-          {score >= 50 ? "You're on fire! 🔥" : 'Practice makes perfect! 💫'}
+        <div className="text-sm text-white/50 font-medium">
+          {(score * TOKEN_MULTIPLIER).toLocaleString()} tokens will be sent to
+          your wallet
         </div>
       </div>
     </div>
