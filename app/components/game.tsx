@@ -36,6 +36,7 @@ interface GameProps {
   coinAddress: string;
   coinId: string;
   onRoundComplete?: (score: number) => void;
+  forceEnd?: boolean;
 }
 
 export function Game({
@@ -44,6 +45,7 @@ export function Game({
   coinAddress,
   coinId,
   onRoundComplete,
+  forceEnd = false,
 }: GameProps) {
   const [loading, setLoading] = useState(true);
   const [isGameOver, setIsGameOver] = useState(false);
@@ -104,8 +106,18 @@ export function Game({
         }
 
         if (typeof score === 'number') {
-          setRoundScore(score);
-          console.log('🎯 Game: Round score set to:', score);
+          // Accumulate points instead of overwriting
+          setRoundScore((prev) => {
+            const newScore = (prev || 0) + score;
+            console.log(
+              '🎯 Game: Accumulating score from',
+              prev,
+              'to',
+              newScore,
+              '(+' + score + ')'
+            );
+            return newScore;
+          });
         }
       } else if (event.data && event.data.type === 'game-over') {
         console.log(
@@ -224,12 +236,14 @@ export function Game({
     if (shouldApplyTimeout) {
       console.log('⏰ Game: Setting timeout for', timeoutSeconds, 'seconds');
       const timer = setTimeout(() => {
-        console.log(
-          '⏰ Game: Timeout reached, ending game with score:',
-          roundScore
-        );
+        console.log('⏰ Game: Timeout reached, ending game');
         setIsGameOver(true);
-        onRoundComplete?.(roundScore || 0);
+        // Get the current score when timeout occurs
+        setRoundScore((currentScore) => {
+          console.log('⏰ Game: Final score at timeout:', currentScore);
+          onRoundComplete?.(currentScore || 0);
+          return currentScore;
+        });
       }, timeoutSeconds * 1000);
 
       return () => clearTimeout(timer);
@@ -244,6 +258,19 @@ export function Game({
     onRoundComplete,
     roundScore,
   ]);
+
+  // Handle forced game end from GameWrapper
+  useEffect(() => {
+    if (forceEnd && !isGameOver) {
+      console.log('🚨 Game: Forced to end by GameWrapper');
+      setIsGameOver(true);
+      setRoundScore((currentScore) => {
+        console.log('🚨 Game: Final score at forced end:', currentScore);
+        onRoundComplete?.(currentScore || 0);
+        return currentScore;
+      });
+    }
+  }, [forceEnd, isGameOver, onRoundComplete]);
 
   if (!id) {
     return (

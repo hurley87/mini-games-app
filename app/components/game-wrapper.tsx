@@ -48,6 +48,7 @@ export function GameWrapper({
   >(zoraData);
   const [isLoadingZoraData, setIsLoadingZoraData] = useState(false);
   const [remainingTime, setRemainingTime] = useState(timeoutSeconds);
+  const [forceGameEnd, setForceGameEnd] = useState(false);
   const gameStartTime = useRef<number | null>(null);
 
   const handleRoundComplete = (score: number) => {
@@ -142,6 +143,8 @@ export function GameWrapper({
     try {
       gameStartTime.current = Date.now();
       setShowGame(true);
+      setForceGameEnd(false); // Reset force end flag
+      setFinalScore(0); // Reset score
 
       // Track game start
       trackGameEvent.gameStart(id, name, coinAddress);
@@ -277,7 +280,7 @@ export function GameWrapper({
     }
   };
 
-  // Timer display only - let Game component handle actual timeout logic
+  // Timer with forced timeout after 10 seconds
   useEffect(() => {
     if (!showGame || !timeoutSeconds) return;
 
@@ -285,6 +288,9 @@ export function GameWrapper({
     const interval = setInterval(() => {
       setRemainingTime((prev) => {
         if (prev <= 1) {
+          // Signal the Game component to end itself
+          console.log('⏰ GameWrapper: Time up, signaling game to end');
+          setForceGameEnd(true);
           return 0;
         }
         return prev - 1;
@@ -292,7 +298,7 @@ export function GameWrapper({
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [showGame, timeoutSeconds]);
+  }, [showGame, timeoutSeconds, finalScore, id, name]);
 
   if (isLoadingZoraData) {
     return (
@@ -347,6 +353,7 @@ export function GameWrapper({
             coinAddress={coinAddress}
             coinId={coinId}
             onRoundComplete={handleRoundComplete}
+            forceEnd={forceGameEnd}
           />
         </div>
       </div>
