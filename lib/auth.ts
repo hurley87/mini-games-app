@@ -3,7 +3,7 @@ import { createClient } from '@farcaster/quick-auth';
 const quickAuthClient = createClient();
 
 export interface AuthTokenPayload {
-  sub: string; // FID as string from JWT
+  sub: string;
   exp: number;
   iat: number;
   iss: string;
