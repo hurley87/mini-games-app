@@ -1,6 +1,5 @@
 import { Header } from '@/app/components/header';
 import {
-  Gamepad2,
   Coins,
   Trophy,
   Wallet,
@@ -27,11 +26,6 @@ export default function InfoPage() {
       <div className="pt-16 pb-8">
         {/* Hero Section */}
         <div className="px-4 py-8 text-center border-b border-white/10">
-          <div className="flex justify-center mb-4">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center">
-              <Gamepad2 className="w-10 h-10 text-white" />
-            </div>
-          </div>
           <h1 className="text-3xl font-bold text-white mb-2">
             Mini Games Studio
           </h1>
@@ -39,31 +33,6 @@ export default function InfoPage() {
             Play onchain games, earn tokens, and compete with the Farcaster
             community
           </p>
-        </div>
-
-        {/* Quick Stats */}
-        <div className="grid grid-cols-3 gap-4 px-4 py-6 border-b border-white/10">
-          <div className="text-center">
-            <div className="flex justify-center mb-2">
-              <Gamepad2 className="w-6 h-6 text-purple-400" />
-            </div>
-            <div className="text-2xl font-bold text-white">50+</div>
-            <div className="text-xs text-white/60">Games</div>
-          </div>
-          <div className="text-center">
-            <div className="flex justify-center mb-2">
-              <Users className="w-6 h-6 text-blue-400" />
-            </div>
-            <div className="text-2xl font-bold text-white">10k+</div>
-            <div className="text-xs text-white/60">Players</div>
-          </div>
-          <div className="text-center">
-            <div className="flex justify-center mb-2">
-              <Coins className="w-6 h-6 text-emerald-400" />
-            </div>
-            <div className="text-2xl font-bold text-white">$1M+</div>
-            <div className="text-xs text-white/60">Volume</div>
-          </div>
         </div>
 
         <div className="px-4 space-y-8 py-8">
