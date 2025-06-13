@@ -55,6 +55,14 @@ export function WelcomeDialog({ trigger, onClose }: WelcomeDialogProps) {
     onClose?.();
   };
 
+  const handleOpenChange = (isOpen: boolean) => {
+    if (isOpen) {
+      setOpen(true);
+    } else {
+      handleClose();
+    }
+  };
+
   const content = (
     <DrawerContent className="max-h-[90vh] bg-gradient-to-b from-black via-zinc-900 to-black border-white/20">
       <DrawerHeader className="text-center pb-6">
@@ -206,10 +214,7 @@ export function WelcomeDialog({ trigger, onClose }: WelcomeDialogProps) {
 
       <DrawerFooter>
         <DrawerClose asChild>
-          <Button
-            onClick={handleClose}
-            className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 rounded-full transition-colors flex items-center justify-center gap-2"
-          >
+          <Button className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 rounded-full transition-colors flex items-center justify-center gap-2">
             {trigger ? 'Got It' : 'Start Playing'}
             <ArrowRight className="w-4 h-4" />
           </Button>
@@ -220,7 +225,7 @@ export function WelcomeDialog({ trigger, onClose }: WelcomeDialogProps) {
 
   if (trigger) {
     return (
-      <Drawer open={open} onOpenChange={setOpen}>
+      <Drawer open={open} onOpenChange={handleOpenChange}>
         <DrawerTrigger asChild>{trigger}</DrawerTrigger>
         {content}
       </Drawer>
@@ -228,7 +233,7 @@ export function WelcomeDialog({ trigger, onClose }: WelcomeDialogProps) {
   }
 
   return (
-    <Drawer open={open} onOpenChange={setOpen}>
+    <Drawer open={open} onOpenChange={handleOpenChange}>
       {content}
     </Drawer>
   );
