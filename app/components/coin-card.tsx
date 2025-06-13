@@ -221,11 +221,12 @@ export function CoinCard({ coin }: CoinCardProps) {
 
       {/* Post Actions */}
       <div className="flex items-center justify-center py-4 ">
-        Play {coin.name}, earn{' '}
-        <span onClick={handleViewCoin} className="text-purple-400">
-          ${coin.symbol}
-        </span>{' '}
-        tokens
+        <span
+          onClick={handleViewCoin}
+          className="text-purple-400 underline cursor-pointer"
+        >
+          Play {coin.name}, earn ${coin.symbol}
+        </span>
       </div>
     </div>
   );
