@@ -304,6 +304,14 @@
   resolved "https://registry.npmjs.org/@farcaster/frame-wagmi-connector/-/frame-wagmi-connector-0.0.33.tgz#61e714ac0e5ab3fd3810eb27f0a2d657b33c5f27"
   integrity sha512-rc/s29OtX1gLKFuYlRLNQX/G3lHtCdfIw2U3wFQ3TzE1pI5kuAywqC45sfRgnaMGa+1q6xtPf2xj6i5bKXfz7g==
 
+"@farcaster/quick-auth@0.0.5":
+  version "0.0.5"
+  resolved "https://registry.npmjs.org/@farcaster/quick-auth/-/quick-auth-0.0.5.tgz#580db82618b9db353cd25e8a8f4fd0f1cad4df31"
+  integrity sha512-Z8hWz/7c33zlmII2AJHja/Wz0C03mm2o+CEBtBylmiun1wC4FMgx1Fal699VQvBUG1lpcJ662WxuRNxKogktDw==
+  dependencies:
+    jose "^5.2.3"
+    zod "^3.25.1"
+
 "@farcaster/quick-auth@^0.0.6":
   version "0.0.6"
   resolved "https://registry.npmjs.org/@farcaster/quick-auth/-/quick-auth-0.0.6.tgz#f59583041ad3591afe4a27e3c196be11a7ab21fb"

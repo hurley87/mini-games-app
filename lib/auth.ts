@@ -3,7 +3,7 @@ import { createClient } from '@farcaster/quick-auth';
 const quickAuthClient = createClient();
 
 export interface AuthTokenPayload {
-  sub: string;
+  sub: number;
   exp: number;
   iat: number;
   iss: string;
@@ -35,7 +35,7 @@ export class FarcasterAuth {
           'localhost:3000',
       });
 
-      return payload as AuthTokenPayload;
+      return payload as unknown as AuthTokenPayload;
     } catch (error) {
       console.error('Token verification error:', error);
       throw new Error('Invalid or expired authentication token');
@@ -49,9 +49,9 @@ export class FarcasterAuth {
    */
   static async getFidFromAuth(authHeader: string): Promise<number> {
     const payload = await this.verifyQuickAuthToken(authHeader);
-    const fid = parseInt(payload.sub, 10);
+    const fid = payload.sub;
 
-    if (isNaN(fid) || fid <= 0) {
+    if (fid <= 0) {
       throw new Error('Invalid FID in token');
     }
 
