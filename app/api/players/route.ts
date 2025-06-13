@@ -10,6 +10,7 @@ export async function POST(request: Request) {
     let authenticatedFid: number | undefined;
     try {
       authenticatedFid = await FarcasterAuth.requireAuth(request);
+      console.log('authenticatedFid', authenticatedFid);
     } catch (error) {
       console.warn(
         'Authentication failed (optional until SDK upgrade):',
@@ -76,6 +77,7 @@ export async function POST(request: Request) {
     // 6. Check if we need to return new player flag
     const url = new URL(request.url);
     const includeNewFlag = url.searchParams.get('includeNewFlag') === 'true';
+    console.log('includeNewFlag', includeNewFlag);
 
     if (includeNewFlag) {
       const result = await supabaseService.upsertPlayerWithNewFlag(userData);
