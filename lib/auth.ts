@@ -65,7 +65,6 @@ export class FarcasterAuth {
    */
   static async requireAuth(request: Request): Promise<number> {
     const authHeader = request.headers.get('Authorization');
-    console.log('authHeader', authHeader);
 
     if (!authHeader) {
       throw new Error('Missing authorization header');
