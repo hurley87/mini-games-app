@@ -138,7 +138,7 @@ export function AppInit() {
         if (isNewPlayer && playerDataSaved && isValidSharerFid) {
           if (sharerFid !== user.fid) {
             try {
-              const response = await fetch('/api/referral', {
+              const response = await sdk.quickAuth.fetch('/api/referral', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
