@@ -51,7 +51,6 @@ function getPageName(pathname: string): string {
   if (pathname === '/leaderboard') return 'Leaderboard';
   if (pathname === '/info') return 'Info';
   if (pathname.startsWith('/coins/')) return 'Game';
-  if (pathname.startsWith('/info/')) return 'Game Info';
 
   // Convert pathname to readable format
   return pathname

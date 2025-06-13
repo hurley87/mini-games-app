@@ -1,12 +1,44 @@
 import { NextResponse } from 'next/server';
 import { supabaseService } from '@/lib/supabase';
+import { FarcasterAuth } from '@/lib/auth';
+import { SecurityService } from '@/lib/security';
+import { RateLimiter } from '@/lib/rate-limit';
 
 export async function POST(request: Request) {
   try {
+    const authenticatedFid = await FarcasterAuth.requireAuth(request);
+
     const userData = await request.json();
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('userData', userData);
+
+    // Verify the FID from the request body matches the authenticated FID
+    if (Number(userData.fid) !== authenticatedFid) {
+      console.error('FID mismatch:', {
+        requested: userData.fid,
+        authenticated: authenticatedFid,
+      });
+      return NextResponse.json(
+        { error: 'Unauthorized: FID mismatch' },
+        { status: 403 }
+      );
     }
+
+    // Check rate limit
+    const rateLimitResult = await RateLimiter.checkRateLimit(
+      `players:${authenticatedFid}`,
+      10, // 10 requests per hour
+      3600 // 1 hour window
+    );
+
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        {
+          error: 'Rate limit exceeded',
+          retryAfter: rateLimitResult.reset,
+        },
+        { status: 429 }
+      );
+    }
+
     // Validate required fields
     if (
       !userData.fid ||
@@ -21,7 +53,13 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check if we need to return new player flag
+    // Verify FID exists on Farcaster
+    const fidExists = await SecurityService.verifyFidExists(userData.fid);
+    if (!fidExists) {
+      console.error('Invalid FID - does not exist on Farcaster:', userData.fid);
+      return NextResponse.json({ error: 'Invalid FID' }, { status: 400 });
+    }
+
     const url = new URL(request.url);
     const includeNewFlag = url.searchParams.get('includeNewFlag') === 'true';
 
@@ -36,9 +74,12 @@ export async function POST(request: Request) {
       return NextResponse.json(data);
     }
   } catch (error) {
-    console.error('Error upserting user:', error);
+    if ((error as Error).message.includes('Unauthorized')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    console.error('Error creating player:', error);
     return NextResponse.json(
-      { error: 'Failed to upsert user' },
+      { error: 'Failed to create player' },
       { status: 500 }
     );
   }

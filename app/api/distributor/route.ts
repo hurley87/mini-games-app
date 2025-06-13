@@ -4,7 +4,6 @@ import {
   getWalletAccount,
 } from '@/lib/clients';
 import { supabaseService } from '@/lib/supabase';
-import { getUserByFid } from '@/lib/neynar';
 import { SendNotificationRequest } from '@farcaster/frame-node';
 import { NextResponse } from 'next/server';
 import { TOKEN_MULTIPLIER } from '@/lib/config';
@@ -59,42 +58,25 @@ async function processTransfers() {
 
       const walletClient = createClientForWallet(account);
 
-      let player = await supabaseService.getPlayerByFid(fid);
-      let playerWalletAddress = player?.[0]?.wallet_address;
+      const player = await supabaseService.getPlayerByFid(fid);
 
-      if (!player || player.length === 0 || !playerWalletAddress) {
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('Player info missing, fetching from Neynar');
-        }
-        try {
-          const user = await getUserByFid(fid);
-          if (user) {
-            const wallet = user.verifications?.[0];
-            await supabaseService.upsertPlayer({
-              fid,
-              name: user.display_name || user.username,
-              pfp: user.pfp_url,
-              username: user.username,
-              wallet_address: wallet || '',
-            });
-            player = await supabaseService.getPlayerByFid(fid);
-            playerWalletAddress = wallet || player?.[0]?.wallet_address;
-          }
-        } catch (err) {
-          console.error('Error fetching player from Neynar:', err);
-        }
+      if (!player || player.length === 0) {
+        return NextResponse.json({
+          success: false,
+          error: 'Player not found',
+        });
       }
+
+      const playerWalletAddress = player?.[0]?.wallet_address;
 
       if (!playerWalletAddress) {
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('Player wallet address not found');
-        }
-        continue;
+        return NextResponse.json({
+          success: false,
+          error: 'Player wallet address not found',
+        });
       }
 
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('playerWalletAddress', playerWalletAddress);
-      }
+      console.log('playerWalletAddress', playerWalletAddress);
 
       try {
         // Transfer tokens using ERC-20 transfer function

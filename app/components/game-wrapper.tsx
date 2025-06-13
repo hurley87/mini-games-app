@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Info } from './info';
 import { Game } from './game';
 import { RoundResult } from './round-result';
+import { GameFinished } from './game-finished';
 import { getCoin } from '@zoralabs/coins-sdk';
 import { base } from 'viem/chains';
 import { ZoraCoinData, Creator } from '@/lib/types';
@@ -52,6 +53,10 @@ export function GameWrapper({
   const [remainingTime, setRemainingTime] = useState(timeoutSeconds);
   const [forceGameEnd, setForceGameEnd] = useState(false);
   const gameStartTime = useRef<number | null>(null);
+  const [isCreatingScore, setIsCreatingScore] = useState(false);
+  const [isScoreCreated, setIsScoreCreated] = useState(false);
+  const [gameFinished, setGameFinished] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const handleRoundComplete = (score: number) => {
     try {
@@ -63,7 +68,7 @@ export function GameWrapper({
 
       setFinalScore(score);
       setShowGame(false);
-      setShowResult(true);
+      setGameFinished(true);
 
       trackGameEvent.gameComplete(id, name, score, sessionTime);
     } catch (error) {
@@ -258,6 +263,65 @@ export function GameWrapper({
     }
   };
 
+  const handleCreateScore = async () => {
+    const response = await sdk.quickAuth.fetch(
+      `${process.env.NEXT_PUBLIC_URL}/api/award`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          coinId: coinId,
+          score: finalScore,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error(
+          'Award service is unavailable. Please try again later.'
+        );
+      }
+
+      if (response.status === 400) {
+        try {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Bad request from server.');
+        } catch (e) {
+          console.log('🎮 GameWrapper: Error data:', e);
+          throw new Error('You can only save your score once.');
+        }
+      }
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+  };
+
+  const handleSaveScore = async () => {
+    setIsCreatingScore(true);
+    setSaveError(null);
+    try {
+      await handleCreateScore();
+      setIsScoreCreated(true);
+      setShowResult(true);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'An unknown error occurred.';
+      setSaveError(errorMessage);
+      console.error('Failed to save score:', error);
+      sentryTracker.gameError(
+        error instanceof Error ? error : new Error('Failed to save score'),
+        {
+          game_id: id,
+          game_name: name,
+          coin_address: coinAddress,
+          action: 'create_score',
+        }
+      );
+    } finally {
+      setIsCreatingScore(false);
+    }
+  };
+
   // Timer with forced timeout after 10 seconds
   useEffect(() => {
     if (!showGame || !timeoutSeconds) return;
@@ -296,6 +360,21 @@ export function GameWrapper({
         onShare={handleShare}
         onExit={handleExit}
         symbol={symbol}
+      />
+    );
+  }
+
+  if (gameFinished) {
+    return (
+      <GameFinished
+        score={finalScore}
+        symbol={symbol}
+        onSaveScore={handleSaveScore}
+        isSaving={isCreatingScore}
+        isSaved={isScoreCreated}
+        error={saveError}
+        onShare={handleShare}
+        onExit={handleExit}
       />
     );
   }

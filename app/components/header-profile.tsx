@@ -18,10 +18,9 @@ import {
   Share2,
   Info as InfoIcon,
 } from 'lucide-react';
-import { useState } from 'react';
 import { useFarcasterContext } from '@/hooks/useFarcasterContext';
 import { toast } from 'sonner';
-import { useAccount } from 'wagmi';
+import { useAccount, useConnect } from 'wagmi';
 import Link from 'next/link';
 import { trackGameEvent } from '@/lib/posthog';
 import { sentryTracker } from '@/lib/sentry';
@@ -30,64 +29,50 @@ import { sdk } from '@farcaster/frame-sdk';
 export function HeaderProfile() {
   const { context, isLoading } = useFarcasterContext();
   const { address } = useAccount();
-  const [isConnecting, setIsConnecting] = useState(false);
-
-  const handleConnect = async () => {
-    setIsConnecting(true);
-    trackGameEvent.navigationClick('connect_wallet', 'header_profile');
-
-    try {
-      // Call distributor API
-      const response = await fetch('/api/distributor', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (data.success) {
+  const {
+    connect,
+    connectors,
+    isPending: isConnecting,
+  } = useConnect({
+    mutation: {
+      onSuccess(data) {
         toast.success('Connected successfully!');
         trackGameEvent.userLogin(
           context?.user?.fid || 0,
           context?.user?.username || 'anonymous',
-          address
+          data.accounts[0] ?? address
         );
-      } else {
-        throw new Error(data.error || 'Failed to connect');
-      }
-    } catch (error) {
-      console.error('Failed to connect:', error);
-      toast.error('Failed to connect');
+      },
+      onError(error: unknown) {
+        console.error('Failed to connect:', error);
+        toast.error('Failed to connect');
 
-      trackGameEvent.error(
-        'connection_error',
-        'Failed to connect to distributor',
-        {
+        trackGameEvent.error('connection_error', 'Failed to connect wallet', {
           error: error instanceof Error ? error.message : 'Unknown error',
-        }
-      );
+        });
 
-      sentryTracker.apiError(
-        error instanceof Error
-          ? error
-          : new Error('Failed to connect to distributor'),
-        {
-          endpoint: '/api/distributor',
-          method: 'POST',
-          status_code:
-            error instanceof Error && 'status' in error
-              ? (error as unknown as { status: number }).status
-              : undefined,
-        }
-      );
-    } finally {
-      setIsConnecting(false);
+        sentryTracker.userActionError(
+          error instanceof Error
+            ? error
+            : new Error('Failed to connect wallet'),
+          {
+            action: 'connect_wallet',
+            element: 'connect_button',
+            page: 'header_profile',
+          }
+        );
+      },
+    },
+  });
+
+  // Trigger wagmi connect flow when user presses the button
+  const handleConnect = () => {
+    trackGameEvent.navigationClick('connect_wallet', 'header_profile');
+
+    if (connectors && connectors.length > 0) {
+      connect({ connector: connectors[0] });
+    } else {
+      toast.error('No wallet connectors available');
     }
   };
 
@@ -155,7 +140,9 @@ export function HeaderProfile() {
       trackGameEvent.navigationClick('info', 'header_profile');
     } catch (error) {
       sentryTracker.userActionError(
-        error instanceof Error ? error : new Error('Failed to track navigation'),
+        error instanceof Error
+          ? error
+          : new Error('Failed to track navigation'),
         {
           action: 'navigate_info',
           element: 'navigation_link',

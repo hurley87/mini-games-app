@@ -1,19 +1,41 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useAccount } from 'wagmi';
 import { useFarcasterContext } from '@/hooks/useFarcasterContext';
-import { trackGameEvent, identifyUser, setUserProperties } from '@/lib/posthog';
+import {
+  trackGameEvent,
+  identifyUser,
+  setUserProperties,
+  trackEvent,
+} from '@/lib/posthog';
 import { setSentryUser, sentryTracker } from '@/lib/sentry';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { sdk } from '@farcaster/frame-sdk';
 
 export function AppInit() {
   const { context, isReady } = useFarcasterContext({ autoAddFrame: true });
   const { address } = useAccount();
 
+  // Avoid triggering the saveUser routine multiple times which can lead to 429 errors
+  // Keep track of the last user that was persisted so we do not spam the endpoint
+  const hasPersistedRef = useRef<{
+    fid: number;
+    wallet: string;
+  } | null>(null);
+
   useEffect(() => {
     const saveUser = async () => {
-      if (!context || !address) {
+      // Ensure we have the required data before continuing
+      if (!context?.user || !address) {
+        return;
+      }
+
+      // Skip if this user/wallet combination has already been persisted in this session
+      if (
+        hasPersistedRef.current?.fid === context.user.fid &&
+        hasPersistedRef.current?.wallet === address
+      ) {
         return;
       }
 
@@ -64,13 +86,16 @@ export function AppInit() {
         let playerDataSaved = false;
 
         try {
-          const response = await fetch('/api/players?includeNewFlag=true', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(userData),
-          });
+          const response = await sdk.quickAuth.fetch(
+            '/api/players?includeNewFlag=true',
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(userData),
+            }
+          );
 
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -89,50 +114,92 @@ export function AppInit() {
             is_new_player: isNewPlayer,
           });
         } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message : 'Unknown error';
-          trackGameEvent.error('api_error', 'Failed to save user data', {
-            error: errorMessage,
-          });
-          sentryTracker.apiError(
-            error instanceof Error ? error : new Error(errorMessage),
-            {
-              endpoint: '/api/players',
-              method: 'POST',
-            }
-          );
-          isNewPlayer = false;
-        }
-
-        if (playerDataSaved && isValidSharerFid && sharerFid !== user.fid) {
-          try {
-            const response = await fetch('/api/referral', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                sharerFid: sharerFid,
-                playerFid: user.fid,
-              }),
+          if (
+            error instanceof TypeError &&
+            error.message.includes('Load failed')
+          ) {
+            const errorMessage = `Farcaster authentication failed. This may be due to a network issue or a browser extension blocking the request. Please check your connection and try again. Details: ${error.message}`;
+            console.error(errorMessage);
+            trackEvent('farcaster_auth_failed', {
+              fid: user.fid,
+              wallet_address: address,
+              error: error.message,
             });
-
-            if (!response.ok) {
-              throw new Error(
-                `HTTP ${response.status}: ${response.statusText}`
-              );
-            }
-          } catch (error) {
+            sentryTracker.authError(errorMessage, {
+              fid: user?.fid,
+              username: user?.username,
+            });
+          } else if (
+            error instanceof Error &&
+            (error.message.includes('SignIn.RejectedByUser') ||
+              error.message.includes('user_rejected_request'))
+          ) {
+            trackEvent('sign_in_rejected', {
+              fid: user.fid,
+              wallet_address: address,
+            });
+          } else {
             const errorMessage =
               error instanceof Error ? error.message : 'Unknown error';
-            trackGameEvent.error('api_error', 'Failed to process referral', {
+            trackGameEvent.error('api_error', 'Failed to save user data', {
               error: errorMessage,
             });
             sentryTracker.apiError(
               error instanceof Error ? error : new Error(errorMessage),
               {
-                endpoint: '/api/referral',
+                endpoint: '/api/players',
                 method: 'POST',
               }
             );
+          }
+          isNewPlayer = false;
+        }
+
+        // Mark as persisted to avoid duplicate requests regardless of success or failure
+        hasPersistedRef.current = { fid: user.fid, wallet: address };
+
+        if (isNewPlayer && playerDataSaved && isValidSharerFid) {
+          if (sharerFid !== user.fid) {
+            try {
+              const response = await sdk.quickAuth.fetch('/api/referral', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  sharerFid: sharerFid,
+                  playerFid: user.fid,
+                }),
+              });
+
+              if (response.ok) {
+                // Track successful referral
+                trackEvent('referral_success', {
+                  sharer_fid: sharerFid,
+                  player_fid: user.fid,
+                });
+              } else {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `HTTP ${response.status}`);
+              }
+            } catch (error) {
+              const errorMessage =
+                error instanceof Error ? error.message : 'Unknown error';
+              trackGameEvent.error(
+                'referral_error',
+                'Failed to process referral',
+                {
+                  error: errorMessage,
+                  sharer_fid: sharerFid,
+                  player_fid: user.fid,
+                }
+              );
+              sentryTracker.apiError(
+                error instanceof Error ? error : new Error(errorMessage),
+                {
+                  endpoint: '/api/referral',
+                  method: 'POST',
+                }
+              );
+            }
           }
         }
       } else {
@@ -148,15 +215,9 @@ export function AppInit() {
       }
     };
 
-    saveUser().catch((error) => {
-      sentryTracker.authError(
-        error instanceof Error ? error : new Error('Failed to save user'),
-        {
-          fid: context?.user?.fid,
-          username: context?.user?.username,
-        }
-      );
-    });
+    if (context && address) {
+      saveUser();
+    }
   }, [context, address]);
 
   if (!isReady) {

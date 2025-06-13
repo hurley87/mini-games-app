@@ -6,27 +6,28 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const searchParams = request.nextUrl.searchParams;
+  const fid = searchParams.get('fid');
+  const coinId = searchParams.get('coinId');
+  const coinAddress = searchParams.get('coinAddress');
 
-  // Parse URL manually
-  const url = new URL(request.url);
-  const fid = url.searchParams.get('fid');
-  const coinId = url.searchParams.get('coinId');
-
-  // Debug logs
   if (process.env.NODE_ENV !== 'production') {
-    console.log('API Route - Full URL:', request.url);
-    console.log('API Route - Params:', params);
-    console.log('API Route - URL Search Params:', url.searchParams.toString());
-    console.log('API Route - fid:', fid);
-    console.log('API Route - coinId:', coinId);
+    console.log('id', id);
+    console.log('fid', fid);
+    console.log('coinId', coinId);
+    console.log('coinAddress', coinAddress);
   }
 
-  // Validate required parameters
-  if (!fid || !coinId) {
-    return NextResponse.json(
-      { error: 'Missing required parameters: fid and buildId are required' },
-      { status: 400 }
-    );
+  if (!id) {
+    return NextResponse.json({ error: 'Missing build ID' }, { status: 400 });
+  }
+
+  if (!fid) {
+    return NextResponse.json({ error: 'Missing FID' }, { status: 400 });
+  }
+
+  if (!coinId) {
+    return NextResponse.json({ error: 'Missing coinId' }, { status: 400 });
   }
 
   try {
@@ -44,22 +45,9 @@ export async function GET(
     <script>
       window.awardPoints = async function(score) {
         try {
-          const response = await fetch('${process.env.NEXT_PUBLIC_URL}/api/award', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              fid: '${fid}',
-              coinId: '${coinId}',
-              score: score
-            })
-          });
-          if (!response.ok) {
-            console.error('Failed to award points:', await response.text());
-          } else {
             if (window.parent && window.parent !== window) {
               window.parent.postMessage({ type: 'points-awarded', score }, '*');
             }
-          }
         } catch (error) {
           console.error('Error awarding points:', error);
         }
