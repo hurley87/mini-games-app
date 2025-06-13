@@ -134,7 +134,7 @@ export function WelcomeDialog({ trigger, onClose }: WelcomeDialogProps) {
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-white/5 rounded-lg p-3 border border-white/10">
               <Coins className="w-5 h-5 text-emerald-400 mb-1" />
-              <p className="text-xs font-medium text-white">Zora Tokens</p>
+              <p className="text-xs font-medium text-white">Tokens</p>
               <p className="text-xs text-white/60">Trade on Base</p>
             </div>
             <div className="bg-white/5 rounded-lg p-3 border border-white/10">
@@ -197,12 +197,6 @@ export function WelcomeDialog({ trigger, onClose }: WelcomeDialogProps) {
                     <CheckCircle className="w-3 h-3 text-emerald-400" />
                     <span className="text-xs text-white/80">
                       Priority access
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="w-3 h-3 text-emerald-400" />
-                    <span className="text-xs text-white/80">
-                      Exclusive tournaments
                     </span>
                   </div>
                 </div>
