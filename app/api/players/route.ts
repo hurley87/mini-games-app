@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     }
 
     // 2. If authenticated, verify the FID matches
-    if (authenticatedFid && userData.fid !== authenticatedFid) {
+    if (authenticatedFid && Number(userData.fid) !== authenticatedFid) {
       console.error('FID mismatch:', {
         requested: userData.fid,
         authenticated: authenticatedFid,

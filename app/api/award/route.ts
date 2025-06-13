@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     const { fid, coinId, score } = await request.json();
 
     // 2. If authenticated, verify the FID matches
-    if (authenticatedFid && fid !== authenticatedFid) {
+    if (authenticatedFid && Number(fid) !== authenticatedFid) {
       console.error('FID mismatch:', {
         requested: fid,
         authenticated: authenticatedFid,
@@ -112,7 +112,32 @@ export async function POST(request: Request) {
       );
     }
 
-    // 7. Check daily points limit
+    // 7. Verify the game exists
+    const { data: coinExists, error: coinCheckError } = await supabaseService
+      .from('coins')
+      .select('id')
+      .eq('id', coinId)
+      .single();
+
+    if (coinCheckError || !coinExists) {
+      console.error('Coin not found:', coinId, coinCheckError);
+      return NextResponse.json(
+        { error: 'Coin not found' },
+        { status: 404, headers }
+      );
+    }
+
+    // 8. Verify the player has actually played the game
+    const hasPlayed = await SecurityService.verifyGamePlay(fid, coinId);
+    if (!hasPlayed) {
+      console.error('Player has not played this game:', { fid, coinId });
+      return NextResponse.json(
+        { error: 'Must play the game before earning points' },
+        { status: 400, headers }
+      );
+    }
+
+    // 9. Check daily points limit before any database writes
     const dailyLimitResult = await RateLimiter.checkDailyPointsLimit(
       fid,
       score,
@@ -131,32 +156,25 @@ export async function POST(request: Request) {
       );
     }
 
-    // 8. Verify the game exists
-    const { data: coinExists, error: coinCheckError } = await supabaseService
-      .from('coins')
-      .select('id')
-      .eq('id', coinId)
-      .single();
-
-    if (coinCheckError || !coinExists) {
-      console.error('Coin not found:', coinId, coinCheckError);
+    // 10. Increment the player's points
+    try {
+      await supabaseService.incrementPlayerPoints(Number(fid), score);
+    } catch (error) {
+      // NOTE: If this fails, the daily limit was consumed without points being awarded.
+      // A compensation mechanism (e.g., a background job to refund the daily limit)
+      // would be needed for full robustness, but is out of scope for this immediate fix.
+      console.error('Error updating points, but daily limit was consumed:', {
+        error,
+        fid,
+        score,
+      });
       return NextResponse.json(
-        { error: 'Coin not found' },
-        { status: 404, headers }
+        { error: 'Failed to update points' },
+        { status: 500, headers }
       );
     }
 
-    // 9. Verify the player has actually played the game
-    const hasPlayed = await SecurityService.verifyGamePlay(fid, coinId);
-    if (!hasPlayed) {
-      console.error('Player has not played this game:', { fid, coinId });
-      return NextResponse.json(
-        { error: 'Must play the game before earning points' },
-        { status: 400, headers }
-      );
-    }
-
-    // 10. Save the score to the scores table
+    // 11. Save the score to the scores table (after successful point increment)
     const { error: scoreError } = await supabaseService.from('scores').insert([
       {
         fid,
@@ -167,22 +185,14 @@ export async function POST(request: Request) {
     ]);
 
     if (scoreError) {
-      console.error('Error saving score:', scoreError);
-      return NextResponse.json(
-        { error: 'Failed to save score' },
-        { status: 500, headers }
-      );
-    }
-
-    // 11. Increment the player's points
-    try {
-      await supabaseService.incrementPlayerPoints(Number(fid), score);
-    } catch (error) {
-      console.error('Error updating points:', error);
-      return NextResponse.json(
-        { error: 'Failed to update points' },
-        { status: 500, headers }
-      );
+      // This is a non-critical error, as the user has received their points.
+      // We should log it for monitoring.
+      console.error('Failed to save score log after awarding points:', {
+        scoreError,
+        fid,
+        coinId,
+        score,
+      });
     }
 
     return NextResponse.json(

@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     const { sharerFid, playerFid } = await request.json();
 
     // 2. If authenticated, the authenticated user should be the new player (playerFid)
-    if (authenticatedFid && playerFid !== authenticatedFid) {
+    if (authenticatedFid && Number(playerFid) !== authenticatedFid) {
       console.error('FID mismatch:', {
         requested: playerFid,
         authenticated: authenticatedFid,

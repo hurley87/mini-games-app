@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     const { fid } = await request.json();
 
     // 2. If authenticated, verify the FID matches
-    if (authenticatedFid && fid !== authenticatedFid) {
+    if (authenticatedFid && Number(fid) !== authenticatedFid) {
       console.error('FID mismatch:', {
         requested: fid,
         authenticated: authenticatedFid,
