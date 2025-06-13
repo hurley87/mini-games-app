@@ -276,24 +276,34 @@ export function GameWrapper({
       }
     );
 
-    if (!response.ok) {
-      if (response.status === 404) {
-        throw new Error(
-          'Award service is unavailable. Please try again later.'
-        );
-      }
-
-      if (response.status === 400) {
-        try {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Bad request from server.');
-        } catch (e) {
-          console.log('🎮 GameWrapper: Error data:', e);
-          throw new Error('You can only save your score once.');
-        }
-      }
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    if (response.ok) {
+      return; // Success case
     }
+
+    // Handle error cases
+    let errorMessage: string | null = null;
+    try {
+      const errorData = await response.json();
+      if (errorData.error) {
+        errorMessage = errorData.error;
+      }
+    } catch (e) {
+      // JSON parsing failed or no 'error' field in response
+      console.error('Could not parse error response:', e);
+    }
+
+    if (errorMessage) {
+      throw new Error(errorMessage);
+    }
+
+    // Fallback to status text if no JSON error message is found
+    if (response.status === 404) {
+      throw new Error('Award service is unavailable. Please try again later.');
+    }
+
+    throw new Error(
+      `An unexpected error occurred: ${response.status} ${response.statusText}`
+    );
   };
 
   const handleSaveScore = async () => {
