@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useAccount } from 'wagmi';
 import { useFarcasterContext } from '@/hooks/useFarcasterContext';
 import { trackGameEvent, identifyUser, setUserProperties } from '@/lib/posthog';
@@ -11,9 +11,25 @@ export function AppInit() {
   const { context, isReady } = useFarcasterContext({ autoAddFrame: true });
   const { address } = useAccount();
 
+  // Avoid triggering the saveUser routine multiple times which can lead to 429 errors
+  // Keep track of the last user that was persisted so we do not spam the endpoint
+  const hasPersistedRef = useRef<{
+    fid: number;
+    wallet: string;
+  } | null>(null);
+
   useEffect(() => {
     const saveUser = async () => {
-      if (!context || !address) {
+      // Ensure we have the required data before continuing
+      if (!context?.user || !address) {
+        return;
+      }
+
+      // Skip if this user/wallet combination has already been persisted in this session
+      if (
+        hasPersistedRef.current?.fid === context.user.fid &&
+        hasPersistedRef.current?.wallet === address
+      ) {
         return;
       }
 
@@ -103,6 +119,9 @@ export function AppInit() {
           );
           isNewPlayer = false;
         }
+
+        // Mark as persisted to avoid duplicate requests regardless of success or failure
+        hasPersistedRef.current = { fid: user.fid, wallet: address };
 
         if (playerDataSaved && isValidSharerFid && sharerFid !== user.fid) {
           try {
