@@ -29,27 +29,11 @@ export async function POST(request: Request) {
   try {
     const authenticatedFid = await FarcasterAuth.requireAuth(request);
 
-    const { fid, coinId, score } = await request.json();
-
-    console.log('fid', fid);
-    console.log('coinId', coinId);
-    console.log('score', score);
-
-    // 2. Verify the FID matches
-    if (Number(fid) !== authenticatedFid) {
-      console.error('FID mismatch:', {
-        requested: fid,
-        authenticated: authenticatedFid,
-      });
-      return NextResponse.json(
-        { error: 'Unauthorized: FID mismatch' },
-        { status: 403, headers }
-      );
-    }
+    const { coinId, score } = await request.json();
 
     // 3. Basic input validation
     if (
-      !fid ||
+      !authenticatedFid ||
       !coinId ||
       typeof score !== 'number' ||
       !Number.isFinite(score) ||
@@ -62,9 +46,12 @@ export async function POST(request: Request) {
     }
 
     // 4. Verify FID exists on Farcaster
-    const fidExists = await SecurityService.verifyFidExists(fid);
+    const fidExists = await SecurityService.verifyFidExists(authenticatedFid);
     if (!fidExists) {
-      console.error('Invalid FID - does not exist on Farcaster:', fid);
+      console.error(
+        'Invalid FID - does not exist on Farcaster:',
+        authenticatedFid
+      );
       return NextResponse.json(
         { error: 'Invalid FID' },
         { status: 400, headers }
@@ -72,9 +59,10 @@ export async function POST(request: Request) {
     }
 
     // 4.5 Ensure the player exists in the database to prevent FK violations
-    const existingPlayer = await supabaseService.getPlayerByFid(fid);
+    const existingPlayer =
+      await supabaseService.getPlayerByFid(authenticatedFid);
     if (!existingPlayer || existingPlayer.length === 0) {
-      console.error('Player not found in database:', fid);
+      console.error('Player not found in database:', authenticatedFid);
       return NextResponse.json(
         {
           error:
@@ -86,7 +74,7 @@ export async function POST(request: Request) {
 
     // 5. Check general rate limit
     const rateLimitResult = await RateLimiter.checkRateLimit(
-      `award:${fid}`,
+      `award:${authenticatedFid}`,
       60, // 60 requests per hour
       3600 // 1 hour window
     );
@@ -145,7 +133,7 @@ export async function POST(request: Request) {
 
     // 9. Check daily points limit before any database writes
     const dailyLimitResult = await RateLimiter.checkDailyPointsLimit(
-      fid,
+      authenticatedFid,
       score,
       1000 // 1,000 points per day limit
     );
@@ -164,14 +152,17 @@ export async function POST(request: Request) {
 
     // 10. Increment the player's points
     try {
-      await supabaseService.incrementPlayerPoints(Number(fid), score);
+      await supabaseService.incrementPlayerPoints(
+        Number(authenticatedFid),
+        score
+      );
     } catch (error) {
       // NOTE: If this fails, the daily limit was consumed without points being awarded.
       // A compensation mechanism (e.g., a background job to refund the daily limit)
       // would be needed for full robustness, but is out of scope for this immediate fix.
       console.error('Error updating points, but daily limit was consumed:', {
         error,
-        fid,
+        authenticatedFid,
         score,
       });
       return NextResponse.json(
@@ -183,7 +174,7 @@ export async function POST(request: Request) {
     // 11. Save the score to the scores table (after successful point increment)
     const { error: scoreError } = await supabaseService.from('scores').insert([
       {
-        fid,
+        fid: authenticatedFid,
         coin_id: coinId,
         score,
         created_at: new Date().toISOString(),
@@ -195,7 +186,7 @@ export async function POST(request: Request) {
       // We should log it for monitoring.
       console.error('Failed to save score log after awarding points:', {
         scoreError,
-        fid,
+        fid: authenticatedFid,
         coinId,
         score,
       });
