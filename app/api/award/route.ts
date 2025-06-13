@@ -31,6 +31,10 @@ export async function POST(request: Request) {
 
     const { fid, coinId, score } = await request.json();
 
+    console.log('fid', fid);
+    console.log('coinId', coinId);
+    console.log('score', score);
+
     // 2. Verify the FID matches
     if (Number(fid) !== authenticatedFid) {
       console.error('FID mismatch:', {
