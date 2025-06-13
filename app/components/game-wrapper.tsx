@@ -277,6 +277,12 @@ export function GameWrapper({
     );
 
     if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error(
+          'Award service is unavailable. Please try again later.'
+        );
+      }
+
       if (response.status === 400) {
         try {
           const errorData = await response.json();

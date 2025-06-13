@@ -86,9 +86,6 @@ export function AppInit() {
         let playerDataSaved = false;
 
         try {
-          // TODO: When upgrading to @farcaster/frame-sdk@0.0.61+, use sdk.quickAuth.getToken()
-          // For now, authentication will be handled in the embedded game iframe
-
           const response = await sdk.quickAuth.fetch(
             '/api/players?includeNewFlag=true',
             {
