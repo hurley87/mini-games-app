@@ -35,12 +35,12 @@ export function HeaderProfile() {
     isPending: isConnecting,
   } = useConnect({
     mutation: {
-      onSuccess(data: any) {
+      onSuccess(data) {
         toast.success('Connected successfully!');
         trackGameEvent.userLogin(
           context?.user?.fid || 0,
           context?.user?.username || 'anonymous',
-          data.account ?? address
+          data.accounts[0] ?? address
         );
       },
       onError(error: unknown) {
