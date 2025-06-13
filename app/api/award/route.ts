@@ -7,7 +7,7 @@ import { SecurityService } from '@/lib/security';
 export const dynamic = 'force-dynamic';
 
 // Add CORS headers for preflight requests
-export async function OPTIONS(request: Request) {
+export async function OPTIONS() {
   return new Response(null, {
     status: 200,
     headers: {

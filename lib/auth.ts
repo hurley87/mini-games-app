@@ -3,7 +3,7 @@ import { createClient } from '@farcaster/quick-auth';
 const quickAuthClient = createClient();
 
 export interface AuthTokenPayload {
-  sub: number; // FID
+  sub: string; // FID as string from JWT
   exp: number;
   iat: number;
   iss: string;
@@ -49,7 +49,13 @@ export class FarcasterAuth {
    */
   static async getFidFromAuth(authHeader: string): Promise<number> {
     const payload = await this.verifyQuickAuthToken(authHeader);
-    return payload.sub;
+    const fid = parseInt(payload.sub, 10);
+
+    if (isNaN(fid) || fid <= 0) {
+      throw new Error('Invalid FID in token');
+    }
+
+    return fid;
   }
 
   /**

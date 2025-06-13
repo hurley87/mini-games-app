@@ -11,7 +11,6 @@ import {
 } from '@/lib/posthog';
 import { setSentryUser, sentryTracker } from '@/lib/sentry';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { sdk } from '@farcaster/frame-sdk';
 
 export function AppInit() {
   const { context, isReady } = useFarcasterContext({ autoAddFrame: true });

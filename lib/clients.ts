@@ -28,7 +28,8 @@ export async function getWalletAccount(
   return createViemAccount({
     walletId,
     address,
-    privy,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    privy: privy as any,
   });
 }
 
