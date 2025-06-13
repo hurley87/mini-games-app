@@ -264,6 +264,14 @@ export function GameWrapper({
   };
 
   const handleCreateScore = async () => {
+    const scoreToSave = Math.min(finalScore, 15);
+
+    if (finalScore > 15) {
+      console.warn(
+        `User score of ${finalScore} exceeded the limit and was capped at 15.`
+      );
+    }
+
     const response = await sdk.quickAuth.fetch(
       `${process.env.NEXT_PUBLIC_URL}/api/award`,
       {
@@ -271,7 +279,7 @@ export function GameWrapper({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           coinId: coinId,
-          score: finalScore,
+          score: scoreToSave,
         }),
       }
     );
@@ -302,7 +310,12 @@ export function GameWrapper({
     try {
       await handleCreateScore();
       setIsScoreCreated(true);
-      setShowResult(true);
+
+      if (finalScore > 15) {
+        setSaveError('Your score was capped at 15 but saved successfully!');
+      } else {
+        setShowResult(true);
+      }
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'An unknown error occurred.';
