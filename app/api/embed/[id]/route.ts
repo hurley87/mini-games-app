@@ -45,22 +45,9 @@ export async function GET(
     <script>
       window.awardPoints = async function(score) {
         try {
-          const response = await fetch('${process.env.NEXT_PUBLIC_URL}/api/award', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              fid: '${fid}',
-              coinId: '${coinId}',
-              score: score
-            })
-          });
-          if (!response.ok) {
-            console.error('Failed to award points:', await response.text());
-          } else {
             if (window.parent && window.parent !== window) {
               window.parent.postMessage({ type: 'points-awarded', score }, '*');
             }
-          }
         } catch (error) {
           console.error('Error awarding points:', error);
         }

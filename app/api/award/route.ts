@@ -27,24 +27,12 @@ export async function POST(request: Request) {
   };
 
   try {
-    // 1. Verify authentication (optional until SDK is upgraded to 0.0.61+)
-    let authenticatedFid: number | undefined;
-    try {
-      authenticatedFid = await FarcasterAuth.requireAuth(request);
-    } catch (error) {
-      console.warn(
-        'Authentication failed (optional until SDK upgrade):',
-        error
-      );
-      // TODO: Make authentication mandatory when SDK is upgraded to 0.0.61+
-      // For now, continue without authentication but with stricter validation
-    }
+    const authenticatedFid = await FarcasterAuth.requireAuth(request);
 
     const { fid, coinId, score } = await request.json();
-    console.log('fid', fid);
 
-    // 2. If authenticated, verify the FID matches
-    if (authenticatedFid && Number(fid) !== authenticatedFid) {
+    // 2. Verify the FID matches
+    if (Number(fid) !== authenticatedFid) {
       console.error('FID mismatch:', {
         requested: fid,
         authenticated: authenticatedFid,
@@ -218,6 +206,12 @@ export async function POST(request: Request) {
       { headers }
     );
   } catch (error) {
+    if ((error as Error).message.includes('Unauthorized')) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401, headers }
+      );
+    }
     console.error('Error in award endpoint:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
