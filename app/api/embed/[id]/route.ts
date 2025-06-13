@@ -43,96 +43,26 @@ export async function GET(
 
     const injectedScript = `
     <script>
-      // Import the Farcaster SDK
-      let sdkModule;
-      
-      async function loadSDK() {
-        if (!sdkModule) {
-          sdkModule = await import('https://esm.sh/@farcaster/frame-sdk@latest');
-        }
-        return sdkModule.sdk;
-      }
-      
       window.awardPoints = async function(score) {
         try {
-          // Load SDK and get authentication token
-          const sdk = await loadSDK();
-
-          const headers = { 
-            'Content-Type': 'application/json'
-          };
-          
-          const response = await sdk.quickAuth.fetch('${process.env.NEXT_PUBLIC_URL}/api/award', {
+          const response = await fetch('${process.env.NEXT_PUBLIC_URL}/api/award', {
             method: 'POST',
-            headers: headers,
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              fid: ${fid},
+              fid: '${fid}',
               coinId: '${coinId}',
               score: score
             })
           });
-          
           if (!response.ok) {
-            const errorData = await response.json();
-            console.error('Failed to award points:', errorData);
-            
-            // Show user-friendly error messages
-            if (response.status === 429) {
-              alert('You have reached your daily points limit. Try again tomorrow!');
-            } else if (response.status === 401) {
-              alert('Please sign in to earn points.');
-            } else {
-              alert('Failed to award points. Please try again.');
-            }
+            console.error('Failed to award points:', await response.text());
           } else {
-            const data = await response.json();
             if (window.parent && window.parent !== window) {
               window.parent.postMessage({ type: 'points-awarded', score }, '*');
-            }
-            
-            // Show remaining daily points if available
-            if (data.dailyPointsRemaining !== undefined) {
-              console.log('Daily points remaining:', data.dailyPointsRemaining);
             }
           }
         } catch (error) {
           console.error('Error awarding points:', error);
-          alert('Network error. Please check your connection and try again.');
-        }
-      };
-      
-      // Override game over to ensure game is recorded before awarding points
-      const originalGameOver = window.gameOver;
-      window.gameOver = async function() {
-        // Record that the game was played
-        try {
-          const sdk = await loadSDK();
-          
-          const headers = { 
-            'Content-Type': 'application/json'
-          };
-          
-          await sdk.quickAuth.fetch('${process.env.NEXT_PUBLIC_URL}/api/record-play', {
-            method: 'POST',
-            headers: headers,
-            body: JSON.stringify({
-              fid: ${fid},
-              gameId: '${coinId}',
-              coinAddress: '${coinAddress || ''}'
-            })
-          });
-        } catch (error) {
-          console.error('Failed to record game play:', error);
-        }
-        
-        // Call original game over if it exists
-        if (originalGameOver && typeof originalGameOver === 'function') {
-          originalGameOver();
-        }
-        
-        // Notify parent that game is over
-        if (window.parent && window.parent !== window) {
-          window.parent.postMessage({ type: 'game-over' }, '*');
         }
       };
     </script>
