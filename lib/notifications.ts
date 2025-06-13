@@ -69,7 +69,7 @@ export async function sendFrameNotification({
         notificationId: crypto.randomUUID(),
         title,
         body,
-        targetUrl: `${targetUrl}/info/${gameId}`,
+        targetUrl: `${targetUrl}/coins/${gameId}`,
         tokens: [notification.token],
       } satisfies SendNotificationRequest),
     });

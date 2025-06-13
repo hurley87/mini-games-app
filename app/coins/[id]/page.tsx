@@ -27,7 +27,7 @@ export async function generateMetadata({
         action: {
           type: 'launch_frame',
           name: coin.name,
-          url: `${appUrl}/info/${id}`,
+          url: `${appUrl}/coins/${id}`,
           splashImageUrl: `${appUrl}/splash.jpg`,
           splashBackgroundColor: '#000000',
         },
@@ -55,7 +55,7 @@ export async function generateMetadata({
         action: {
           type: 'launch_frame',
           name: 'Token Not Found',
-          url: `${appUrl}/info/${id}`,
+          url: `${appUrl}/coins/${id}`,
           splashImageUrl: `${appUrl}/splash.jpg`,
           splashBackgroundColor: '#000000',
         },
