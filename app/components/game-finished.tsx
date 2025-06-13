@@ -33,7 +33,7 @@ export function GameFinished({
         symbol={symbol}
         onShare={onShare}
         onExit={onExit}
-        isError
+        error={error}
       />
     );
   }
