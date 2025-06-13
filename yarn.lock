@@ -269,10 +269,10 @@
     ox "^0.4.4"
     zod "^3.24.1"
 
-"@farcaster/frame-core@0.1.8":
-  version "0.1.8"
-  resolved "https://registry.npmjs.org/@farcaster/frame-core/-/frame-core-0.1.8.tgz#8c56c2ef083c80ff146fa785e8367a54f0c1a515"
-  integrity sha512-Y0JATQXa/iaqH3pCp8Dby4iCQbwqw7JJaGtfzUazdr7R+zs3EDP8DYQCkqJu6iGjE9gqgecB+b+DOZpnqMTDNw==
+"@farcaster/frame-core@0.1.10":
+  version "0.1.10"
+  resolved "https://registry.npmjs.org/@farcaster/frame-core/-/frame-core-0.1.10.tgz#84f231f9d811dab409cf3018231f80e1e20fe9c1"
+  integrity sha512-4PG0mHrk5VmDtt/HH+vs3xDaWY/KVdZLUxlFetkD/szn1NNtHUxM43vCUE/qgulmlV53x8GPBbkwHzcA7Dmpuw==
   dependencies:
     "@solana/web3.js" "^1.98.2"
     ox "^0.4.4"
@@ -288,12 +288,12 @@
     ox "^0.4.4"
     zod "^3.24.1"
 
-"@farcaster/frame-sdk@^0.0.61":
-  version "0.0.61"
-  resolved "https://registry.npmjs.org/@farcaster/frame-sdk/-/frame-sdk-0.0.61.tgz#5c98f8a0f3de0abdb554f9c4dbff90f15f1baf4e"
-  integrity sha512-FvujZY/Xw7Ar6V4iFkZWK6b2s2oyuEWxB5Pb9KyNr5jSq8lGdF8HfsO+gWFBej+X13aEOQG1btm7nEvwhYrebQ==
+"@farcaster/frame-sdk@^0.0.63":
+  version "0.0.63"
+  resolved "https://registry.npmjs.org/@farcaster/frame-sdk/-/frame-sdk-0.0.63.tgz#22870bc7f60fdaa6d151740d36e623e504c200dc"
+  integrity sha512-rT8Di/9+SNkQ+aDmMrAsEdPCnhf+pPmzzp8KOsv5rp4A1xG27zrCV+TjHsNM3Rj9WO794vugS0xloXaXHzErsA==
   dependencies:
-    "@farcaster/frame-core" "0.1.8"
+    "@farcaster/frame-core" "0.1.10"
     "@farcaster/quick-auth" "^0.0.6"
     comlink "^4.4.2"
     eventemitter3 "^5.0.1"
