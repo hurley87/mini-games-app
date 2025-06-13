@@ -3,6 +3,7 @@ import { supabaseService } from '@/lib/supabase';
 import { FarcasterAuth } from '@/lib/auth';
 import { RateLimiter } from '@/lib/rate-limit';
 import { SecurityService } from '@/lib/security';
+import { getUserByFid } from '@/lib/neynar';
 
 export const dynamic = 'force-dynamic';
 
@@ -55,6 +56,15 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: 'Invalid FID' },
         { status: 400, headers }
+      );
+    }
+
+    // Check user's Farcaster score
+    const user = await getUserByFid(Number(authenticatedFid));
+    if (!user || user.score < 0.5) {
+      return NextResponse.json(
+        { error: "User's Farcaster score is too low to earn points." },
+        { status: 403, headers }
       );
     }
 

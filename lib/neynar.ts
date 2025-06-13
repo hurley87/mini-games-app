@@ -64,6 +64,13 @@ export const getUserByFid = async (fid: number) => {
   }
 
   const json = await res.json();
+  const user = json?.users?.[0];
+
+  if (user) {
+    const { follower_count = 0, following_count = 0 } = user;
+    user.score = follower_count / (following_count + 1);
+  }
+
   // v2 endpoint returns { users: [...] }
-  return json?.users?.[0];
+  return user;
 };
