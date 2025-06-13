@@ -1,4 +1,5 @@
 import { GameWrapper } from '@/app/components/game-wrapper';
+import { WelcomeDialog } from '@/app/components/welcome-dialog';
 import { supabaseService } from '@/lib/supabase';
 import { Metadata } from 'next';
 
@@ -96,17 +97,20 @@ export default async function GamePage({
   }
 
   return (
-    <GameWrapper
-      id={buildId}
-      symbol={coin.symbol}
-      name={coin.name}
-      description={build.tutorial || 'An exciting game to play!'}
-      coinAddress={coinAddress}
-      imageUrl={coin.image}
-      zoraData={coin.zoraData}
-      fid={coin.fid}
-      creator={creator}
-      coinId={coin.id}
-    />
+    <div>
+      <GameWrapper
+        id={buildId}
+        symbol={coin.symbol}
+        name={coin.name}
+        description={build.tutorial || 'An exciting game to play!'}
+        coinAddress={coinAddress}
+        imageUrl={coin.image}
+        zoraData={coin.zoraData}
+        fid={coin.fid}
+        creator={creator}
+        coinId={coin.id}
+      />
+      <WelcomeDialog />
+    </div>
   );
 }
