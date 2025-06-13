@@ -117,18 +117,28 @@ export function AppInit() {
             is_new_player: isNewPlayer,
           });
         } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message : 'Unknown error';
-          trackGameEvent.error('api_error', 'Failed to save user data', {
-            error: errorMessage,
-          });
-          sentryTracker.apiError(
-            error instanceof Error ? error : new Error(errorMessage),
-            {
-              endpoint: '/api/players',
-              method: 'POST',
-            }
-          );
+          if (
+            error instanceof Error &&
+            error.message.includes('SignIn.RejectedByUser')
+          ) {
+            trackEvent('sign_in_rejected', {
+              fid: user.fid,
+              wallet_address: address,
+            });
+          } else {
+            const errorMessage =
+              error instanceof Error ? error.message : 'Unknown error';
+            trackGameEvent.error('api_error', 'Failed to save user data', {
+              error: errorMessage,
+            });
+            sentryTracker.apiError(
+              error instanceof Error ? error : new Error(errorMessage),
+              {
+                endpoint: '/api/players',
+                method: 'POST',
+              }
+            );
+          }
           isNewPlayer = false;
         }
 
