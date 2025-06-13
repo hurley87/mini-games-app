@@ -19,6 +19,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { fid, gameId, coinAddress } = await request.json();
+    console.log('fid', fid);
 
     // 2. If authenticated, verify the FID matches
     if (authenticatedFid && Number(fid) !== authenticatedFid) {
