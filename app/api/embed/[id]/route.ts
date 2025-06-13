@@ -57,26 +57,10 @@ export async function GET(
         try {
           // Load SDK and get authentication token
           const sdk = await loadSDK();
-          let authToken;
-          
-          try {
-            // Get Quick Auth token
-            const tokenData = await sdk.quickAuth.getToken();
-            authToken = tokenData.token;
-          } catch (authError) {
-            console.error('Failed to get auth token:', authError);
-            // Fallback to no authentication for backward compatibility
-            // In production, you should fail here
-          }
-          
+
           const headers = { 
             'Content-Type': 'application/json'
           };
-          
-          // Add auth header if we have a token
-          if (authToken) {
-            headers['Authorization'] = 'Bearer ' + authToken;
-          }
           
           const response = await sdk.quickAuth.fetch('${process.env.NEXT_PUBLIC_URL}/api/award', {
             method: 'POST',
@@ -123,14 +107,6 @@ export async function GET(
         // Record that the game was played
         try {
           const sdk = await loadSDK();
-          let authToken;
-          
-          try {
-            const tokenData = await sdk.quickAuth.getToken();
-            authToken = tokenData.token;
-          } catch (authError) {
-            console.error('Failed to get auth token for game record:', authError);
-          }
           
           const headers = { 
             'Content-Type': 'application/json'
