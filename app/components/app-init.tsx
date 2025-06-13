@@ -119,7 +119,8 @@ export function AppInit() {
         } catch (error) {
           if (
             error instanceof Error &&
-            error.message.includes('SignIn.RejectedByUser')
+            (error.message.includes('SignIn.RejectedByUser') ||
+              error.message.includes('user_rejected_request'))
           ) {
             trackEvent('sign_in_rejected', {
               fid: user.fid,
