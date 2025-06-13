@@ -4,10 +4,11 @@ import { useState, useEffect, useRef } from 'react';
 import { Info } from './info';
 import { Game } from './game';
 import { RoundResult } from './round-result';
+import { GameFinished } from './game-finished';
 import { getCoin } from '@zoralabs/coins-sdk';
 import { base } from 'viem/chains';
 import { ZoraCoinData, Creator } from '@/lib/types';
-import { ArrowLeft, Clock, Trophy } from 'lucide-react';
+import { ArrowLeft, Clock } from 'lucide-react';
 import { Button } from './ui/button';
 import { trackGameEvent, trackEvent } from '@/lib/posthog';
 import { sentryTracker, setSentryTags } from '@/lib/sentry';
@@ -280,6 +281,28 @@ export function GameWrapper({
     }
   };
 
+  const handleSaveScore = async () => {
+    setIsCreatingScore(true);
+    try {
+      await handleCreateScore();
+      setIsScoreCreated(true);
+    } catch (error) {
+      console.error('Failed to save score:', error);
+      sentryTracker.gameError(
+        error instanceof Error ? error : new Error('Failed to save score'),
+        {
+          game_id: id,
+          game_name: name,
+          coin_address: coinAddress,
+          action: 'create_score',
+        }
+      );
+    } finally {
+      setIsCreatingScore(false);
+      setShowResult(true);
+    }
+  };
+
   // Timer with forced timeout after 10 seconds
   useEffect(() => {
     if (!showGame || !timeoutSeconds) return;
@@ -324,62 +347,13 @@ export function GameWrapper({
 
   if (gameFinished) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center text-white">
-        <div className="text-center p-4 rounded-lg bg-gray-900/50 backdrop-blur-md border border-white/20 shadow-2xl max-w-sm w-full mx-4">
-          <div className="flex justify-center mb-4">
-            <Trophy className="w-16 h-16 text-yellow-400" />
-          </div>
-          <h1 className="text-3xl font-bold mb-2">Round Complete!</h1>
-          <p className="text-white/80 mb-1">
-            You scored{' '}
-            <span className="font-bold text-yellow-400">{finalScore}</span>{' '}
-            points.
-          </p>
-          <p className="text-white/80 mb-6">
-            Save your score to get{' '}
-            <span className="font-bold text-white">
-              {(finalScore * TOKEN_MULTIPLIER).toLocaleString()} ${symbol}
-            </span>{' '}
-            tokens.
-          </p>
-
-          <Button
-            onClick={async () => {
-              setIsCreatingScore(true);
-              try {
-                await handleCreateScore();
-                setIsScoreCreated(true);
-              } catch (error) {
-                console.error('Failed to save score:', error);
-                sentryTracker.gameError(
-                  error instanceof Error
-                    ? error
-                    : new Error('Failed to save score'),
-                  {
-                    game_id: id,
-                    game_name: name,
-                    coin_address: coinAddress,
-                    action: 'create_score',
-                  }
-                );
-              } finally {
-                setIsCreatingScore(false);
-                setShowResult(true);
-              }
-            }}
-            disabled={isCreatingScore || isScoreCreated}
-            className="w-full text-lg py-6 bg-green-500 hover:bg-green-600 disabled:bg-gray-600"
-          >
-            {isCreatingScore ? (
-              <LoadingSpinner />
-            ) : isScoreCreated ? (
-              'Score Saved!'
-            ) : (
-              'Save Score'
-            )}
-          </Button>
-        </div>
-      </div>
+      <GameFinished
+        score={finalScore}
+        symbol={symbol}
+        onSaveScore={handleSaveScore}
+        isSaving={isCreatingScore}
+        isSaved={isScoreCreated}
+      />
     );
   }
 
