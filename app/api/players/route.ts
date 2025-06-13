@@ -6,26 +6,12 @@ import { RateLimiter } from '@/lib/rate-limit';
 
 export async function POST(request: Request) {
   try {
-    // 1. Verify authentication (optional until SDK is upgraded to 0.0.61+)
-    let authenticatedFid: number | undefined;
-    try {
-      authenticatedFid = await FarcasterAuth.requireAuth(request);
-      console.log('authenticatedFid', authenticatedFid);
-    } catch (error) {
-      console.warn(
-        'Authentication failed (optional until SDK upgrade):',
-        error
-      );
-      // TODO: Make authentication mandatory when SDK is upgraded to 0.0.61+
-    }
+    const authenticatedFid = await FarcasterAuth.requireAuth(request);
 
     const userData = await request.json();
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('userData', userData);
-    }
 
-    // 2. If authenticated, verify the FID matches
-    if (authenticatedFid && Number(userData.fid) !== authenticatedFid) {
+    // Verify the FID from the request body matches the authenticated FID
+    if (Number(userData.fid) !== authenticatedFid) {
       console.error('FID mismatch:', {
         requested: userData.fid,
         authenticated: authenticatedFid,
@@ -36,10 +22,10 @@ export async function POST(request: Request) {
       );
     }
 
-    // 3. Check rate limit
+    // Check rate limit
     const rateLimitResult = await RateLimiter.checkRateLimit(
       `players:${authenticatedFid}`,
-      10, // 10 requests per hour (player creation should be rare)
+      10, // 10 requests per hour
       3600 // 1 hour window
     );
 
@@ -53,7 +39,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // 4. Validate required fields
+    // Validate required fields
     if (
       !userData.fid ||
       !userData.name ||
@@ -67,17 +53,15 @@ export async function POST(request: Request) {
       );
     }
 
-    // 5. Verify FID exists on Farcaster
+    // Verify FID exists on Farcaster
     const fidExists = await SecurityService.verifyFidExists(userData.fid);
     if (!fidExists) {
       console.error('Invalid FID - does not exist on Farcaster:', userData.fid);
       return NextResponse.json({ error: 'Invalid FID' }, { status: 400 });
     }
 
-    // 6. Check if we need to return new player flag
     const url = new URL(request.url);
     const includeNewFlag = url.searchParams.get('includeNewFlag') === 'true';
-    console.log('includeNewFlag', includeNewFlag);
 
     if (includeNewFlag) {
       const result = await supabaseService.upsertPlayerWithNewFlag(userData);
@@ -90,9 +74,12 @@ export async function POST(request: Request) {
       return NextResponse.json(data);
     }
   } catch (error) {
-    console.error('Error upserting user:', error);
+    if ((error as Error).message.includes('Unauthorized')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    console.error('Error creating player:', error);
     return NextResponse.json(
-      { error: 'Failed to upsert user' },
+      { error: 'Failed to create player' },
       { status: 500 }
     );
   }
