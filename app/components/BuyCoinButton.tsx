@@ -6,7 +6,7 @@ import {
   useWriteContract,
   useWaitForTransactionReceipt,
 } from 'wagmi';
-import { Address, parseEther } from 'viem';
+import { Address, parseEther, BaseError } from 'viem';
 import { useAccount } from 'wagmi';
 import { useEffect } from 'react';
 
@@ -40,12 +40,21 @@ export function BuyCoinButton({
   // Create configuration for wagmi
   const contractCallParams = tradeCoinCall(tradeParams);
 
-  const { data } = useSimulateContract({
+  const {
+    data,
+    error,
+    isPending: isSimulating,
+  } = useSimulateContract({
     ...contractCallParams,
     query: {
       enabled: Boolean(address && coinAddress),
     },
   });
+
+  const hasInsufficientBalance = (error?.cause as BaseError)?.walk(
+    (e: unknown) =>
+      e instanceof BaseError && e.name === 'InsufficientFundsError'
+  );
 
   const { writeContract, isPending, data: hash } = useWriteContract();
 
@@ -59,26 +68,33 @@ export function BuyCoinButton({
     }
   }, [isSuccess, onSuccess]);
 
+  const isDisabled =
+    isSimulating || isPending || isConfirming || !!hasInsufficientBalance;
+
   return (
     <div className="flex flex-col gap-2">
       <button
         onClick={() => data && writeContract(data.request)}
-        disabled={isPending || isConfirming}
+        disabled={isDisabled}
         className={`
           px-4 py-6 rounded-full font-medium shadow-xl shadow-purple-500/20
           ${
-            isPending || isConfirming
+            isDisabled
               ? 'bg-white/10 cursor-not-allowed'
               : 'bg-purple-600 hover:brightness-110'
           }
           text-white transition-all duration-200 text-xl
         `}
       >
-        {isPending
-          ? 'Buying...'
-          : isConfirming
-            ? 'Confirming...'
-            : `Buy $${symbol}`}
+        {isSimulating
+          ? 'Simulating...'
+          : hasInsufficientBalance
+            ? 'Insufficient ETH'
+            : isPending
+              ? 'Buying...'
+              : isConfirming
+                ? 'Confirming...'
+                : `Buy $${symbol}`}
       </button>
     </div>
   );
