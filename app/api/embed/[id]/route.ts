@@ -78,7 +78,7 @@ export async function GET(
             headers['Authorization'] = 'Bearer ' + authToken;
           }
           
-          const response = await fetch('${process.env.NEXT_PUBLIC_URL}/api/award', {
+          const response = await sdk.quickAuth.fetch('${process.env.NEXT_PUBLIC_URL}/api/award', {
             method: 'POST',
             headers: headers,
             body: JSON.stringify({
@@ -140,7 +140,7 @@ export async function GET(
             headers['Authorization'] = 'Bearer ' + authToken;
           }
           
-          await fetch('${process.env.NEXT_PUBLIC_URL}/api/record-play', {
+          await sdk.quickAuth.fetch('${process.env.NEXT_PUBLIC_URL}/api/record-play', {
             method: 'POST',
             headers: headers,
             body: JSON.stringify({
