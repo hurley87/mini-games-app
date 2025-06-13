@@ -269,7 +269,6 @@ export function GameWrapper({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          fid: fid,
           coinId: coinId,
           score: finalScore,
         }),
