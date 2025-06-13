@@ -212,7 +212,7 @@ export default function InfoPage() {
                     <p className="text-sm text-white/90 mb-2">
                       Hold{' '}
                       <span className="font-bold text-yellow-400">
-                        {PREMIUM_THRESHOLD.toLocaleString()}
+                        {PREMIUM_THRESHOLD.toLocaleString('en-US')}
                       </span>{' '}
                       tokens of any game to unlock:
                     </p>
@@ -319,8 +319,9 @@ export default function InfoPage() {
                   <Info className="w-4 h-4 text-white/60 group-open:rotate-180 transition-transform" />
                 </summary>
                 <div className="px-4 pb-4 text-sm text-white/70">
-                  Hold at least {PREMIUM_THRESHOLD.toLocaleString()} tokens from
-                  any game to unlock unlimited plays and exclusive features.
+                  Hold at least {PREMIUM_THRESHOLD.toLocaleString('en-US')}{' '}
+                  tokens from any game to unlock unlimited plays and exclusive
+                  features.
                 </div>
               </details>
 
