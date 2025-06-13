@@ -311,6 +311,17 @@ export function GameWrapper({
     );
   }
 
+  if (showResult) {
+    return (
+      <RoundResult
+        score={finalScore}
+        onShare={handleShare}
+        onExit={handleExit}
+        symbol={symbol}
+      />
+    );
+  }
+
   if (gameFinished) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center text-white">
@@ -367,26 +378,8 @@ export function GameWrapper({
               'Save Score'
             )}
           </Button>
-          <Button
-            variant="link"
-            className="text-white/50 mt-4"
-            onClick={() => setShowResult(true)}
-          >
-            Skip for now
-          </Button>
         </div>
       </div>
-    );
-  }
-
-  if (showResult) {
-    return (
-      <RoundResult
-        score={finalScore}
-        onShare={handleShare}
-        onExit={handleExit}
-        symbol={symbol}
-      />
     );
   }
 
