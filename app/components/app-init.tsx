@@ -11,6 +11,7 @@ import {
 } from '@/lib/posthog';
 import { setSentryUser, sentryTracker } from '@/lib/sentry';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { sdk } from '@farcaster/frame-sdk';
 
 export function AppInit() {
   const { context, isReady } = useFarcasterContext({ autoAddFrame: true });
@@ -88,14 +89,16 @@ export function AppInit() {
           // TODO: When upgrading to @farcaster/frame-sdk@0.0.61+, use sdk.quickAuth.getToken()
           // For now, authentication will be handled in the embedded game iframe
 
-          const response = await fetch('/api/players?includeNewFlag=true', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              // Note: Authentication header will be added when SDK is upgraded
-            },
-            body: JSON.stringify(userData),
-          });
+          const response = await sdk.quickAuth.fetch(
+            '/api/players?includeNewFlag=true',
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(userData),
+            }
+          );
 
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);

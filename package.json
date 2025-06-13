@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@farcaster/frame-node": "^0.0.28",
-    "@farcaster/frame-sdk": "^0.0.60",
+    "@farcaster/frame-sdk": "^0.0.61",
     "@farcaster/frame-wagmi-connector": "^0.0.33",
     "@farcaster/quick-auth": "^0.0.6",
     "@neynar/nodejs-sdk": "^2.41.0",
