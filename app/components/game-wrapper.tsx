@@ -282,6 +282,7 @@ export function GameWrapper({
           const errorData = await response.json();
           throw new Error(errorData.error || 'Bad request from server.');
         } catch (e) {
+          console.log('🎮 GameWrapper: Error data:', e);
           throw new Error('You can only save your score once.');
         }
       }
