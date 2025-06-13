@@ -70,12 +70,25 @@ export async function POST(request: Request) {
     }
 
     // 4. Verify FID exists on Farcaster
-    const fidExists = await SecurityService.verifyFidExists(fid);
+    const fidExists = await SecurityService.addverifyFidExists(fid);
     if (!fidExists) {
       console.error('Invalid FID - does not exist on Farcaster:', fid);
       return NextResponse.json(
         { error: 'Invalid FID' },
         { status: 400, headers }
+      );
+    }
+
+    // 4.5 Ensure the player exists in the database to prevent FK violations
+    const existingPlayer = await supabaseService.getPlayerByFid(fid);
+    if (!existingPlayer || existingPlayer.length === 0) {
+      console.error('Player not found in database:', fid);
+      return NextResponse.json(
+        {
+          error:
+            'Player profile not found. Please register before earning points.',
+        },
+        { status: 404, headers }
       );
     }
 

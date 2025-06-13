@@ -64,6 +64,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid FID' }, { status: 400 });
     }
 
+    // 5.5 Ensure the player exists in the database to prevent FK violations
+    const existingPlayer = await supabaseService.getPlayerByFid(fid);
+    if (!existingPlayer || existingPlayer.length === 0) {
+      console.error('Player not found in database:', fid);
+      return NextResponse.json(
+        {
+          error:
+            'Player profile not found. Please create a player profile before recording gameplay.',
+        },
+        { status: 400 }
+      );
+    }
+
     // 6. Record the game play
     const gamePlay = await supabaseService.recordGamePlay({
       fid,
