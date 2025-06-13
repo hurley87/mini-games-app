@@ -142,20 +142,20 @@ export async function POST(request: Request) {
     }
 
     // 8. Verify the player has actually played the game
-    const hasPlayed = await SecurityService.verifyGamePlay(fid, coinId);
-    if (!hasPlayed) {
-      console.error('Player has not played this game:', { fid, coinId });
-      return NextResponse.json(
-        { error: 'Must play the game before earning points' },
-        { status: 400, headers }
-      );
-    }
+    // const hasPlayed = await SecurityService.verifyGamePlay(fid, coinId);
+    // if (!hasPlayed) {
+    //   console.error('Player has not played this game:', { fid, coinId });
+    //   return NextResponse.json(
+    //     { error: 'Must play the game before earning points' },
+    //     { status: 400, headers }
+    //   );
+    // }
 
     // 9. Check daily points limit before any database writes
     const dailyLimitResult = await RateLimiter.checkDailyPointsLimit(
       fid,
       score,
-      10000 // 10,000 points per day limit
+      1000 // 1,000 points per day limit
     );
 
     if (!dailyLimitResult.success) {
