@@ -41,7 +41,8 @@ export function WelcomeDialog({ trigger, onClose }: WelcomeDialogProps) {
       const hasSeenWelcome = localStorage.getItem(WELCOME_STORAGE_KEY);
       if (!hasSeenWelcome) {
         // Small delay to ensure smooth loading
-        setTimeout(() => setOpen(true), 500);
+        const timer = setTimeout(() => setOpen(true), 500);
+        return () => clearTimeout(timer);
       }
     }
   }, [trigger]);
