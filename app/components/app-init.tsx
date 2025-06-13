@@ -118,6 +118,21 @@ export function AppInit() {
           });
         } catch (error) {
           if (
+            error instanceof TypeError &&
+            error.message.includes('Load failed')
+          ) {
+            const errorMessage = `Farcaster authentication failed. This may be due to a network issue or a browser extension blocking the request. Please check your connection and try again. Details: ${error.message}`;
+            console.error(errorMessage);
+            trackEvent('farcaster_auth_failed', {
+              fid: user.fid,
+              wallet_address: address,
+              error: error.message,
+            });
+            sentryTracker.authError(errorMessage, {
+              fid: user?.fid,
+              username: user?.username,
+            });
+          } else if (
             error instanceof Error &&
             (error.message.includes('SignIn.RejectedByUser') ||
               error.message.includes('user_rejected_request'))
