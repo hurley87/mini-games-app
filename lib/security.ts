@@ -46,7 +46,7 @@ export class SecurityService {
 
     // Add game-specific score limits here
     const maxScorePerGame: Record<string, number> = {
-      default: 1000, // Default max score
+      default: 150, // Default max score
       // Add specific game limits as needed
     };
 

@@ -305,6 +305,11 @@ export function GameWrapper({
   };
 
   const handleSaveScore = async () => {
+    if (finalScore <= 0) {
+      setShowResult(true);
+      return;
+    }
+
     setIsCreatingScore(true);
     setSaveError(null);
     try {
