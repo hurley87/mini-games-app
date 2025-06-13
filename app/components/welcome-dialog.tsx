@@ -67,7 +67,7 @@ export function WelcomeDialog({ trigger, onClose }: WelcomeDialogProps) {
     <DrawerContent className="max-h-[90vh] bg-gradient-to-b from-black via-zinc-900 to-black border-white/20">
       <DrawerHeader className="text-center pb-6">
         <DrawerTitle className="text-2xl font-bold text-white mb-2">
-          Welcome to Mini Games Studio! 🎮
+          Welcome to Mini Games!
         </DrawerTitle>
         <DrawerDescription className="text-white/70 text-base">
           Play onchain games, earn tokens, and compete with the Farcaster
