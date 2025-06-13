@@ -3,7 +3,12 @@
 import { useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { useFarcasterContext } from '@/hooks/useFarcasterContext';
-import { trackGameEvent, identifyUser, setUserProperties } from '@/lib/posthog';
+import {
+  trackGameEvent,
+  identifyUser,
+  setUserProperties,
+  trackEvent,
+} from '@/lib/posthog';
 import { setSentryUser, sentryTracker } from '@/lib/sentry';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
@@ -64,10 +69,14 @@ export function AppInit() {
         let playerDataSaved = false;
 
         try {
+          // TODO: When upgrading to @farcaster/frame-sdk@0.0.61+, use sdk.quickAuth.getToken()
+          // For now, authentication will be handled in the embedded game iframe
+
           const response = await fetch('/api/players?includeNewFlag=true', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
+              // Note: Authentication header will be added when SDK is upgraded
             },
             body: JSON.stringify(userData),
           });
@@ -104,35 +113,55 @@ export function AppInit() {
           isNewPlayer = false;
         }
 
-        if (playerDataSaved && isValidSharerFid && sharerFid !== user.fid) {
-          try {
-            const response = await fetch('/api/referral', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                sharerFid: sharerFid,
-                playerFid: user.fid,
-              }),
-            });
+        if (isNewPlayer && playerDataSaved && isValidSharerFid) {
+          if (sharerFid !== user.fid) {
+            try {
+              // TODO: When upgrading to @farcaster/frame-sdk@0.0.61+, use sdk.quickAuth.getToken()
 
-            if (!response.ok) {
-              throw new Error(
-                `HTTP ${response.status}: ${response.statusText}`
+              const referralResponse = await fetch('/api/referral', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  // Note: Authentication header will be added when SDK is upgraded
+                },
+                body: JSON.stringify({
+                  sharerFid,
+                  playerFid: user.fid,
+                }),
+              });
+
+              if (referralResponse.ok) {
+                // Track successful referral
+                trackEvent('referral_success', {
+                  sharer_fid: sharerFid,
+                  player_fid: user.fid,
+                });
+              } else {
+                const errorData = await referralResponse.json();
+                throw new Error(
+                  errorData.error || `HTTP ${referralResponse.status}`
+                );
+              }
+            } catch (error) {
+              const errorMessage =
+                error instanceof Error ? error.message : 'Unknown error';
+              trackGameEvent.error(
+                'referral_error',
+                'Failed to process referral',
+                {
+                  error: errorMessage,
+                  sharer_fid: sharerFid,
+                  player_fid: user.fid,
+                }
+              );
+              sentryTracker.apiError(
+                error instanceof Error ? error : new Error(errorMessage),
+                {
+                  endpoint: '/api/referral',
+                  method: 'POST',
+                }
               );
             }
-          } catch (error) {
-            const errorMessage =
-              error instanceof Error ? error.message : 'Unknown error';
-            trackGameEvent.error('api_error', 'Failed to process referral', {
-              error: errorMessage,
-            });
-            sentryTracker.apiError(
-              error instanceof Error ? error : new Error(errorMessage),
-              {
-                endpoint: '/api/referral',
-                method: 'POST',
-              }
-            );
           }
         }
       } else {
@@ -148,15 +177,9 @@ export function AppInit() {
       }
     };
 
-    saveUser().catch((error) => {
-      sentryTracker.authError(
-        error instanceof Error ? error : new Error('Failed to save user'),
-        {
-          fid: context?.user?.fid,
-          username: context?.user?.username,
-        }
-      );
-    });
+    if (context && address) {
+      saveUser();
+    }
   }, [context, address]);
 
   if (!isReady) {
