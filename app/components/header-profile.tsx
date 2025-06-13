@@ -25,6 +25,7 @@ import Link from 'next/link';
 import { trackGameEvent } from '@/lib/posthog';
 import { sentryTracker } from '@/lib/sentry';
 import { sdk } from '@farcaster/frame-sdk';
+import { WelcomeDialog } from './welcome-dialog';
 
 export function HeaderProfile() {
   const { context, isLoading } = useFarcasterContext();
@@ -262,14 +263,17 @@ export function HeaderProfile() {
                 <span>Leaderboard</span>
               </Link>
 
-              <Link
-                className="flex items-center gap-4 text-xl font-semibold text-white hover:brightness-110 transition-all duration-200 cursor-pointer"
-                href="/info"
-                onClick={handleInfoNavigation}
-              >
-                <InfoIcon className="w-6 h-6" />
-                <span>How It Works</span>
-              </Link>
+              <WelcomeDialog
+                trigger={
+                  <button
+                    className="flex items-center gap-4 text-xl font-semibold text-white hover:brightness-110 transition-all duration-200 cursor-pointer"
+                    onClick={handleInfoNavigation}
+                  >
+                    <InfoIcon className="w-6 h-6" />
+                    <span>How It Works</span>
+                  </button>
+                }
+              />
 
               <button
                 onClick={handleShareReferral}
