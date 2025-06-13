@@ -6,13 +6,10 @@ import {
   ExternalLink,
   Copy,
   MoreHorizontal,
-  TrendingUp,
-  DollarSign,
-  Users,
   Link as LinkIcon,
 } from 'lucide-react';
 import { CoinWithCreator } from '@/lib/types';
-import { formatRelativeTime, formatCurrency, formatHolders } from '@/lib/utils';
+import { formatRelativeTime } from '@/lib/utils';
 import {
   Popover,
   PopoverContent,
