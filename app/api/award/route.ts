@@ -70,7 +70,7 @@ export async function POST(request: Request) {
     }
 
     // 4. Verify FID exists on Farcaster
-    const fidExists = await SecurityService.addverifyFidExists(fid);
+    const fidExists = await SecurityService.verifyFidExists(fid);
     if (!fidExists) {
       console.error('Invalid FID - does not exist on Farcaster:', fid);
       return NextResponse.json(
