@@ -21,6 +21,7 @@ import {
 import { toast } from 'sonner';
 import { trackGameEvent } from '@/lib/posthog';
 import { sentryTracker } from '@/lib/sentry';
+import sdk from '@farcaster/frame-sdk';
 
 interface CoinCardProps {
   coin: CoinWithCreator;
@@ -96,6 +97,23 @@ export function CoinCard({ coin }: CoinCardProps) {
         {
           action: 'game_card_view',
           element: 'game_card',
+          page: 'coins_list',
+        }
+      );
+    }
+  };
+
+  const handleViewCoin = async () => {
+    try {
+      await sdk.actions.viewToken({
+        token: `eip155:8453/erc20:${coin.coin_address}`,
+      });
+    } catch (error) {
+      sentryTracker.userActionError(
+        error instanceof Error ? error : new Error('Failed to track view coin'),
+        {
+          action: 'view_coin',
+          element: 'coin_card',
           page: 'coins_list',
         }
       );
@@ -206,32 +224,11 @@ export function CoinCard({ coin }: CoinCardProps) {
 
       {/* Post Actions */}
       <div className="flex items-center justify-center py-4 ">
-        <div className="flex items-center gap-4">
-          {/* Zora Data Metrics */}
-          <div className="flex items-center gap-3 text-sm">
-            {/* 24h Volume */}
-            <div className="flex items-center gap-1 text-purple-400">
-              <TrendingUp className="w-4 h-4" />
-              <span className="font-medium">
-                {formatCurrency(coin.zoraData?.volume24h)}
-              </span>
-            </div>
-            {/* Market Cap */}
-            <div className="flex items-center gap-1 text-emerald-400">
-              <DollarSign className="w-4 h-4" />
-              <span className="font-medium">
-                {formatCurrency(coin.zoraData?.marketCap)}
-              </span>
-            </div>
-            {/* Unique Holders */}
-            <div className="flex items-center gap-1 text-blue-400">
-              <Users className="w-4 h-4" />
-              <span className="font-medium">
-                {formatHolders(coin.zoraData?.uniqueHolders)}
-              </span>
-            </div>
-          </div>
-        </div>
+        Play {coin.name}, earn{' '}
+        <span onClick={handleViewCoin} className="text-purple-400">
+          ${coin.symbol}
+        </span>{' '}
+        tokens
       </div>
     </div>
   );
