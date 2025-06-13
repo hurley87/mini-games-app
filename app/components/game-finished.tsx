@@ -1,8 +1,7 @@
 'use client';
 
 import { Button } from './ui/button';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { Trophy } from 'lucide-react';
+import { Trophy, Loader2 } from 'lucide-react';
 import { TOKEN_MULTIPLIER } from '@/lib/config';
 
 interface GameFinishedProps {
@@ -45,10 +44,13 @@ export function GameFinished({
           <Button
             onClick={onSaveScore}
             disabled={isSaving || isSaved}
-            className="flex w-full transform items-center justify-center gap-2 rounded-full border border-green-400/30 bg-green-500/20 px-6 py-4 text-lg font-semibold text-white backdrop-blur-sm transition-all duration-200 hover:scale-105 hover:border-green-300/50 hover:bg-green-400/30 hover:shadow-lg active:scale-95 disabled:scale-100 disabled:border-gray-500/30 disabled:bg-gray-800 disabled:text-gray-400 disabled:shadow-none disabled:hover:scale-100 disabled:hover:bg-gray-800"
+            className="flex w-full transform items-center justify-center gap-2 rounded-full border border-purple-400/30 bg-purple-500/20 px-6 py-4 text-lg font-semibold text-white backdrop-blur-sm transition-all duration-200 hover:scale-105 hover:border-purple-300/50 hover:bg-purple-400/30 hover:shadow-lg active:scale-95 disabled:scale-100 disabled:border-gray-500/30 disabled:bg-gray-800 disabled:text-gray-400 disabled:shadow-none disabled:hover:scale-100 disabled:hover:bg-gray-800"
           >
             {isSaving ? (
-              <LoadingSpinner />
+              <>
+                <Loader2 className="h-5 w-5 animate-spin" />
+                Saving...
+              </>
             ) : isSaved ? (
               'Score Saved!'
             ) : (
