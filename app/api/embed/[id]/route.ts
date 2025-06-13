@@ -112,10 +112,6 @@ export async function GET(
             'Content-Type': 'application/json'
           };
           
-          if (authToken) {
-            headers['Authorization'] = 'Bearer ' + authToken;
-          }
-          
           await sdk.quickAuth.fetch('${process.env.NEXT_PUBLIC_URL}/api/record-play', {
             method: 'POST',
             headers: headers,
