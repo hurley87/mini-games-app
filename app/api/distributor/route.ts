@@ -58,7 +58,7 @@ async function processTransfers() {
 
       const walletClient = createClientForWallet(account);
 
-      let player = await supabaseService.getPlayerByFid(fid);
+      const player = await supabaseService.getPlayerByFid(fid);
 
       if (!player || player.length === 0) {
         return NextResponse.json({
@@ -67,7 +67,7 @@ async function processTransfers() {
         });
       }
 
-      let playerWalletAddress = player?.[0]?.wallet_address;
+      const playerWalletAddress = player?.[0]?.wallet_address;
 
       if (!playerWalletAddress) {
         return NextResponse.json({
