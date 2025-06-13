@@ -67,7 +67,7 @@ export function Game({
 
   // Define iframeUrl early to avoid declaration order issues
   const fid = context?.user?.fid;
-  const iframeUrl = `/api/embed/${id}?fid=${fid}&coinId=${coinId}`;
+  const iframeUrl = `/api/embed/${id}?fid=${fid}&coinId=${coinId}&coinAddress=${coinAddress}`;
 
   // Fetch token decimals when component mounts
   useEffect(() => {

@@ -6,27 +6,28 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const searchParams = request.nextUrl.searchParams;
+  const fid = searchParams.get('fid');
+  const coinId = searchParams.get('coinId');
+  const coinAddress = searchParams.get('coinAddress');
 
-  // Parse URL manually
-  const url = new URL(request.url);
-  const fid = url.searchParams.get('fid');
-  const coinId = url.searchParams.get('coinId');
-
-  // Debug logs
   if (process.env.NODE_ENV !== 'production') {
-    console.log('API Route - Full URL:', request.url);
-    console.log('API Route - Params:', params);
-    console.log('API Route - URL Search Params:', url.searchParams.toString());
-    console.log('API Route - fid:', fid);
-    console.log('API Route - coinId:', coinId);
+    console.log('id', id);
+    console.log('fid', fid);
+    console.log('coinId', coinId);
+    console.log('coinAddress', coinAddress);
   }
 
-  // Validate required parameters
-  if (!fid || !coinId) {
-    return NextResponse.json(
-      { error: 'Missing required parameters: fid and buildId are required' },
-      { status: 400 }
-    );
+  if (!id) {
+    return NextResponse.json({ error: 'Missing build ID' }, { status: 400 });
+  }
+
+  if (!fid) {
+    return NextResponse.json({ error: 'Missing FID' }, { status: 400 });
+  }
+
+  if (!coinId) {
+    return NextResponse.json({ error: 'Missing coinId' }, { status: 400 });
   }
 
   try {
@@ -42,26 +43,124 @@ export async function GET(
 
     const injectedScript = `
     <script>
+      // Import the Farcaster SDK
+      let sdkModule;
+      
+      async function loadSDK() {
+        if (!sdkModule) {
+          sdkModule = await import('https://esm.sh/@farcaster/frame-sdk@latest');
+        }
+        return sdkModule.sdk;
+      }
+      
       window.awardPoints = async function(score) {
         try {
+          // Load SDK and get authentication token
+          const sdk = await loadSDK();
+          let authToken;
+          
+          try {
+            // Get Quick Auth token
+            const tokenData = await sdk.quickAuth.getToken();
+            authToken = tokenData.token;
+          } catch (authError) {
+            console.error('Failed to get auth token:', authError);
+            // Fallback to no authentication for backward compatibility
+            // In production, you should fail here
+          }
+          
+          const headers = { 
+            'Content-Type': 'application/json'
+          };
+          
+          // Add auth header if we have a token
+          if (authToken) {
+            headers['Authorization'] = 'Bearer ' + authToken;
+          }
+          
           const response = await fetch('${process.env.NEXT_PUBLIC_URL}/api/award', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: headers,
             body: JSON.stringify({
-              fid: '${fid}',
+              fid: ${fid},
               coinId: '${coinId}',
               score: score
             })
           });
+          
           if (!response.ok) {
-            console.error('Failed to award points:', await response.text());
+            const errorData = await response.json();
+            console.error('Failed to award points:', errorData);
+            
+            // Show user-friendly error messages
+            if (response.status === 429) {
+              alert('You have reached your daily points limit. Try again tomorrow!');
+            } else if (response.status === 401) {
+              alert('Please sign in to earn points.');
+            } else {
+              alert('Failed to award points. Please try again.');
+            }
           } else {
+            const data = await response.json();
             if (window.parent && window.parent !== window) {
               window.parent.postMessage({ type: 'points-awarded', score }, '*');
+            }
+            
+            // Show remaining daily points if available
+            if (data.dailyPointsRemaining !== undefined) {
+              console.log('Daily points remaining:', data.dailyPointsRemaining);
             }
           }
         } catch (error) {
           console.error('Error awarding points:', error);
+          alert('Network error. Please check your connection and try again.');
+        }
+      };
+      
+      // Override game over to ensure game is recorded before awarding points
+      const originalGameOver = window.gameOver;
+      window.gameOver = async function() {
+        // Record that the game was played
+        try {
+          const sdk = await loadSDK();
+          let authToken;
+          
+          try {
+            const tokenData = await sdk.quickAuth.getToken();
+            authToken = tokenData.token;
+          } catch (authError) {
+            console.error('Failed to get auth token for game record:', authError);
+          }
+          
+          const headers = { 
+            'Content-Type': 'application/json'
+          };
+          
+          if (authToken) {
+            headers['Authorization'] = 'Bearer ' + authToken;
+          }
+          
+          await fetch('${process.env.NEXT_PUBLIC_URL}/api/record-play', {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({
+              fid: ${fid},
+              gameId: '${coinId}',
+              coinAddress: '${coinAddress || ''}'
+            })
+          });
+        } catch (error) {
+          console.error('Failed to record game play:', error);
+        }
+        
+        // Call original game over if it exists
+        if (originalGameOver && typeof originalGameOver === 'function') {
+          originalGameOver();
+        }
+        
+        // Notify parent that game is over
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: 'game-over' }, '*');
         }
       };
     </script>
