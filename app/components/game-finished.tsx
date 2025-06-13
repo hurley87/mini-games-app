@@ -11,6 +11,7 @@ interface GameFinishedProps {
   onSaveScore: () => void;
   isSaving: boolean;
   isSaved: boolean;
+  error?: string | null;
 }
 
 export function GameFinished({
@@ -19,6 +20,7 @@ export function GameFinished({
   onSaveScore,
   isSaving,
   isSaved,
+  error,
 }: GameFinishedProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md">
@@ -53,6 +55,12 @@ export function GameFinished({
               'Save Score'
             )}
           </Button>
+
+          {error && (
+            <div className="rounded-lg border border-red-500/30 bg-red-900/20 p-3 text-sm font-medium text-red-400">
+              {error}
+            </div>
+          )}
         </div>
 
         <div className="text-sm font-medium text-white/50">

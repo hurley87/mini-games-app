@@ -56,6 +56,7 @@ export function GameWrapper({
   const [isCreatingScore, setIsCreatingScore] = useState(false);
   const [isScoreCreated, setIsScoreCreated] = useState(false);
   const [gameFinished, setGameFinished] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const handleRoundComplete = (score: number) => {
     try {
@@ -276,16 +277,29 @@ export function GameWrapper({
     );
 
     if (!response.ok) {
+      if (response.status === 400) {
+        try {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Bad request from server.');
+        } catch (e) {
+          throw new Error('You can only save your score once.');
+        }
+      }
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
   };
 
   const handleSaveScore = async () => {
     setIsCreatingScore(true);
+    setSaveError(null);
     try {
       await handleCreateScore();
       setIsScoreCreated(true);
+      setShowResult(true);
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'An unknown error occurred.';
+      setSaveError(errorMessage);
       console.error('Failed to save score:', error);
       sentryTracker.gameError(
         error instanceof Error ? error : new Error('Failed to save score'),
@@ -298,7 +312,6 @@ export function GameWrapper({
       );
     } finally {
       setIsCreatingScore(false);
-      setShowResult(true);
     }
   };
 
@@ -352,6 +365,7 @@ export function GameWrapper({
         onSaveScore={handleSaveScore}
         isSaving={isCreatingScore}
         isSaved={isScoreCreated}
+        error={saveError}
       />
     );
   }
