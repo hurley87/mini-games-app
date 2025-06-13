@@ -8,16 +8,12 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   try {
-    // 1. Verify authentication (optional until SDK is upgraded to 0.0.61+)
+    // 1. Verify authentication
     let authenticatedFid: number | undefined;
     try {
       authenticatedFid = await FarcasterAuth.requireAuth(request);
     } catch (error) {
-      console.warn(
-        'Authentication failed (optional until SDK upgrade):',
-        error
-      );
-      // TODO: Make authentication mandatory when SDK is upgraded to 0.0.61+
+      console.warn('Authentication failed:', error);
     }
 
     const { fid } = await request.json();
