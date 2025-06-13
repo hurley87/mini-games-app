@@ -8,6 +8,7 @@ interface RoundResultProps {
   symbol: string;
   onShare: () => void;
   onExit?: () => void;
+  isError?: boolean;
 }
 
 export function RoundResult({
@@ -15,6 +16,7 @@ export function RoundResult({
   symbol,
   onShare,
   onExit,
+  isError,
 }: RoundResultProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md">
@@ -66,8 +68,16 @@ export function RoundResult({
 
         {/* Fun footer message */}
         <div className="text-sm text-white/50 font-medium">
-          {(score * TOKEN_MULTIPLIER).toLocaleString()} ${symbol} tokens will be
-          sent to your wallet
+          {isError ? (
+            <span className="font-bold text-red-400">
+              Failed to save score. Please try again later.
+            </span>
+          ) : (
+            <>
+              {(score * TOKEN_MULTIPLIER).toLocaleString()} ${symbol} tokens
+              will be sent to your wallet
+            </>
+          )}
         </div>
       </div>
     </div>

@@ -3,6 +3,7 @@
 import { Button } from './ui/button';
 import { Trophy, Loader2 } from 'lucide-react';
 import { TOKEN_MULTIPLIER } from '@/lib/config';
+import { RoundResult } from './round-result';
 
 interface GameFinishedProps {
   score: number;
@@ -11,6 +12,8 @@ interface GameFinishedProps {
   isSaving: boolean;
   isSaved: boolean;
   error?: string | null;
+  onShare: () => void;
+  onExit: () => void;
 }
 
 export function GameFinished({
@@ -20,7 +23,32 @@ export function GameFinished({
   isSaving,
   isSaved,
   error,
+  onShare,
+  onExit,
 }: GameFinishedProps) {
+  if (error) {
+    return (
+      <RoundResult
+        score={score}
+        symbol={symbol}
+        onShare={onShare}
+        onExit={onExit}
+        isError
+      />
+    );
+  }
+
+  if (isSaved) {
+    return (
+      <RoundResult
+        score={score}
+        symbol={symbol}
+        onShare={onShare}
+        onExit={onExit}
+      />
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md">
       <div className="mx-4 w-full max-w-md space-y-8 rounded-3xl border border-white/20 bg-black/20 p-8 text-center shadow-2xl backdrop-blur-xl animate-in fade-in-0 zoom-in-95 duration-500">
@@ -51,18 +79,10 @@ export function GameFinished({
                 <Loader2 className="h-5 w-5 animate-spin" />
                 Saving...
               </>
-            ) : isSaved ? (
-              'Score Saved!'
             ) : (
               'Save Score'
             )}
           </Button>
-
-          {error && (
-            <div className="rounded-lg border border-red-500/30 bg-red-900/20 p-3 text-sm font-medium text-red-400">
-              {error}
-            </div>
-          )}
         </div>
 
         <div className="text-sm font-medium text-white/50">
