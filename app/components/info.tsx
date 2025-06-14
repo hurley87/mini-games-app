@@ -14,13 +14,16 @@ import {
   Trophy,
   Coins,
   Share2,
+  Gift,
+  Clock,
 } from 'lucide-react';
 import { formatCurrency, formatHolders, formatTokenBalance } from '@/lib/utils';
 import { sdk } from '@farcaster/frame-sdk';
 import { Header } from './header';
 import { CoinLeaderboard } from './coin-leaderboard';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { PREMIUM_THRESHOLD } from '@/lib/config';
+import { PREMIUM_THRESHOLD, TOKEN_MULTIPLIER } from '@/lib/config';
+import { usePendingRewards } from '@/hooks/usePendingRewards';
 
 interface InfoProps {
   name: string;
@@ -53,6 +56,10 @@ export function Info({
   const { playStatus, isLoading, error, checkPlayStatus, recordPlay } =
     usePlayStatus();
   const { playerStats, isLoading: isLoadingStats } = usePlayerStats();
+  const { pendingRewards, isLoading: isLoadingRewards } = usePendingRewards(
+    coinId,
+    symbol
+  );
   const [hasCheckedStatus, setHasCheckedStatus] = useState(false);
   const [buyAmount, setBuyAmount] = useState('0.01');
   const { isConnected } = useAccount();
@@ -281,6 +288,45 @@ export function Info({
                     You need at least {PREMIUM_THRESHOLD.toLocaleString()}{' '}
                     {symbol} tokens to play.
                   </p>
+
+                  {/* Rewards Preview */}
+                  <div className="mt-3 p-3 bg-black/20 rounded-lg border border-amber-500/20">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Gift className="w-4 h-4 text-emerald-400" />
+                      <span className="text-sm font-semibold text-emerald-300">
+                        Rewards You Could Earn
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="text-center p-2 bg-emerald-900/20 rounded">
+                        <div className="text-emerald-300 font-semibold">
+                          10 Points
+                        </div>
+                        <div className="text-emerald-400">
+                          {(10 * TOKEN_MULTIPLIER).toLocaleString()} ${symbol}
+                        </div>
+                      </div>
+                      <div className="text-center p-2 bg-emerald-900/20 rounded">
+                        <div className="text-emerald-300 font-semibold">
+                          50 Points
+                        </div>
+                        <div className="text-emerald-400">
+                          {(50 * TOKEN_MULTIPLIER).toLocaleString()} ${symbol}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-2 text-center">
+                      <div className="text-xs text-gray-300">
+                        <span className="text-gray-400">Earn Rate:</span>{' '}
+                        <span className="font-semibold text-white">
+                          {TOKEN_MULTIPLIER.toLocaleString()} ${symbol}
+                        </span>{' '}
+                        per point
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -526,6 +572,47 @@ export function Info({
                 <p className="text-xs text-green-300 mt-1">
                   Play for free on your first attempt!
                 </p>
+
+                {/* First-Time Rewards Preview */}
+                <div className="mt-3 p-3 bg-black/20 rounded-lg border border-green-500/20">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Gift className="w-4 h-4 text-emerald-400" />
+                    <span className="text-sm font-semibold text-emerald-300">
+                      You'll Earn Rewards
+                    </span>
+                  </div>
+
+                  <div className="space-y-2 text-xs">
+                    <div className="flex items-center justify-between p-2 bg-green-900/20 rounded">
+                      <span className="text-green-300">
+                        Your Score × {TOKEN_MULTIPLIER.toLocaleString()}
+                      </span>
+                      <span className="font-semibold text-green-200">
+                        ${symbol} Tokens
+                      </span>
+                    </div>
+
+                    <div className="text-center p-2 bg-gray-900/20 rounded border border-gray-600/30">
+                      <div className="text-gray-300">
+                        <span className="text-gray-400">Example:</span>{' '}
+                        <span className="text-white">25 points</span> ={' '}
+                        <span className="font-semibold text-emerald-400">
+                          {(25 * TOKEN_MULTIPLIER).toLocaleString()} ${symbol}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-2 text-center">
+                    <div className="text-xs text-blue-300">
+                      💡 Get{' '}
+                      <span className="font-semibold">
+                        {PREMIUM_THRESHOLD.toLocaleString()} ${symbol}
+                      </span>{' '}
+                      for unlimited plays!
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -555,38 +642,84 @@ export function Info({
                   You own ${symbol} tokens - enjoy unlimited access!
                 </p>
 
-                {/* Player Stats */}
-                <div className="flex items-center gap-4 mt-3">
-                  {/* Token Balance */}
-                  <div className="flex items-center gap-1.5">
-                    <Coins className="w-4 h-4 text-blue-400" />
-                    <div className="text-xs">
-                      <span className="text-blue-300 font-medium">
+                {/* Enhanced Rewards Section */}
+                <div className="mt-4 p-3 bg-black/20 rounded-lg border border-blue-500/20">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Gift className="w-4 h-4 text-emerald-400" />
+                    <span className="text-sm font-semibold text-emerald-300">
+                      Your Rewards
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-3">
+                    {/* Current Wallet Balance */}
+                    <div className="flex items-center justify-between p-2 bg-blue-900/20 rounded">
+                      <div className="flex items-center gap-2">
+                        <Coins className="w-4 h-4 text-blue-400" />
+                        <span className="text-xs text-blue-300">
+                          Wallet Balance
+                        </span>
+                      </div>
+                      <span className="text-xs font-bold text-blue-200">
                         {formatTokenBalance(playStatus.tokenBalance)} ${symbol}
                       </span>
                     </div>
-                  </div>
 
-                  {/* Points */}
-                  {!isLoadingStats && playerStats && (
-                    <div className="flex items-center gap-1.5">
-                      <Trophy className="w-4 h-4 text-yellow-400" />
-                      <div className="text-xs">
-                        <span className="text-yellow-300 font-medium">
+                    {/* Pending Rewards */}
+                    {!isLoadingRewards &&
+                      pendingRewards &&
+                      pendingRewards.pendingTokens > 0 && (
+                        <div className="flex items-center justify-between p-2 bg-amber-900/20 rounded border border-amber-500/30">
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-amber-400" />
+                            <span className="text-xs text-amber-300">
+                              Pending Rewards
+                            </span>
+                          </div>
+                          <span className="text-xs font-bold text-amber-200">
+                            {pendingRewards.pendingTokens.toLocaleString()} $
+                            {symbol}
+                          </span>
+                        </div>
+                      )}
+
+                    {/* Total Points */}
+                    {!isLoadingStats && playerStats && (
+                      <div className="flex items-center justify-between p-2 bg-purple-900/20 rounded">
+                        <div className="flex items-center gap-2">
+                          <Trophy className="w-4 h-4 text-yellow-400" />
+                          <span className="text-xs text-yellow-300">
+                            Total Points
+                          </span>
+                        </div>
+                        <span className="text-xs font-bold text-yellow-200">
                           {playerStats.points.toLocaleString()} pts
                         </span>
                       </div>
+                    )}
+
+                    {/* Token Exchange Rate Info */}
+                    <div className="mt-2 p-2 bg-gray-900/20 rounded border border-gray-600/30">
+                      <div className="text-xs text-gray-300 text-center">
+                        <span className="text-gray-400">Earn Rate:</span>{' '}
+                        <span className="font-semibold text-white">
+                          {TOKEN_MULTIPLIER.toLocaleString()} ${symbol}
+                        </span>{' '}
+                        per point
+                      </div>
                     </div>
-                  )}
+                  </div>
 
                   {/* Share Button */}
-                  <button
-                    onClick={handleShare}
-                    className="flex items-center justify-center gap-2 py-1 px-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-full transition-colors"
-                  >
-                    <Share2 className="w-3.5 h-3.5" />
-                    Share
-                  </button>
+                  <div className="mt-3 flex justify-center">
+                    <button
+                      onClick={handleShare}
+                      className="flex items-center justify-center gap-2 py-1.5 px-4 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-full transition-colors"
+                    >
+                      <Share2 className="w-3.5 h-3.5" />
+                      Share Progress
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
