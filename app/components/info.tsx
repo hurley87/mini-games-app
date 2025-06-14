@@ -601,24 +601,8 @@ export function Info({
             </div>
             <div className="flex-1">
               <h3 className="text-sm font-semibold text-yellow-200 mb-3">
-                Rewards & Configuration
+                Game Settings
               </h3>
-
-              {/* Rewards Amount */}
-              <div className="mb-3">
-                <div className="text-xs text-yellow-300/70 mb-1">
-                  Total Rewards
-                </div>
-                <div className="flex items-center gap-2">
-                  <Trophy className="w-4 h-4 text-yellow-400" />
-                  <span className="text-yellow-200 font-bold text-lg">
-                    {!isLoadingStats && playerStats
-                      ? playerStats.points.toLocaleString()
-                      : '0'}{' '}
-                    points
-                  </span>
-                </div>
-              </div>
 
               {/* Environment Variables */}
               <div className="space-y-2 text-xs">
