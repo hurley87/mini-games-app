@@ -5,7 +5,7 @@ import { useFarcasterContext } from '@/hooks/useFarcasterContext';
 import { usePlayStatus } from '@/hooks/usePlayStatus';
 import { usePlayerStats } from '@/hooks/usePlayerStats';
 import { BuyCoinButton } from './BuyCoinButton';
-import { useAccount, useConnect } from 'wagmi';
+import { useAccount } from 'wagmi';
 import { ZoraCoinData, Creator } from '@/lib/types';
 import {
   DollarSign,
@@ -21,6 +21,7 @@ import { Header } from './header';
 import { CoinLeaderboard } from './coin-leaderboard';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { PREMIUM_THRESHOLD, TOKEN_MULTIPLIER } from '@/lib/config';
+import { useSafeConnect } from '@/hooks/useSafeConnect';
 
 interface InfoProps {
   name: string;
@@ -56,7 +57,7 @@ export function Info({
   const [hasCheckedStatus, setHasCheckedStatus] = useState(false);
   const [buyAmount, setBuyAmount] = useState('0.01');
   const { isConnected } = useAccount();
-  const { connectors, connect } = useConnect();
+  const { connectors, connect } = useSafeConnect();
 
   // Validate and sanitize buy amount input
   const handleBuyAmountChange = (value: string) => {
@@ -349,7 +350,13 @@ export function Info({
           <div className="p-6">
             {!isConnected ? (
               <button
-                onClick={() => connect({ connector: connectors[0] })}
+                onClick={() => {
+                  try {
+                    connect({ connector: connectors[0] });
+                  } catch (error) {
+                    console.error('Connect error:', error);
+                  }
+                }}
                 className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-full transition-colors text-lg"
               >
                 Connect Wallet

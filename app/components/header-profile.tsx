@@ -20,12 +20,13 @@ import {
 } from 'lucide-react';
 import { useFarcasterContext } from '@/hooks/useFarcasterContext';
 import { toast } from 'sonner';
-import { useAccount, useConnect } from 'wagmi';
+import { useAccount } from 'wagmi';
 import Link from 'next/link';
 import { trackGameEvent } from '@/lib/posthog';
 import { sentryTracker } from '@/lib/sentry';
 import { sdk } from '@farcaster/frame-sdk';
 import { WelcomeDialog } from './welcome-dialog';
+import { useSafeConnect } from '@/hooks/useSafeConnect';
 
 export function HeaderProfile() {
   const { context, isLoading } = useFarcasterContext();
@@ -34,7 +35,7 @@ export function HeaderProfile() {
     connect,
     connectors,
     isPending: isConnecting,
-  } = useConnect({
+  } = useSafeConnect({
     mutation: {
       onSuccess(data) {
         toast.success('Connected successfully!');
@@ -70,10 +71,11 @@ export function HeaderProfile() {
   const handleConnect = () => {
     trackGameEvent.navigationClick('connect_wallet', 'header_profile');
 
-    if (connectors && connectors.length > 0) {
+    try {
       connect({ connector: connectors[0] });
-    } else {
-      toast.error('No wallet connectors available');
+    } catch (error) {
+      console.error('Connect error:', error);
+      toast.error('Failed to connect wallet');
     }
   };
 
