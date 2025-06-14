@@ -20,7 +20,7 @@ import { sdk } from '@farcaster/frame-sdk';
 import { Header } from './header';
 import { CoinLeaderboard } from './coin-leaderboard';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { PREMIUM_THRESHOLD } from '@/lib/config';
+import { PREMIUM_THRESHOLD, TOKEN_MULTIPLIER } from '@/lib/config';
 
 interface InfoProps {
   name: string;
@@ -382,6 +382,56 @@ export function Info({
             )}
           </div>
 
+          {/* Rewards & Config Section */}
+          <div className="p-6 bg-gradient-to-r from-yellow-900/20 to-orange-900/20 border-b border-yellow-700/30">
+            <div className="flex items-start space-x-3">
+              <div className="w-6 h-6 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Coins className="w-4 h-4 text-yellow-400" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-sm font-semibold text-yellow-200 mb-3">
+                  Rewards & Configuration
+                </h3>
+
+                {/* Rewards Amount */}
+                <div className="mb-3">
+                  <div className="text-xs text-yellow-300/70 mb-1">
+                    Total Rewards
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Trophy className="w-4 h-4 text-yellow-400" />
+                    <span className="text-yellow-200 font-bold text-lg">
+                      {!isLoadingStats && playerStats
+                        ? playerStats.points.toLocaleString()
+                        : '0'}{' '}
+                      points
+                    </span>
+                  </div>
+                </div>
+
+                {/* Environment Variables */}
+                <div className="space-y-2 text-xs">
+                  <div className="flex justify-between items-center py-1 px-2 bg-black/20 rounded">
+                    <span className="text-yellow-300/70">
+                      Token Multiplier:
+                    </span>
+                    <span className="text-yellow-200 font-mono">
+                      {TOKEN_MULTIPLIER.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center py-1 px-2 bg-black/20 rounded">
+                    <span className="text-yellow-300/70">
+                      Premium Threshold:
+                    </span>
+                    <span className="text-yellow-200 font-mono">
+                      {PREMIUM_THRESHOLD.toLocaleString()} ${symbol}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Description */}
           <div className="p-6 border-t border-white/20">
             <h2 className="text-lg font-semibold text-white mb-3">
@@ -592,6 +642,89 @@ export function Info({
             </div>
           </div>
         )}
+
+        {/* Action Button */}
+        <div className="p-6">
+          {!isConnected ? (
+            <button
+              onClick={() => connect({ connector: connectors[0] })}
+              className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-full transition-colors text-lg"
+            >
+              Connect Wallet
+            </button>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <input
+                type="text"
+                placeholder="0.01"
+                value={buyAmount}
+                onChange={(e) => handleBuyAmountChange(e.target.value)}
+                onBlur={() => {
+                  // Set to minimum if empty or invalid on blur
+                  if (!buyAmount || parseFloat(buyAmount) < 0.01) {
+                    setBuyAmount('0.01');
+                  }
+                }}
+                className="w-full px-3 py-2 rounded-md text-black border-2 border-gray-300 focus:border-blue-500 focus:outline-none"
+              />
+              <div className="text-xs text-white/70">Minimum: 0.01 ETH</div>
+              <BuyCoinButton
+                coinAddress={coinAddress}
+                amount={getValidatedBuyAmount()}
+                symbol={symbol}
+                onSuccess={() => {
+                  setHasCheckedStatus(false);
+                }}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Rewards & Config Section */}
+        <div className="p-6 bg-gradient-to-r from-yellow-900/20 to-orange-900/20 border-b border-yellow-700/30">
+          <div className="flex items-start space-x-3">
+            <div className="w-6 h-6 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <Coins className="w-4 h-4 text-yellow-400" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-yellow-200 mb-3">
+                Rewards & Configuration
+              </h3>
+
+              {/* Rewards Amount */}
+              <div className="mb-3">
+                <div className="text-xs text-yellow-300/70 mb-1">
+                  Total Rewards
+                </div>
+                <div className="flex items-center gap-2">
+                  <Trophy className="w-4 h-4 text-yellow-400" />
+                  <span className="text-yellow-200 font-bold text-lg">
+                    {!isLoadingStats && playerStats
+                      ? playerStats.points.toLocaleString()
+                      : '0'}{' '}
+                    points
+                  </span>
+                </div>
+              </div>
+
+              {/* Environment Variables */}
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between items-center py-1 px-2 bg-black/20 rounded">
+                  <span className="text-yellow-300/70">Token Multiplier:</span>
+                  <span className="text-yellow-200 font-mono">
+                    {TOKEN_MULTIPLIER.toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center py-1 px-2 bg-black/20 rounded">
+                  <span className="text-yellow-300/70">Premium Threshold:</span>
+                  <span className="text-yellow-200 font-mono">
+                    {PREMIUM_THRESHOLD.toLocaleString()} ${symbol}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Description */}
         <div className="p-6 border-t border-white/20 flex flex-col gap-6 items-center">
