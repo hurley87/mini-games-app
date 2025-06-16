@@ -58,6 +58,15 @@ export function Info({
   const { isConnected } = useAccount();
   const { connectors, connect } = useConnect();
 
+  const formatNextFreePlay = () => {
+    if (!playStatus?.nextFreePlay) return null;
+    const diff = new Date(playStatus.nextFreePlay).getTime() - Date.now();
+    if (diff <= 0) return 'now';
+    const hours = Math.floor(diff / 3600000);
+    const minutes = Math.floor((diff % 3600000) / 60000);
+    return `in ${hours}h ${minutes}m`;
+  };
+
   // Validate and sanitize buy amount input
   const handleBuyAmountChange = (value: string) => {
     // Allow empty string temporarily for user input
@@ -103,10 +112,8 @@ export function Info({
     if (!playStatus) return;
 
     if (playStatus.canPlay) {
-      // Record the play if they haven't played before
-      if (!playStatus.hasPlayed) {
-        await recordPlay(id, coinAddress);
-      }
+      // Record the play to update last played timestamp
+      await recordPlay(id, coinAddress);
       onPlay();
     }
   };
@@ -281,6 +288,11 @@ export function Info({
                     You need at least {PREMIUM_THRESHOLD.toLocaleString()}{' '}
                     {symbol} tokens to play.
                   </p>
+                  {playStatus.nextFreePlay && (
+                    <p className="text-xs text-amber-300 mt-1">
+                      Next free play available {formatNextFreePlay()}.
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -521,10 +533,10 @@ export function Info({
               </div>
               <div>
                 <h3 className="text-sm font-semibold text-green-200">
-                  Free Trial Available
+                  Daily Free Play
                 </h3>
                 <p className="text-xs text-green-300 mt-1">
-                  Play for free on your first attempt!
+                  Your first play each day is free!
                 </p>
               </div>
             </div>

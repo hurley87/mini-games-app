@@ -26,6 +26,15 @@ export const PREMIUM_THRESHOLD = parseInt(
 );
 
 /**
+ * Free play interval in seconds. Players can play for free once within this
+ * period. Defaults to 86400 seconds (24 hours)
+ */
+export const FREE_PLAY_INTERVAL = parseInt(
+  process.env.NEXT_PUBLIC_FREE_PLAY_INTERVAL ?? '86400',
+  10
+);
+
+/**
  * Validate that the token multiplier is a positive number
  */
 if (isNaN(TOKEN_MULTIPLIER) || TOKEN_MULTIPLIER <= 0) {
@@ -40,5 +49,14 @@ if (isNaN(TOKEN_MULTIPLIER) || TOKEN_MULTIPLIER <= 0) {
 if (isNaN(PREMIUM_THRESHOLD) || PREMIUM_THRESHOLD <= 0) {
   throw new Error(
     'PREMIUM_THRESHOLD must be a positive number. Check NEXT_PUBLIC_PREMIUM_THRESHOLD environment variable.'
+  );
+}
+
+/**
+ * Validate that the free play interval is a positive number
+ */
+if (isNaN(FREE_PLAY_INTERVAL) || FREE_PLAY_INTERVAL <= 0) {
+  throw new Error(
+    'FREE_PLAY_INTERVAL must be a positive number. Check NEXT_PUBLIC_FREE_PLAY_INTERVAL environment variable.'
   );
 }

@@ -12,6 +12,7 @@ export type PlayStatus = {
     | 'balance_check_failed';
   hasPlayed: boolean;
   tokenBalance: string;
+  nextFreePlay?: string | null;
 };
 
 export function usePlayStatus() {

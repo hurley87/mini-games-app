@@ -54,6 +54,7 @@ export type GamePlay = {
   fid: number;
   game_id: string;
   coin_address: string;
+  last_played_at?: string;
 };
 
 export type PlayerRank = {
@@ -344,9 +345,12 @@ export const supabaseService = {
   async recordGamePlay(gamePlay: Omit<GamePlay, 'id' | 'created_at'>) {
     const { data, error } = await supabase
       .from('game_plays')
-      .upsert(gamePlay, {
-        onConflict: 'fid,game_id',
-      })
+      .upsert(
+        { ...gamePlay, last_played_at: new Date().toISOString() },
+        {
+          onConflict: 'fid,game_id',
+        }
+      )
       .select()
       .single();
 
@@ -356,6 +360,22 @@ export const supabaseService = {
     }
 
     return data;
+  },
+
+  async getGamePlay(fid: number, gameId: string) {
+    const { data, error } = await supabase
+      .from('game_plays')
+      .select('*')
+      .eq('fid', fid)
+      .eq('game_id', gameId)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error fetching game play:', error);
+      throw new Error('Failed to fetch game play');
+    }
+
+    return data as GamePlay | null;
   },
 
   async hasPlayerPlayedGame(fid: number, gameId: string) {

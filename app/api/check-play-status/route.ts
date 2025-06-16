@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseService } from '@/lib/supabase';
 import { Address, createPublicClient, http } from 'viem';
 import { base } from 'viem/chains';
-import { PREMIUM_THRESHOLD } from '@/lib/config';
+import { PREMIUM_THRESHOLD, FREE_PLAY_INTERVAL } from '@/lib/config';
 
 const rpcUrl = process.env.RPC_URL!;
 
@@ -47,16 +47,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if player has played this game before
-    const hasPlayed = await supabaseService.hasPlayerPlayedGame(fid, coinId);
+    // Check last play time
+    const gamePlay = await supabaseService.getGamePlay(fid, coinId);
+    const now = Date.now();
+    const lastPlay = gamePlay?.last_played_at
+      ? new Date(gamePlay.last_played_at).getTime()
+      : null;
 
-    // If they haven't played before, they can play for free
-    if (!hasPlayed) {
+    if (!lastPlay || now - lastPlay >= FREE_PLAY_INTERVAL * 1000) {
       return NextResponse.json({
         canPlay: true,
         reason: 'first_time',
         hasPlayed: false,
         tokenBalance: '0',
+        nextFreePlay: new Date(now + FREE_PLAY_INTERVAL * 1000).toISOString(),
       });
     }
 
@@ -67,6 +71,7 @@ export async function POST(request: NextRequest) {
         reason: 'no_wallet',
         hasPlayed: true,
         tokenBalance: '0',
+        nextFreePlay: new Date(lastPlay + FREE_PLAY_INTERVAL * 1000).toISOString(),
       });
     }
 
@@ -107,6 +112,9 @@ export async function POST(request: NextRequest) {
         reason: hasTokens ? 'has_tokens' : 'needs_tokens',
         hasPlayed: true,
         tokenBalance: balance.toString(),
+        nextFreePlay: hasTokens
+          ? null
+          : new Date(lastPlay + FREE_PLAY_INTERVAL * 1000).toISOString(),
       });
     } catch (balanceError) {
       console.error('Error checking token balance:', balanceError);
@@ -116,6 +124,7 @@ export async function POST(request: NextRequest) {
         reason: 'balance_check_failed',
         hasPlayed: true,
         tokenBalance: '0',
+        nextFreePlay: new Date(lastPlay + FREE_PLAY_INTERVAL * 1000).toISOString(),
       });
     }
   } catch (error) {
