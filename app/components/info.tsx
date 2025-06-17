@@ -567,7 +567,7 @@ export function Info({
             </div>
             <div className="flex-1">
               <h3 className="text-sm font-semibold text-yellow-200 mb-3">
-                Game Settings
+                Settings
               </h3>
 
               {/* Environment Variables */}
