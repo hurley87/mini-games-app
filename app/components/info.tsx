@@ -222,9 +222,9 @@ export function Info({
                 {/* creator */}
                 <div
                   onClick={handleViewProfile}
-                  className="flex items-center space-x-3 cursor-pointer"
+                  className="flex items-center gap-1 mb-1 cursor-pointer"
                 >
-                  <div className="w-8 h-8 rounded-full bg-white/10 overflow-hidden">
+                  <div className="w-8 h-8 rounded-full bg-white/10 overflow-hidden cursor-pointer">
                     {creator?.pfp ? (
                       <img
                         src={creator.pfp}
@@ -233,7 +233,7 @@ export function Info({
                       />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
-                        <span className="text-white text-sm font-bold cursor-pointer">
+                        <span className="text-white text-sm font-bold">
                           {creator?.username?.charAt(0)?.toUpperCase() || 'C'}
                         </span>
                       </div>
@@ -433,10 +433,10 @@ export function Info({
 
             {/* App Info */}
             <div className="flex-1 min-w-0">
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center gap-1 mb-1">
                 <div
                   onClick={handleViewProfile}
-                  className="w-10 h-10 rounded-full bg-white/10 overflow-hidden cursor-pointer"
+                  className="w-8 h-8 rounded-full bg-white/10 overflow-hidden cursor-pointer"
                 >
                   {creator?.pfp ? (
                     <img
