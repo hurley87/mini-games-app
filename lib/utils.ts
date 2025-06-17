@@ -60,11 +60,11 @@ export function formatTimeUntil(timestamp: string): string {
   let diff = Math.floor((future - now) / 1000);
   if (diff <= 0) return 'now';
   if (diff < 60) return `${diff}s`;
-  diff = Math.ceil(diff / 60);
+  diff = Math.floor(diff / 60);
   if (diff < 60) return `${diff}m`;
-  diff = Math.ceil(diff / 60);
+  diff = Math.floor(diff / 60);
   if (diff < 24) return `${diff}h`;
-  diff = Math.ceil(diff / 24);
+  diff = Math.floor(diff / 24);
   return `${diff}d`;
 }
 

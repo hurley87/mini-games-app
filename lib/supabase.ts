@@ -551,6 +551,28 @@ export const supabaseService = {
     return data || [];
   },
 
+  async getAllNotifications() {
+    const { data, error } = await supabase.from('notifications').select('*');
+
+    if (error) {
+      console.error('Error getting all notifications:', error);
+      throw new Error('Failed to get all notifications');
+    }
+
+    return data || [];
+  },
+
+  async getAllGamePlayRecords() {
+    const { data, error } = await supabase.from('game_plays').select('*');
+
+    if (error) {
+      console.error('Error getting all game play records:', error);
+      throw new Error('Failed to get all game play records');
+    }
+
+    return data || [];
+  },
+
   // Add direct access to supabase client
   from: supabase.from.bind(supabase),
 };

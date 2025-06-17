@@ -49,16 +49,21 @@ export async function POST(request: NextRequest) {
 
     // Check if player has played this game before and when
     const gamePlay = await supabaseService.getGamePlayRecord(fid, coinId);
-    const lastPlay = gamePlay?.created_at ? new Date(gamePlay.created_at) : null;
+    const lastPlay = gamePlay?.created_at
+      ? new Date(gamePlay.created_at)
+      : null;
     const now = new Date();
 
-    if (!lastPlay || now.getTime() - lastPlay.getTime() >= 24 * 60 * 60 * 1000) {
+    if (
+      !lastPlay ||
+      now.getTime() - lastPlay.getTime() >= 24 * 60 * 60 * 1000
+    ) {
       return NextResponse.json({
         canPlay: true,
         reason: gamePlay ? 'daily_free' : 'first_time',
         hasPlayed: !!gamePlay,
         tokenBalance: '0',
-        nextFreePlayTime: new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString(),
+        nextFreePlayTime: null,
       });
     }
 
