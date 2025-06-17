@@ -224,7 +224,7 @@ export function Info({
                   onClick={handleViewProfile}
                   className="flex items-center space-x-3 cursor-pointer"
                 >
-                  <div className="w-10 h-10 rounded-full bg-white/10 overflow-hidden">
+                  <div className="w-8 h-8 rounded-full bg-white/10 overflow-hidden">
                     {creator?.pfp ? (
                       <img
                         src={creator.pfp}
@@ -239,12 +239,9 @@ export function Info({
                       </div>
                     )}
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-white">
-                      {creator?.username || `Creator ${fid}`}
-                    </p>
-                    <p className="text-xs text-white/70">Game Creator</p>
-                  </div>
+                  <p className="text-sm font-medium text-white">
+                    {creator?.username || `Creator ${fid}`}
+                  </p>
                 </div>
                 <h1 className="text-2xl font-bold text-white leading-tight">
                   {name}
@@ -455,12 +452,9 @@ export function Info({
                     </div>
                   )}
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-white">
-                    {creator?.username || `Creator ${fid}`}
-                  </p>
-                  <p className="text-xs text-white/70">Game Creator</p>
-                </div>
+                <p className="text-sm font-medium text-white">
+                  {creator?.username || `Creator ${fid}`}
+                </p>
               </div>
               <h1 className="text-2xl font-bold text-white leading-tight">
                 {name}
