@@ -204,7 +204,7 @@ export function CoinCard({ coin }: CoinCardProps) {
           className="bg-purple-600 text-white rounded-full font-semibold w-full mt-4 text-xl py-4 hover:brightness-110 transition-all duration-200 shadow-xl"
           onClick={handleGameCardView}
         >
-          {coin.name}
+          View {coin.name}
         </button>
       </Link>
 
