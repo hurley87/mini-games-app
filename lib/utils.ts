@@ -1,5 +1,7 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { sdk } from '@farcaster/frame-sdk';
+import { sentryTracker } from './sentry';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -127,5 +129,30 @@ export function formatTokenBalance(
   } catch (error) {
     console.error('Error formatting token balance:', error);
     return '0';
+  }
+}
+
+/**
+ * Handles viewing a coin token via Farcaster SDK
+ * @param coinAddress - The coin contract address
+ * @param context - Additional context for error tracking
+ */
+export async function handleViewCoin(
+  coinAddress: string,
+  context?: { element?: string; page?: string }
+) {
+  try {
+    await sdk.actions.viewToken({
+      token: `eip155:8453/erc20:${coinAddress}`,
+    });
+  } catch (error) {
+    sentryTracker.userActionError(
+      error instanceof Error ? error : new Error('Failed to track view coin'),
+      {
+        action: 'view_coin',
+        element: context?.element || 'coin_card',
+        page: context?.page || 'coins_list',
+      }
+    );
   }
 }

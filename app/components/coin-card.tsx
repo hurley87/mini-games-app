@@ -9,7 +9,7 @@ import {
   Link as LinkIcon,
 } from 'lucide-react';
 import { CoinWithCreator } from '@/lib/types';
-import { formatRelativeTime } from '@/lib/utils';
+import { formatRelativeTime, handleViewCoin } from '@/lib/utils';
 import {
   Popover,
   PopoverContent,
@@ -100,21 +100,11 @@ export function CoinCard({ coin }: CoinCardProps) {
     }
   };
 
-  const handleViewCoin = async () => {
-    try {
-      await sdk.actions.viewToken({
-        token: `eip155:8453/erc20:${coin.coin_address}`,
-      });
-    } catch (error) {
-      sentryTracker.userActionError(
-        error instanceof Error ? error : new Error('Failed to track view coin'),
-        {
-          action: 'view_coin',
-          element: 'coin_card',
-          page: 'coins_list',
-        }
-      );
-    }
+  const handleViewCoinClick = async () => {
+    await handleViewCoin(coin.coin_address, {
+      element: 'coin_card',
+      page: 'coins_list',
+    });
   };
 
   return (
@@ -223,7 +213,7 @@ export function CoinCard({ coin }: CoinCardProps) {
       <div className="flex items-center justify-center pt-4 gap-1">
         Play {coin.name}, earn
         <span
-          onClick={handleViewCoin}
+          onClick={handleViewCoinClick}
           className="text-purple-400 cursor-pointer"
         >
           ${coin.symbol}

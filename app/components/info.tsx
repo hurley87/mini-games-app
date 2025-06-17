@@ -3,19 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useFarcasterContext } from '@/hooks/useFarcasterContext';
 import { usePlayStatus } from '@/hooks/usePlayStatus';
-import { usePlayerStats } from '@/hooks/usePlayerStats';
 import { BuyCoinButton } from './BuyCoinButton';
 import { useAccount, useConnect } from 'wagmi';
 import { ZoraCoinData, Creator } from '@/lib/types';
-import {
-  DollarSign,
-  TrendingUp,
-  Users,
-  Trophy,
-  Coins,
-  Share2,
-} from 'lucide-react';
-import { formatCurrency, formatHolders, formatTokenBalance } from '@/lib/utils';
+import { Coins, Share2 } from 'lucide-react';
+import { formatTokenBalance, handleViewCoin } from '@/lib/utils';
 import { sdk } from '@farcaster/frame-sdk';
 import { Header } from './header';
 import { CoinLeaderboard } from './coin-leaderboard';
@@ -43,7 +35,6 @@ export function Info({
   coinAddress,
   imageUrl,
   symbol,
-  zoraData,
   fid,
   creator,
   onPlay,
@@ -52,7 +43,6 @@ export function Info({
   const { isReady } = useFarcasterContext({ autoAddFrame: true });
   const { playStatus, isLoading, error, checkPlayStatus, recordPlay } =
     usePlayStatus();
-  const { playerStats, isLoading: isLoadingStats } = usePlayerStats();
   const [hasCheckedStatus, setHasCheckedStatus] = useState(false);
   const [buyAmount, setBuyAmount] = useState('0.01');
   const { isConnected } = useAccount();
@@ -132,6 +122,13 @@ export function Info({
     } catch (error) {
       console.error('Failed to share:', error);
     }
+  };
+
+  const handleViewCoinClick = async () => {
+    await handleViewCoin(coinAddress, {
+      element: 'coin_info',
+      page: 'game_info',
+    });
   };
 
   if (!name) {
@@ -224,36 +221,25 @@ export function Info({
                 <h1 className="text-2xl font-bold text-white leading-tight">
                   {name}
                 </h1>
-                <p className="text-sm text-white/70 mt-1">${symbol}</p>
 
-                {/* Token Statistics */}
-                <div className="flex items-center gap-3 text-sm pt-2">
-                  {/* 24h Volume */}
-                  <div className="flex items-center gap-1 text-purple-400">
-                    <TrendingUp className="w-4 h-4" />
-                    <span className="font-medium">
-                      {formatCurrency(zoraData?.volume24h)}
-                    </span>
-                  </div>
-
-                  {/* Market Cap */}
-                  <div className="flex items-center gap-1 text-emerald-400">
-                    <DollarSign className="w-4 h-4" />
-                    <span className="font-medium">
-                      {formatCurrency(zoraData?.marketCap)}
-                    </span>
-                  </div>
-
-                  {/* Unique Holders */}
-                  <div className="flex items-center gap-1 text-blue-400">
-                    <Users className="w-4 h-4" />
-                    <span className="font-medium">
-                      {formatHolders(zoraData?.uniqueHolders)}
-                    </span>
-                  </div>
-                </div>
+                <p
+                  onClick={handleViewCoinClick}
+                  className="text-sm text-purple-400 mt-1 cursor-pointer"
+                >
+                  ${symbol}
+                </p>
               </div>
             </div>
+          </div>
+
+          {/* Description */}
+          <div className="p-6 border-t border-white/20">
+            <h2 className="text-lg font-semibold text-white mb-3">
+              About this game
+            </h2>
+            <p className="text-sm text-white/70 leading-relaxed">
+              {description}
+            </p>
           </div>
 
           {/* Warning/Status Section */}
@@ -382,16 +368,6 @@ export function Info({
             )}
           </div>
 
-          {/* Description */}
-          <div className="p-6 border-t border-white/20">
-            <h2 className="text-lg font-semibold text-white mb-3">
-              About this game
-            </h2>
-            <p className="text-sm text-white/70 leading-relaxed">
-              {description}
-            </p>
-          </div>
-
           {/* Creator */}
           <div className="p-6 border-t border-white/20">
             <div className="flex items-center justify-between">
@@ -470,34 +446,13 @@ export function Info({
               <h1 className="text-2xl font-bold text-white leading-tight">
                 {name}
               </h1>
-              <p className="text-sm text-white/70 mt-1">${symbol}</p>
 
-              {/* Token Statistics */}
-              <div className="flex items-center gap-3 text-sm pt-2">
-                {/* 24h Volume */}
-                <div className="flex items-center gap-1 text-purple-400">
-                  <TrendingUp className="w-4 h-4" />
-                  <span className="font-medium">
-                    {formatCurrency(zoraData?.volume24h)}
-                  </span>
-                </div>
-
-                {/* Market Cap */}
-                <div className="flex items-center gap-1 text-emerald-400">
-                  <DollarSign className="w-4 h-4" />
-                  <span className="font-medium">
-                    {formatCurrency(zoraData?.marketCap)}
-                  </span>
-                </div>
-
-                {/* Unique Holders */}
-                <div className="flex items-center gap-1 text-blue-400">
-                  <Users className="w-4 h-4" />
-                  <span className="font-medium">
-                    {formatHolders(zoraData?.uniqueHolders)}
-                  </span>
-                </div>
-              </div>
+              <p
+                className="text-sm text-purple-400 mt-1 cursor-pointer"
+                onClick={handleViewCoinClick}
+              >
+                ${symbol}
+              </p>
             </div>
           </div>
         </div>
@@ -566,18 +521,6 @@ export function Info({
                       </span>
                     </div>
                   </div>
-
-                  {/* Points */}
-                  {!isLoadingStats && playerStats && (
-                    <div className="flex items-center gap-1.5">
-                      <Trophy className="w-4 h-4 text-yellow-400" />
-                      <div className="text-xs">
-                        <span className="text-yellow-300 font-medium">
-                          {playerStats.points.toLocaleString()} pts
-                        </span>
-                      </div>
-                    </div>
-                  )}
 
                   {/* Share Button */}
                   <button
