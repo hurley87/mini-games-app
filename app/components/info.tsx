@@ -7,7 +7,7 @@ import { BuyCoinButton } from './BuyCoinButton';
 import { useAccount, useConnect } from 'wagmi';
 import { ZoraCoinData, Creator } from '@/lib/types';
 import { Coins, Share2 } from 'lucide-react';
-import { formatTokenBalance, handleViewCoin } from '@/lib/utils';
+import { formatTokenBalance, handleViewCoin, formatTimeUntil } from '@/lib/utils';
 import { sdk } from '@farcaster/frame-sdk';
 import { Header } from './header';
 import { CoinLeaderboard } from './coin-leaderboard';
@@ -268,7 +268,7 @@ export function Info({
           </div>
 
           {/* Warning/Status Section */}
-          {playStatus.reason === 'needs_tokens' && (
+          {playStatus.reason === 'wait_for_free' && (
             <div className="p-6 bg-amber-900/30 border-b border-amber-700/30">
               <div className="flex items-start space-x-3">
                 <div className="w-6 h-6 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -290,7 +290,9 @@ export function Info({
                   </h3>
                   <p className="text-xs text-amber-300 mt-1">
                     You need at least {PREMIUM_THRESHOLD.toLocaleString()}{' '}
-                    {symbol} tokens to play.
+                    {symbol} tokens or wait{' '}
+                    {formatTimeUntil(playStatus.nextFreePlayTime!)} for your
+                    next free play.
                   </p>
                 </div>
               </div>
@@ -482,7 +484,7 @@ export function Info({
         </div>
 
         {/* Status indicators */}
-        {!playStatus.hasPlayed && (
+        {(!playStatus.hasPlayed || playStatus.reason === 'daily_free') && (
           <div className="p-6 bg-green-900/30 border-b border-green-700/30">
             <div className="flex items-start space-x-3">
               <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -503,7 +505,9 @@ export function Info({
                   Free Trial Available
                 </h3>
                 <p className="text-xs text-green-300 mt-1">
-                  Play for free on your first attempt!
+                  {playStatus.reason === 'daily_free'
+                    ? 'Your daily free play is ready!'
+                    : 'Play for free on your first attempt!'}
                 </p>
               </div>
             </div>

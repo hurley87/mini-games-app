@@ -6,12 +6,14 @@ export type PlayStatus = {
   canPlay: boolean;
   reason:
     | 'first_time'
+    | 'daily_free'
     | 'has_tokens'
-    | 'needs_tokens'
+    | 'wait_for_free'
     | 'no_wallet'
     | 'balance_check_failed';
   hasPlayed: boolean;
   tokenBalance: string;
+  nextFreePlayTime?: string;
 };
 
 export function usePlayStatus() {

@@ -47,26 +47,38 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if player has played this game before
-    const hasPlayed = await supabaseService.hasPlayerPlayedGame(fid, coinId);
+    // Check if player has played this game before and when
+    const gamePlay = await supabaseService.getGamePlayRecord(fid, coinId);
+    const lastPlay = gamePlay?.created_at
+      ? new Date(gamePlay.created_at)
+      : null;
+    const now = new Date();
 
-    // If they haven't played before, they can play for free
-    if (!hasPlayed) {
+    if (
+      !lastPlay ||
+      now.getTime() - lastPlay.getTime() >= 24 * 60 * 60 * 1000
+    ) {
       return NextResponse.json({
         canPlay: true,
-        reason: 'first_time',
-        hasPlayed: false,
+        reason: gamePlay ? 'daily_free' : 'first_time',
+        hasPlayed: !!gamePlay,
         tokenBalance: '0',
+        nextFreePlayTime: null,
       });
     }
 
     // If they have played before, check their token balance
+    const nextFreePlayTime = new Date(
+      lastPlay.getTime() + 24 * 60 * 60 * 1000
+    ).toISOString();
+
     if (!walletAddress) {
       return NextResponse.json({
         canPlay: false,
         reason: 'no_wallet',
         hasPlayed: true,
         tokenBalance: '0',
+        nextFreePlayTime,
       });
     }
 
@@ -104,9 +116,10 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({
         canPlay: hasTokens,
-        reason: hasTokens ? 'has_tokens' : 'needs_tokens',
+        reason: hasTokens ? 'has_tokens' : 'wait_for_free',
         hasPlayed: true,
         tokenBalance: balance.toString(),
+        nextFreePlayTime,
       });
     } catch (balanceError) {
       console.error('Error checking token balance:', balanceError);
@@ -116,6 +129,7 @@ export async function POST(request: NextRequest) {
         reason: 'balance_check_failed',
         hasPlayed: true,
         tokenBalance: '0',
+        nextFreePlayTime,
       });
     }
   } catch (error) {

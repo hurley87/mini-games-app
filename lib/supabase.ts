@@ -341,7 +341,7 @@ export const supabaseService = {
     return data;
   },
 
-  async recordGamePlay(gamePlay: Omit<GamePlay, 'id' | 'created_at'>) {
+  async recordGamePlay(gamePlay: Omit<GamePlay, 'id'>) {
     const { data, error } = await supabase
       .from('game_plays')
       .upsert(gamePlay, {
@@ -373,6 +373,22 @@ export const supabaseService = {
     }
 
     return !!data;
+  },
+
+  async getGamePlayRecord(fid: number, gameId: string) {
+    const { data, error } = await supabase
+      .from('game_plays')
+      .select('*')
+      .eq('fid', fid)
+      .eq('game_id', gameId)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error getting game play record:', error);
+      throw new Error('Failed to get game play record');
+    }
+
+    return data as GamePlay | null;
   },
 
   async getPlayerGamePlays(fid: number) {
@@ -530,6 +546,28 @@ export const supabaseService = {
     if (error) {
       console.error('Error getting notifications by fid:', error);
       throw new Error('Failed to get notifications by fid');
+    }
+
+    return data || [];
+  },
+
+  async getAllNotifications() {
+    const { data, error } = await supabase.from('notifications').select('*');
+
+    if (error) {
+      console.error('Error getting all notifications:', error);
+      throw new Error('Failed to get all notifications');
+    }
+
+    return data || [];
+  },
+
+  async getAllGamePlayRecords() {
+    const { data, error } = await supabase.from('game_plays').select('*');
+
+    if (error) {
+      console.error('Error getting all game play records:', error);
+      throw new Error('Failed to get all game play records');
     }
 
     return data || [];
