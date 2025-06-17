@@ -189,6 +189,7 @@ export function Info({
   if (!playStatus.canPlay) {
     return (
       <div className="min-h-screen bg-black">
+        <Header />
         <div className="max-w-lg mx-auto bg-gradient-to-b from-black via-zinc-900 to-black">
           {/* Header with app icon and basic info */}
           <div className="p-6 border-b border-white/20">
@@ -218,6 +219,33 @@ export function Info({
 
               {/* App Info */}
               <div className="flex-1 min-w-0">
+                {/* creator */}
+                <div
+                  onClick={handleViewProfile}
+                  className="flex items-center space-x-3 cursor-pointer"
+                >
+                  <div className="w-10 h-10 rounded-full bg-white/10 overflow-hidden">
+                    {creator?.pfp ? (
+                      <img
+                        src={creator.pfp}
+                        alt={`${creator.username || 'Creator'} profile`}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
+                        <span className="text-white text-sm font-bold cursor-pointer">
+                          {creator?.username?.charAt(0)?.toUpperCase() || 'C'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-white">
+                      {creator?.username || `Creator ${fid}`}
+                    </p>
+                    <p className="text-xs text-white/70">Game Creator</p>
+                  </div>
+                </div>
                 <h1 className="text-2xl font-bold text-white leading-tight">
                   {name}
                 </h1>
@@ -368,41 +396,6 @@ export function Info({
             )}
           </div>
 
-          {/* Creator */}
-          <div className="p-6 border-t border-white/20">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full bg-white/10 overflow-hidden">
-                  {creator?.pfp ? (
-                    <img
-                      src={creator.pfp}
-                      alt={`${creator.username || 'Creator'} profile`}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
-                      <span className="text-white text-sm font-bold">
-                        {creator?.username?.charAt(0)?.toUpperCase() || 'C'}
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-white">
-                    {creator?.username || `Creator ${fid}`}
-                  </p>
-                  <p className="text-xs text-white/70">Game Creator</p>
-                </div>
-              </div>
-              <button
-                onClick={handleViewProfile}
-                className="text-blue-400 text-sm font-medium hover:text-blue-300 transition-colors"
-              >
-                View Profile
-              </button>
-            </div>
-          </div>
-
           {/* Coin Leaderboard */}
           <CoinLeaderboard coinId={coinId} symbol={symbol} limit={10} />
         </div>
@@ -443,10 +436,35 @@ export function Info({
 
             {/* App Info */}
             <div className="flex-1 min-w-0">
+              <div className="flex items-center space-x-3">
+                <div
+                  onClick={handleViewProfile}
+                  className="w-10 h-10 rounded-full bg-white/10 overflow-hidden cursor-pointer"
+                >
+                  {creator?.pfp ? (
+                    <img
+                      src={creator.pfp}
+                      alt={`${creator.username || 'Creator'} profile`}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
+                      <span className="text-white text-sm font-bold">
+                        {creator?.username?.charAt(0)?.toUpperCase() || 'C'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-white">
+                    {creator?.username || `Creator ${fid}`}
+                  </p>
+                  <p className="text-xs text-white/70">Game Creator</p>
+                </div>
+              </div>
               <h1 className="text-2xl font-bold text-white leading-tight">
                 {name}
               </h1>
-
               <p
                 className="text-sm text-purple-400 mt-1 cursor-pointer"
                 onClick={handleViewCoinClick}
@@ -574,41 +592,6 @@ export function Info({
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Creator */}
-        <div className="p-6 border-t border-white/20">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-full bg-white/10 overflow-hidden">
-                {creator?.pfp ? (
-                  <img
-                    src={creator.pfp}
-                    alt={`${creator.username || 'Creator'} profile`}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
-                    <span className="text-white text-sm font-bold">
-                      {creator?.username?.charAt(0)?.toUpperCase() || 'C'}
-                    </span>
-                  </div>
-                )}
-              </div>
-              <div>
-                <p className="text-sm font-medium text-white">
-                  {creator?.username || `Creator ${fid}`}
-                </p>
-                <p className="text-xs text-white/70">Game Creator</p>
-              </div>
-            </div>
-            <button
-              onClick={handleViewProfile}
-              className="text-blue-400 text-sm font-medium hover:text-blue-300 transition-colors"
-            >
-              View Profile
-            </button>
           </div>
         </div>
 
