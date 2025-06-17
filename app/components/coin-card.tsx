@@ -18,7 +18,6 @@ import {
 import { toast } from 'sonner';
 import { trackGameEvent } from '@/lib/posthog';
 import { sentryTracker } from '@/lib/sentry';
-import sdk from '@farcaster/frame-sdk';
 
 interface CoinCardProps {
   coin: CoinWithCreator;
