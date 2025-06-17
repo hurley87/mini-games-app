@@ -78,11 +78,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 6. Record the game play
+    // 6. Record the game play with current timestamp
     const gamePlay = await supabaseService.recordGamePlay({
       fid,
       game_id: gameId,
       coin_address: coinAddress,
+      created_at: new Date().toISOString(),
     });
 
     return NextResponse.json({

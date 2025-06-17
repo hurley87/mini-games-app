@@ -341,7 +341,7 @@ export const supabaseService = {
     return data;
   },
 
-  async recordGamePlay(gamePlay: Omit<GamePlay, 'id' | 'created_at'>) {
+  async recordGamePlay(gamePlay: Omit<GamePlay, 'id'>) {
     const { data, error } = await supabase
       .from('game_plays')
       .upsert(gamePlay, {
@@ -373,6 +373,22 @@ export const supabaseService = {
     }
 
     return !!data;
+  },
+
+  async getGamePlayRecord(fid: number, gameId: string) {
+    const { data, error } = await supabase
+      .from('game_plays')
+      .select('*')
+      .eq('fid', fid)
+      .eq('game_id', gameId)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error getting game play record:', error);
+      throw new Error('Failed to get game play record');
+    }
+
+    return data as GamePlay | null;
   },
 
   async getPlayerGamePlays(fid: number) {

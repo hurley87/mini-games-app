@@ -51,6 +51,24 @@ export function formatRelativeTime(timestamp: string): string {
 }
 
 /**
+ * Format a future timestamp into a relative time string from now
+ * @param timestamp ISO timestamp string in the future
+ */
+export function formatTimeUntil(timestamp: string): string {
+  const future = new Date(timestamp).getTime();
+  const now = Date.now();
+  let diff = Math.floor((future - now) / 1000);
+  if (diff <= 0) return 'now';
+  if (diff < 60) return `${diff}s`;
+  diff = Math.ceil(diff / 60);
+  if (diff < 60) return `${diff}m`;
+  diff = Math.ceil(diff / 60);
+  if (diff < 24) return `${diff}h`;
+  diff = Math.ceil(diff / 24);
+  return `${diff}d`;
+}
+
+/**
  * Formats a currency value for display
  * @param value - Currency value as string
  * @returns Formatted currency string
