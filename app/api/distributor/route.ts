@@ -13,6 +13,10 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
+function formatAddress(address: string) {
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
+
 // Shared logic for processing transfers
 async function processTransfers() {
   try {
@@ -137,7 +141,7 @@ async function processTransfers() {
                   body: JSON.stringify({
                     notificationId: crypto.randomUUID(),
                     title: `You earned ${(tokenCount * TOKEN_MULTIPLIER).toLocaleString()} ${coin.symbol} tokens`,
-                    body: `Check your wallet: ${playerWalletAddress}`,
+                    body: `Check your wallet: ${formatAddress(playerWalletAddress)}`,
                     targetUrl: `https://app.minigames.studio/coins/${coin.id}`,
                     tokens: [notification.token],
                   } satisfies SendNotificationRequest),
