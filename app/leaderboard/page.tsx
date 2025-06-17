@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Leaderboard } from '@/components/leaderboard';
 import { Header } from '@/app/components/header';
+import { BottomNav } from '@/app/components/bottom-nav';
 import { trackGameEvent } from '@/lib/posthog';
 import { useFarcasterContext } from '@/hooks/useFarcasterContext';
 import { usePlayerStats } from '@/hooks/usePlayerStats';
@@ -75,7 +76,7 @@ export default function LeaderboardPage() {
   return (
     <div className="max-w-lg mx-auto min-h-screen flex flex-col bg-gradient-to-b from-black via-zinc-900 to-black text-white">
       <Header />
-      <div className="px-4 pt-20 pb-8">
+      <div className="px-4 pt-20 pb-24">
         <div className="text-center mb-8">
           <h1 className="text-xl font-bold text-white mb-2">Player Rankings</h1>
           <p className="text-white/70">
@@ -116,6 +117,7 @@ export default function LeaderboardPage() {
           </div>
         </div>
       </div>
+      <BottomNav />
     </div>
   );
 }

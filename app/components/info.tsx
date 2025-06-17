@@ -13,6 +13,7 @@ import { Header } from './header';
 import { CoinLeaderboard } from './coin-leaderboard';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { PREMIUM_THRESHOLD, TOKEN_MULTIPLIER } from '@/lib/config';
+import { BottomNav } from './bottom-nav';
 
 interface InfoProps {
   name: string;
@@ -189,8 +190,7 @@ export function Info({
   if (!playStatus.canPlay) {
     return (
       <div className="min-h-screen bg-black">
-        <Header />
-        <div className="max-w-lg mx-auto bg-gradient-to-b from-black via-zinc-900 to-black">
+         <div className="max-w-lg mx-auto bg-gradient-to-b from-black via-zinc-900 to-black pb-24">
           {/* Header with app icon and basic info */}
           <div className="p-6 border-b border-white/20">
             <div className="flex items-start space-x-4">
@@ -396,6 +396,7 @@ export function Info({
           {/* Coin Leaderboard */}
           <CoinLeaderboard coinId={coinId} symbol={symbol} limit={10} />
         </div>
+        <BottomNav />
       </div>
     );
   }
@@ -404,7 +405,7 @@ export function Info({
   return (
     <div className="min-h-screen bg-black">
       <Header />
-      <div className="max-w-lg mx-auto bg-gradient-to-b from-black via-zinc-900 to-black pt-14">
+      <div className="max-w-lg mx-auto bg-gradient-to-b from-black via-zinc-900 to-black pt-14 pb-24">
         {/* Header with app icon and basic info */}
         <div className="p-6 border-b border-white/20">
           <div className="flex items-start space-x-4">
@@ -592,6 +593,7 @@ export function Info({
         {/* Coin Leaderboard */}
         <CoinLeaderboard coinId={coinId} symbol={symbol} limit={10} />
       </div>
+      <BottomNav />
     </div>
   );
 }
