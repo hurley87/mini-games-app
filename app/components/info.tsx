@@ -457,6 +457,17 @@ export function Info({
           </div>
         </div>
 
+        {/* Description */}
+        <div className="p-6 border-t border-white/20 flex flex-col gap-6 items-center">
+          <p className="text-sm text-white/70 leading-relaxed">{description}</p>
+          <button
+            onClick={handlePlay}
+            className="w-full bg-purple-600 text-white px-4 py-4 rounded-full font-semibold shadow-xl shadow-purple-500/20 hover:brightness-110 transition-all duration-200 text-lg"
+          >
+            PLAY
+          </button>
+        </div>
+
         {/* Status indicators */}
         {!playStatus.hasPlayed && (
           <div className="p-6 bg-green-900/30 border-b border-green-700/30">
@@ -564,17 +575,6 @@ export function Info({
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Description */}
-        <div className="p-6 border-t border-white/20 flex flex-col gap-6 items-center">
-          <p className="text-sm text-white/70 leading-relaxed">{description}</p>
-          <button
-            onClick={handlePlay}
-            className="w-full bg-purple-600 text-white px-4 py-4 rounded-full font-semibold shadow-xl shadow-purple-500/20 hover:brightness-110 transition-all duration-200 text-lg"
-          >
-            PLAY
-          </button>
         </div>
 
         {/* Creator */}
