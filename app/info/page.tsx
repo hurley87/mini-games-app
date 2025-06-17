@@ -1,4 +1,5 @@
 import { Header } from '@/app/components/header';
+import { BottomNav } from '@/app/components/bottom-nav';
 import {
   Coins,
   Trophy,
@@ -23,7 +24,7 @@ export default function InfoPage() {
   return (
     <div className="max-w-lg mx-auto min-h-screen flex flex-col bg-gradient-to-b from-black via-zinc-900 to-black text-white">
       <Header />
-      <div className="pt-16 pb-8">
+      <div className="pt-16 pb-24">
         {/* Hero Section */}
         <div className="px-4 py-8 text-center border-b border-white/10">
           <h1 className="text-3xl font-bold text-white mb-2">
@@ -327,6 +328,7 @@ export default function InfoPage() {
           </section>
         </div>
       </div>
+      <BottomNav />
     </div>
   );
 }

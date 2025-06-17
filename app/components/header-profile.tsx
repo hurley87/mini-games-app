@@ -11,21 +11,16 @@ import { Button } from '@/app/components/ui/button';
 import Image from 'next/image';
 import {
   List,
-  Trophy,
   Wallet,
   Copy,
-  Sparkles,
   Share2,
-  Info as InfoIcon,
 } from 'lucide-react';
 import { useFarcasterContext } from '@/hooks/useFarcasterContext';
 import { toast } from 'sonner';
 import { useAccount, useConnect } from 'wagmi';
-import Link from 'next/link';
 import { trackGameEvent } from '@/lib/posthog';
 import { sentryTracker } from '@/lib/sentry';
 import { sdk } from '@farcaster/frame-sdk';
-import { WelcomeDialog } from './welcome-dialog';
 
 export function HeaderProfile() {
   const { context, isLoading } = useFarcasterContext();
@@ -96,57 +91,6 @@ export function HeaderProfile() {
         {
           action: 'copy_wallet_address',
           element: 'wallet_address',
-          page: 'header_profile',
-        }
-      );
-    }
-  };
-
-  const handleGamesNavigation = () => {
-    try {
-      trackGameEvent.navigationClick('games', 'header_profile');
-    } catch (error) {
-      sentryTracker.userActionError(
-        error instanceof Error
-          ? error
-          : new Error('Failed to track navigation'),
-        {
-          action: 'navigate_games',
-          element: 'navigation_link',
-          page: 'header_profile',
-        }
-      );
-    }
-  };
-
-  const handleLeaderboardNavigation = () => {
-    try {
-      trackGameEvent.navigationClick('leaderboard', 'header_profile');
-    } catch (error) {
-      sentryTracker.userActionError(
-        error instanceof Error
-          ? error
-          : new Error('Failed to track navigation'),
-        {
-          action: 'navigate_leaderboard',
-          element: 'navigation_link',
-          page: 'header_profile',
-        }
-      );
-    }
-  };
-
-  const handleInfoNavigation = () => {
-    try {
-      trackGameEvent.navigationClick('info', 'header_profile');
-    } catch (error) {
-      sentryTracker.userActionError(
-        error instanceof Error
-          ? error
-          : new Error('Failed to track navigation'),
-        {
-          action: 'navigate_info',
-          element: 'navigation_link',
           page: 'header_profile',
         }
       );
@@ -247,34 +191,6 @@ export function HeaderProfile() {
           <div className="flex-1 p-6">
             {/* Menu Items */}
             <div className="space-y-6">
-              <Link href="/" onClick={handleGamesNavigation}>
-                <div className="flex items-center gap-4 text-xl font-semibold text-white hover:brightness-110 transition-all duration-200">
-                  <Sparkles className="w-6 h-6" />
-                  <span>Games</span>
-                </div>
-              </Link>
-
-              <Link
-                className="flex items-center gap-4 text-xl font-semibold text-white hover:brightness-110 transition-all duration-200 cursor-pointer"
-                href="/leaderboard"
-                onClick={handleLeaderboardNavigation}
-              >
-                <Trophy className="w-6 h-6" />
-                <span>Leaderboard</span>
-              </Link>
-
-              <WelcomeDialog
-                trigger={
-                  <button
-                    className="flex items-center gap-4 text-xl font-semibold text-white hover:brightness-110 transition-all duration-200 cursor-pointer"
-                    onClick={handleInfoNavigation}
-                  >
-                    <InfoIcon className="w-6 h-6" />
-                    <span>How It Works</span>
-                  </button>
-                }
-              />
-
               <button
                 onClick={handleShareReferral}
                 className="flex items-center gap-4 text-xl font-semibold text-white hover:brightness-110 transition-all duration-200"
