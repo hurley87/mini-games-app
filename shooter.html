@@ -1,0 +1,520 @@
+<html>
+  <body style="margin: 0; overflow: hidden; background: #111">
+    <canvas
+      id="gameCanvas"
+      style="
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+      "
+    ></canvas>
+
+    <script>
+      (function () {
+        'use strict';
+
+        // CANVAS SETUP
+        const canvas = document.getElementById('gameCanvas');
+        const context = canvas.getContext('2d');
+        let screenWidth = window.innerWidth;
+        let screenHeight = window.innerHeight;
+
+        function resizeCanvas() {
+          screenWidth = window.innerWidth;
+          screenHeight = window.innerHeight;
+          canvas.width = screenWidth;
+          canvas.height = screenHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // COLORS
+        const bgColorCombos = [
+          ['#222e4f', '#7400C0'],
+          ['#1b6655', '#81ECEC'],
+          ['#580018', '#F0496E'],
+          ['#110c45', '#ffc600'],
+          ['#222750', '#f600b1'],
+          ['#1b143e', '#3ef3d6'],
+          ['#2f1616', '#ffc453'],
+          ['#0a254a', '#fd5c43'],
+          ['#140f2b', '#8c52ff'],
+          ['#3f0943', '#fff95c'],
+          ['#0c2e4e', '#09ffe7'],
+        ];
+        let currentBgComboIdx = 0;
+
+        function setRandomBgCombo() {
+          let old = currentBgComboIdx;
+          do {
+            currentBgComboIdx = Math.floor(
+              Math.random() * bgColorCombos.length
+            );
+          } while (currentBgComboIdx === old && bgColorCombos.length > 1);
+        }
+
+        // SOFT GRADIENT BACKGROUND
+        function drawBgGradient() {
+          const colors = bgColorCombos[currentBgComboIdx];
+          let grad = context.createLinearGradient(
+            0,
+            0,
+            screenWidth,
+            screenHeight
+          );
+          grad.addColorStop(0, colors[0]);
+          grad.addColorStop(1, colors[1]);
+          context.fillStyle = grad;
+          context.fillRect(0, 0, screenWidth, screenHeight);
+        }
+
+        // SOFT BLOOM STARFIELD (for subtle depth)
+        const starCount = 80;
+        const stars = [];
+        for (let i = 0; i < starCount; i++) {
+          stars.push({
+            x: Math.random() * screenWidth,
+            y: Math.random() * screenHeight,
+            radius: Math.random() * 1.3 + 0.3,
+            alpha: Math.random() * 0.25 + 0.14,
+          });
+        }
+
+        function drawBloomStarfield() {
+          for (let i = 0; i < stars.length; i++) {
+            const star = stars[i];
+            context.save();
+            context.globalAlpha = star.alpha;
+            context.beginPath();
+            context.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+            context.fillStyle = '#fff';
+            context.shadowColor = '#fff';
+            context.shadowBlur = 9;
+            context.fill();
+            context.restore();
+          }
+          context.globalAlpha = 1;
+        }
+
+        // SHAPE SYSTEM
+        const targets = [];
+        const allShapes = [
+          'circle',
+          'triangle',
+          'square',
+          'pentagon',
+          'hexagon',
+        ];
+        const appleColors = [
+          '#FF5252', // red
+          '#4BD964', // green
+          '#FFCD38', // yellow-orange
+          '#4FC3F7', // blue
+          '#A259F7', // purple
+          '#FF80AB', // pink
+          '#FFD600', // pure yellow
+        ];
+
+        function randomBetween(min, max) {
+          return Math.random() * (max - min) + min;
+        }
+
+        // Speed-up system
+        let hitCount = 0;
+        let baseTargetSpeedMin = 1.8;
+        let baseTargetSpeedMax = 3.2;
+        let baseProjSpeed = 13;
+        function getCurrentTargetSpeed() {
+          let mul = 1 + Math.min(hitCount * 0.14, 4.2);
+          return [
+            baseTargetSpeedMin * mul,
+            baseTargetSpeedMax * mul + mul * 1.1,
+          ];
+        }
+        function getCurrentProjectileSpeed() {
+          return baseProjSpeed + Math.min(hitCount * 0.19, 12);
+        }
+
+        function spawnTarget() {
+          const shape = allShapes[Math.floor(Math.random() * allShapes.length)];
+          const color =
+            appleColors[Math.floor(Math.random() * appleColors.length)];
+          const size = randomBetween(14, 26);
+          const movementType =
+            Math.random() < 0.33
+              ? 'drift'
+              : Math.random() < 0.5
+                ? 'zigzag'
+                : 'orbit';
+          let x = randomBetween(size, screenWidth - size);
+          let y = randomBetween(size, screenHeight * 0.15);
+          let [spMin, spMax] = getCurrentTargetSpeed();
+          let speed = randomBetween(
+            spMin,
+            spMax + randomBetween(0, 1 + hitCount * 0.07)
+          );
+          let angle = randomBetween(0, Math.PI * 2);
+          let direction = Math.random() < 0.5 ? 1 : -1;
+          let orbitRadius =
+            randomBetween(50, 100) + randomBetween(0, hitCount / 2);
+          let zigzagPhase = randomBetween(0, Math.PI * 2);
+          let zigzagAmplitude = randomBetween(40, 88 + hitCount * 2.7);
+          let zigzagSpeed = randomBetween(spMin, spMax + hitCount * 0.12);
+          let baseY = y;
+          let baseX = x;
+          targets.push({
+            x: x,
+            y: y,
+            baseX,
+            baseY,
+            size,
+            shape,
+            color,
+            speed,
+            angle,
+            direction,
+            orbitRadius,
+            orbitCenterX: x,
+            orbitCenterY: y,
+            zigzagPhase,
+            zigzagAmplitude,
+            zigzagSpeed,
+            movementType,
+            alive: true,
+          });
+        }
+
+        function updateTargets() {
+          for (let i = 0; i < targets.length; i++) {
+            const target = targets[i];
+            if (!target.alive) continue;
+            if (target.movementType === 'drift') {
+              target.y += target.speed;
+              if (target.y - target.size > screenHeight)
+                targets[i].alive = false;
+            } else if (target.movementType === 'orbit') {
+              target.angle +=
+                0.016 *
+                target.direction *
+                target.speed *
+                (1 + Math.sin(performance.now() / 217 + i) * 0.09);
+              target.x =
+                target.orbitCenterX +
+                Math.cos(target.angle) *
+                  target.orbitRadius *
+                  (1 + Math.sin(performance.now() / 433 + i) * 0.09);
+              target.y =
+                target.orbitCenterY +
+                Math.sin(target.angle) *
+                  target.orbitRadius *
+                  (1 + Math.cos(performance.now() / 377 - i) * 0.12);
+              target.y += 0.11 * target.speed;
+              if (target.y - target.size > screenHeight)
+                targets[i].alive = false;
+            } else if (target.movementType === 'zigzag') {
+              target.y += target.zigzagSpeed;
+              target.x =
+                target.baseX +
+                Math.sin(
+                  target.y * 0.06 +
+                    target.zigzagPhase +
+                    Math.sin(performance.now() / 120 + i * 0.44) * 1.5
+                ) *
+                  target.zigzagAmplitude;
+              if (target.y - target.size > screenHeight)
+                targets[i].alive = false;
+            }
+          }
+        }
+
+        function drawTarget(target) {
+          context.save();
+          context.translate(target.x, target.y);
+          context.shadowColor = target.color;
+          context.shadowBlur = 24 + hitCount * 2.2;
+          context.globalAlpha =
+            0.97 -
+            0.12 * Math.abs(Math.sin(performance.now() / 430 + target.x));
+          context.fillStyle = target.color;
+          context.strokeStyle = '#fff';
+          switch (target.shape) {
+            case 'circle':
+              context.beginPath();
+              context.arc(0, 0, target.size, 0, Math.PI * 2);
+              context.fill();
+              break;
+            case 'triangle':
+              context.beginPath();
+              for (let i = 0; i < 3; i++) {
+                const angle = Math.PI / 2 + (i * 2 * Math.PI) / 3;
+                const px = Math.cos(angle) * target.size;
+                const py = Math.sin(angle) * target.size;
+                if (i === 0) context.moveTo(px, py);
+                else context.lineTo(px, py);
+              }
+              context.closePath();
+              context.fill();
+              break;
+            case 'square':
+              context.beginPath();
+              for (let i = 0; i < 4; i++) {
+                const angle = Math.PI / 4 + (i * Math.PI) / 2;
+                const px = Math.cos(angle) * target.size * 0.98;
+                const py = Math.sin(angle) * target.size * 0.98;
+                if (i === 0) context.moveTo(px, py);
+                else context.lineTo(px, py);
+              }
+              context.closePath();
+              context.fill();
+              break;
+            case 'pentagon':
+              context.beginPath();
+              for (let i = 0; i < 5; i++) {
+                const angle = Math.PI / 2 + (i * 2 * Math.PI) / 5;
+                const px = Math.cos(angle) * target.size;
+                const py = Math.sin(angle) * target.size;
+                if (i === 0) context.moveTo(px, py);
+                else context.lineTo(px, py);
+              }
+              context.closePath();
+              context.fill();
+              break;
+            case 'hexagon':
+              context.beginPath();
+              for (let i = 0; i < 6; i++) {
+                const angle = Math.PI / 6 + (i * 2 * Math.PI) / 6;
+                const px = Math.cos(angle) * target.size;
+                const py = Math.sin(angle) * target.size;
+                if (i === 0) context.moveTo(px, py);
+                else context.lineTo(px, py);
+              }
+              context.closePath();
+              context.fill();
+              break;
+            default:
+              context.beginPath();
+              context.arc(0, 0, target.size, 0, Math.PI * 2);
+              context.fill();
+          }
+          context.restore();
+        }
+
+        // PROJECTILES - Apple-style glow disc
+        const projectiles = [];
+        let shakeFrames = 0;
+        let shakePower = 0;
+
+        function launchProjectile(targetX, targetY) {
+          const startX = screenWidth / 2;
+          const startY = screenHeight - 44;
+          const dx = targetX - startX;
+          const dy = targetY - startY;
+          const distance = Math.sqrt(dx * dx + dy * dy) || 1;
+          const velocityX = (dx / distance) * getCurrentProjectileSpeed();
+          const velocityY = (dy / distance) * getCurrentProjectileSpeed();
+          const colorIdx = Math.floor(Math.random() * appleColors.length);
+          const color = appleColors[colorIdx];
+          projectiles.push({
+            x: startX,
+            y: startY,
+            velocityX,
+            velocityY,
+            color,
+            radius: 10,
+            born: Date.now(),
+            angle: Math.atan2(dy, dx),
+          });
+        }
+
+        function drawProjectile(p) {
+          context.save();
+          context.translate(p.x, p.y);
+          let grad = context.createRadialGradient(0, 0, 2, 0, 0, p.radius);
+          grad.addColorStop(0, '#fff');
+          grad.addColorStop(0.45, p.color);
+          grad.addColorStop(1, 'rgba(255,255,255,0.07)');
+          context.beginPath();
+          context.arc(0, 0, p.radius, 0, Math.PI * 2);
+          context.fillStyle = grad;
+          context.shadowColor = p.color;
+          context.shadowBlur = 14 + hitCount * 1.7;
+          context.globalAlpha =
+            0.96 + 0.02 * Math.sin(performance.now() / 110 + p.x);
+          context.fill();
+          context.restore();
+        }
+
+        // COLLISION
+        function checkCollision(proj, target) {
+          const dx = proj.x - target.x;
+          const dy = proj.y - target.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          return dist < 10 + target.size * 0.9;
+        }
+
+        // APPLE-PARTICLE EXPLOSION
+        const explosions = [];
+        function spawnExplosion(x, y, color) {
+          const particleCount = 23 + Math.floor(hitCount * 0.38);
+          const particles = [];
+          for (let i = 0; i < particleCount; i++) {
+            const angle =
+              Math.PI * 2 * (i / particleCount) +
+              Math.sin(performance.now() / 77 + i) * 0.15;
+            const speed = randomBetween(
+              1.7 + hitCount * 0.06,
+              6.7 + hitCount * 0.13
+            );
+            let pcol =
+              appleColors[Math.floor(Math.random() * appleColors.length)];
+            particles.push({
+              x,
+              y,
+              velocityX: Math.cos(angle) * speed,
+              velocityY: Math.sin(angle) * speed,
+              color: pcol,
+              radius: randomBetween(2, 5),
+              alpha: 1.02,
+            });
+          }
+          explosions.push({ particles, lifetime: 0 });
+        }
+
+        function updateExplosions() {
+          for (let i = explosions.length - 1; i >= 0; i--) {
+            let ex = explosions[i];
+            ex.lifetime += 1;
+            for (let j = 0; j < ex.particles.length; j++) {
+              let e = ex.particles[j];
+              e.x += e.velocityX;
+              e.y += e.velocityY;
+              e.velocityX *= 0.95;
+              e.velocityY *= 0.95;
+              e.alpha -= 0.021 + hitCount * 0.0008;
+              if (e.alpha < 0) e.alpha = 0;
+            }
+            if (ex.lifetime > 36) explosions.splice(i, 1);
+          }
+        }
+
+        function drawExplosions() {
+          for (let i = 0; i < explosions.length; i++) {
+            var ex = explosions[i];
+            for (let j = 0; j < ex.particles.length; j++) {
+              let e = ex.particles[j];
+              context.save();
+              context.globalAlpha = e.alpha;
+              context.beginPath();
+              context.arc(e.x, e.y, e.radius, 0, Math.PI * 2);
+              context.fillStyle = e.color;
+              context.shadowColor = e.color;
+              context.shadowBlur = 17 + hitCount * 0.85;
+              context.fill();
+              context.restore();
+            }
+          }
+        }
+
+        // GAME STATE
+        let score = 0;
+        let maxAliveTargets = 3;
+        let lastSpawnTime = Date.now();
+
+        // GAME LOOP
+        function gameLoop() {
+          drawBgGradient();
+          drawBloomStarfield();
+          updateTargets();
+          updateExplosions();
+          for (let i = 0; i < targets.length; i++) {
+            if (targets[i].alive) drawTarget(targets[i]);
+          }
+          // Screen shake during shakeFrames (shake every hit)
+          if (shakeFrames > 0) {
+            let shakeMag = shakePower;
+            shakeMag *= 0.6 + shakeFrames / 8;
+            let shX =
+              Math.sin(performance.now() / 10) * shakeMag +
+              (Math.random() - 0.5) * 6;
+            let shY =
+              Math.cos(performance.now() / 8) * shakeMag +
+              (Math.random() - 0.5) * 6;
+            canvas.style.transform = 'translate(' + shX + 'px,' + shY + 'px)';
+            shakeFrames--;
+            if (shakeFrames === 0) canvas.style.transform = '';
+          }
+          // Draw & move projectiles
+          for (let i = projectiles.length - 1; i >= 0; i--) {
+            const p = projectiles[i];
+            p.x += p.velocityX;
+            p.y += p.velocityY;
+            drawProjectile(p);
+            if (
+              p.x < -40 ||
+              p.x > screenWidth + 40 ||
+              p.y < -40 ||
+              p.y > screenHeight + 40
+            ) {
+              projectiles.splice(i, 1);
+              continue;
+            }
+            // Check collision
+            for (let j = 0; j < targets.length; j++) {
+              let t = targets[j];
+              if (t.alive && checkCollision(p, t)) {
+                t.alive = false;
+                spawnExplosion(t.x, t.y, t.color);
+                spawnExplosion(p.x, p.y, p.color);
+                score += 1;
+                hitCount++;
+                if (typeof window.awardPoints === 'function') {
+                  window.awardPoints(1);
+                }
+                shakeFrames = 20 + Math.min(10, Math.floor(hitCount / 5));
+                shakePower = 22 + Math.min(hitCount, 60) * 1.09;
+                setRandomBgCombo();
+                projectiles.splice(i, 1);
+                break;
+              }
+            }
+          }
+          drawExplosions();
+          for (let i = targets.length - 1; i >= 0; i--) {
+            if (!targets[i].alive) targets.splice(i, 1);
+          }
+          let now = Date.now();
+          if (targets.length < maxAliveTargets) {
+            for (let i = targets.length; i < maxAliveTargets; i++) {
+              spawnTarget();
+            }
+          }
+          if (targets.length === 0 && now - lastSpawnTime > 800) {
+            let numToSpawn = Math.floor(randomBetween(1, 4));
+            for (let i = 0; i < numToSpawn; i++) spawnTarget();
+            lastSpawnTime = now;
+          }
+          requestAnimationFrame(gameLoop);
+        }
+
+        for (let i = 0; i < maxAliveTargets; i++) spawnTarget();
+
+        canvas.addEventListener('mousedown', function (event) {
+          const rect = canvas.getBoundingClientRect();
+          const mouseX =
+            (event.clientX - rect.left) * (canvas.width / rect.width);
+          const mouseY =
+            (event.clientY - rect.top) * (canvas.height / rect.height);
+          launchProjectile(mouseX, mouseY);
+        });
+        canvas.addEventListener('contextmenu', function (event) {
+          event.preventDefault();
+        });
+
+        gameLoop();
+      })();
+    </script>
+  </body>
+</html>

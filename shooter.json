@@ -1,0 +1,14 @@
+{
+  "version": "eip-7572",
+  "name": "Shape Shooter",
+  "description": "Mini Game created by @hurls on Farcaster",
+  "image": "ipfs://bafybeietfzgmpv76ph7etckq2lca4nablpimz6ag3bofjc7yvt6czhjmlm",
+  "animation_url": "ipfs://bafkreifteow4kwpez233aauu4whzwmybgtawrgxczdw7tn6mxhv7zzc644",
+  "content": {
+    "mime": "text/html",
+    "uri": "ipfs://bafkreifteow4kwpez233aauu4whzwmybgtawrgxczdw7tn6mxhv7zzc644"
+  },
+  "properties": {
+    "category": "game"
+  }
+}
