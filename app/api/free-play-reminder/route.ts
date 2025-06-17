@@ -53,7 +53,7 @@ async function processReminders() {
     for (const coin of coins) {
       try {
         // Get the specific game play record using the lookup map
-        const gamePlayRecordKey = `${player.fid}-${coin.id}`;
+        const gamePlayRecordKey = `${player.fid}-${coin.build_id}`;
         const gamePlayRecord = gamePlayRecordsByKey.get(gamePlayRecordKey);
 
         // If player never played this game, they can get a reminder
