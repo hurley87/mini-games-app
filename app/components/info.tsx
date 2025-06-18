@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useFarcasterContext } from '@/hooks/useFarcasterContext';
 import { usePlayStatus } from '@/hooks/usePlayStatus';
 import { useAccount, useConnect } from 'wagmi';
@@ -62,7 +62,10 @@ export function Info({
     });
   };
 
-  const handlePlay = async () => {
+  const handlePlay = async (
+    e: React.MouseEvent<HTMLButtonElement, MouseEvent>
+  ) => {
+    e.preventDefault();
     if (isStartingGame) return; // Prevent multiple clicks
 
     console.log('🎮 Info: Starting game...');
@@ -478,6 +481,7 @@ export function Info({
               {description}
             </p>
             <button
+              type="button"
               onClick={handlePlay}
               disabled={isStartingGame}
               className="w-full bg-purple-600 text-white px-4 py-4 rounded-full font-semibold shadow-xl shadow-purple-500/20 hover:brightness-110 transition-all duration-200 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
