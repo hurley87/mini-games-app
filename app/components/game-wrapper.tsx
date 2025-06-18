@@ -193,7 +193,7 @@ export function GameWrapper({
       });
 
       // Navigate to home/games list
-      window.location.href = '/';
+      // window.location.href = '/';
     } catch (error) {
       sentryTracker.gameError(
         error instanceof Error ? error : new Error('Failed to exit game'),
