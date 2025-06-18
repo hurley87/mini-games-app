@@ -32,6 +32,17 @@ export function useFarcasterContext(options: UseFarcasterContextOptions = {}) {
         setIsReady(true);
       } catch (error) {
         console.error('Failed to initialize frame:', error);
+        try {
+          await sdk.actions.ready({
+            disableNativeGestures: options.disableNativeGestures,
+          });
+        } catch (readyError) {
+          console.error(
+            'Failed to signal ready after init failure:',
+            readyError
+          );
+        }
+        setIsReady(true);
       } finally {
         setIsLoading(false);
       }
