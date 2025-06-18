@@ -33,6 +33,11 @@ export async function POST(request: NextRequest) {
   try {
     const { fid, coinId, coinAddress, walletAddress } = await request.json();
 
+    console.log('fid', fid);
+    console.log('coinId', coinId);
+    console.log('coinAddress', coinAddress);
+    console.log('walletAddress', walletAddress);
+
     if (process.env.NODE_ENV !== 'production') {
       console.log('fid', fid);
       console.log('coinId', coinId);
@@ -47,12 +52,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if player has played this game before and when
+    // Check if player has played this game before
     const gamePlay = await supabaseService.getGamePlayRecord(fid, coinId);
-    const lastPlay = gamePlay?.created_at
-      ? new Date(gamePlay.created_at)
-      : null;
-    const now = new Date();
+    const hasPlayed = !!gamePlay;
+
+    // If user hasn't played before, allow free play
+    if (!hasPlayed) {
+      return NextResponse.json({
+        canPlay: true,
+        reason: 'first_time',
+        hasPlayed: false,
+        tokenBalance: '0',
+      });
+    }
+
+    // If user has played before, check if they have a wallet and tokens
+    if (!walletAddress) {
+      return NextResponse.json({
+        canPlay: false,
+        reason: 'no_wallet',
+        hasPlayed: true,
+        tokenBalance: '0',
+      });
+    }
 
     const checkTokenBalance = async () => {
       const [balance, decimals] = await Promise.all([
@@ -88,63 +110,17 @@ export async function POST(request: NextRequest) {
       return { balance: balance.toString(), hasTokens };
     };
 
-    const freePlayAvailable =
-      !lastPlay || now.getTime() - lastPlay.getTime() >= 24 * 60 * 60 * 1000;
-
-    if (freePlayAvailable) {
-      let tokenBalance = '0';
-
-      if (walletAddress) {
-        try {
-          const { balance, hasTokens } = await checkTokenBalance();
-          tokenBalance = balance;
-          if (hasTokens) {
-            return NextResponse.json({
-              canPlay: true,
-              reason: 'has_tokens',
-              hasPlayed: !!gamePlay,
-              tokenBalance,
-              nextFreePlayTime: null,
-            });
-          }
-        } catch (balanceError) {
-          console.error('Error checking token balance:', balanceError);
-        }
-      }
-
-      return NextResponse.json({
-        canPlay: true,
-        reason: gamePlay ? 'daily_free' : 'first_time',
-        hasPlayed: !!gamePlay,
-        tokenBalance,
-        nextFreePlayTime: null,
-      });
-    }
-
-    // If they have played before, check their token balance
-    const nextFreePlayTime = new Date(
-      lastPlay.getTime() + 24 * 60 * 60 * 1000
-    ).toISOString();
-
-    if (!walletAddress) {
-      return NextResponse.json({
-        canPlay: false,
-        reason: 'no_wallet',
-        hasPlayed: true,
-        tokenBalance: '0',
-        nextFreePlayTime,
-      });
-    }
-
     try {
       const { balance, hasTokens } = await checkTokenBalance();
 
+      console.log('balance', balance);
+      console.log('hasTokens', hasTokens);
+
       return NextResponse.json({
         canPlay: hasTokens,
-        reason: hasTokens ? 'has_tokens' : 'wait_for_free',
+        reason: hasTokens ? 'has_tokens' : 'insufficient_tokens',
         hasPlayed: true,
         tokenBalance: balance,
-        nextFreePlayTime,
       });
     } catch (balanceError) {
       console.error('Error checking token balance:', balanceError);
@@ -154,7 +130,6 @@ export async function POST(request: NextRequest) {
         reason: 'balance_check_failed',
         hasPlayed: true,
         tokenBalance: '0',
-        nextFreePlayTime,
       });
     }
   } catch (error) {

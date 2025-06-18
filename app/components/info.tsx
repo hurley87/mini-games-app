@@ -55,7 +55,6 @@ export function Info({
     await sdk.actions.swapToken({
       sellToken: '0x0000000000000000000000000000000000000000',
       buyToken: `eip155:8453/erc20:${coinAddress}`,
-      sellAmount: '0.01',
     });
   };
 
