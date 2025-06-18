@@ -54,15 +54,69 @@ export async function POST(request: NextRequest) {
       : null;
     const now = new Date();
 
-    if (
-      !lastPlay ||
-      now.getTime() - lastPlay.getTime() >= 24 * 60 * 60 * 1000
-    ) {
+    const checkTokenBalance = async () => {
+      const [balance, decimals] = await Promise.all([
+        publicClient.readContract({
+          address: coinAddress as Address,
+          abi: ERC20_ABI,
+          functionName: 'balanceOf',
+          args: [walletAddress as Address],
+        }),
+        publicClient.readContract({
+          address: coinAddress as Address,
+          abi: ERC20_ABI,
+          functionName: 'decimals',
+        }),
+      ]);
+
+      // Calculate minimum tokens: PREMIUM_THRESHOLD * 10^decimals using BigInt
+      const powerOfTenBigInt = (exp: number): bigint => {
+        if (exp <= 0) return BigInt(1);
+        let result = BigInt(1);
+        const base = BigInt(10);
+        for (let i = 0; i < exp; i++) {
+          result *= base;
+        }
+        return result;
+      };
+
+      const minimumTokens =
+        BigInt(PREMIUM_THRESHOLD) * powerOfTenBigInt(Number(decimals));
+
+      const hasTokens = balance >= minimumTokens;
+
+      return { balance: balance.toString(), hasTokens };
+    };
+
+    const freePlayAvailable =
+      !lastPlay || now.getTime() - lastPlay.getTime() >= 24 * 60 * 60 * 1000;
+
+    if (freePlayAvailable) {
+      let tokenBalance = '0';
+
+      if (walletAddress) {
+        try {
+          const { balance, hasTokens } = await checkTokenBalance();
+          tokenBalance = balance;
+          if (hasTokens) {
+            return NextResponse.json({
+              canPlay: true,
+              reason: 'has_tokens',
+              hasPlayed: !!gamePlay,
+              tokenBalance,
+              nextFreePlayTime: null,
+            });
+          }
+        } catch (balanceError) {
+          console.error('Error checking token balance:', balanceError);
+        }
+      }
+
       return NextResponse.json({
         canPlay: true,
         reason: gamePlay ? 'daily_free' : 'first_time',
         hasPlayed: !!gamePlay,
-        tokenBalance: '0',
+        tokenBalance,
         nextFreePlayTime: null,
       });
     }
@@ -83,42 +137,13 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      // Fetch token decimals and balance in parallel
-      const [balance, decimals] = await Promise.all([
-        publicClient.readContract({
-          address: coinAddress as Address,
-          abi: ERC20_ABI,
-          functionName: 'balanceOf',
-          args: [walletAddress as Address],
-        }),
-        publicClient.readContract({
-          address: coinAddress as Address,
-          abi: ERC20_ABI,
-          functionName: 'decimals',
-        }),
-      ]);
-
-      // Calculate minimum tokens: PREMIUM_THRESHOLD * 10^decimals using BigInt
-      // Helper function to calculate 10^n using BigInt
-      const powerOfTenBigInt = (exp: number): bigint => {
-        if (exp <= 0) return BigInt(1);
-        let result = BigInt(1);
-        const base = BigInt(10);
-        for (let i = 0; i < exp; i++) {
-          result *= base;
-        }
-        return result;
-      };
-
-      const minimumTokens =
-        BigInt(PREMIUM_THRESHOLD) * powerOfTenBigInt(Number(decimals));
-      const hasTokens = balance >= minimumTokens;
+      const { balance, hasTokens } = await checkTokenBalance();
 
       return NextResponse.json({
         canPlay: hasTokens,
         reason: hasTokens ? 'has_tokens' : 'wait_for_free',
         hasPlayed: true,
-        tokenBalance: balance.toString(),
+        tokenBalance: balance,
         nextFreePlayTime,
       });
     } catch (balanceError) {
