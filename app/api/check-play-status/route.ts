@@ -56,6 +56,9 @@ export async function POST(request: NextRequest) {
     const gamePlay = await supabaseService.getGamePlayRecord(fid, coinId);
     const hasPlayed = !!gamePlay;
 
+    console.log('gamePlay', gamePlay);
+    console.log('hasPlayed', hasPlayed);
+
     // If user hasn't played before, allow free play
     if (!hasPlayed) {
       return NextResponse.json({

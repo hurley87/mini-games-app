@@ -5,8 +5,6 @@ import { Info } from './info';
 import { Game } from './game';
 import { RoundResult } from './round-result';
 import { GameFinished } from './game-finished';
-import { getCoin } from '@zoralabs/coins-sdk';
-import { base } from 'viem/chains';
 import { ZoraCoinData, Creator } from '@/lib/types';
 import { ArrowLeft, Clock } from 'lucide-react';
 import { Button } from './ui/button';
@@ -95,55 +93,6 @@ export function GameWrapper({
       creator_fid: fid.toString(),
     });
   }, [id, name, coinAddress, fid]);
-
-  // Fetch Zora data if not provided
-  useEffect(() => {
-    async function fetchZoraCoinData() {
-      if (fetchedZoraData || !coinAddress) return;
-
-      setIsLoadingZoraData(true);
-      try {
-        const response = await getCoin({
-          address: coinAddress,
-          chain: base.id,
-        });
-
-        const zoraCoin = response.data?.zora20Token;
-        if (zoraCoin) {
-          setFetchedZoraData({
-            volume24h: zoraCoin.volume24h,
-            marketCap: zoraCoin.marketCap,
-            uniqueHolders: zoraCoin.uniqueHolders,
-          });
-        }
-      } catch (error) {
-        console.error(
-          `Failed to fetch Zora data for coin ${coinAddress}:`,
-          error
-        );
-
-        trackGameEvent.error('zora_fetch_error', 'Failed to fetch Zora data', {
-          coin_address: coinAddress,
-          coin_name: name,
-          error: error instanceof Error ? error.message : 'Unknown error',
-        });
-
-        sentryTracker.web3Error(
-          error instanceof Error
-            ? error
-            : new Error('Failed to fetch Zora data'),
-          {
-            action: 'fetch_zora_data',
-            coin_address: coinAddress,
-          }
-        );
-      } finally {
-        setIsLoadingZoraData(false);
-      }
-    }
-
-    fetchZoraCoinData();
-  }, [coinAddress, fetchedZoraData, name]);
 
   // Handle game start
   const handleGameStart = () => {

@@ -229,6 +229,7 @@ export async function POST(request: Request) {
       authenticatedFid,
       coinId
     );
+    console.log('gamePlay', gamePlay);
     if (!gamePlay) {
       try {
         await supabaseService.recordGamePlay({
