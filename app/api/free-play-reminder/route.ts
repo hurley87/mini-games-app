@@ -5,10 +5,83 @@ import {
 } from '@/lib/supabase';
 import { SendNotificationRequest } from '@farcaster/frame-node';
 import { NextResponse } from 'next/server';
+import { Address, createPublicClient, http } from 'viem';
+import { base } from 'viem/chains';
+import { PREMIUM_THRESHOLD } from '@/lib/config';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
+
+const rpcUrl = process.env.RPC_URL!;
+
+const publicClient = createPublicClient({
+  chain: base,
+  transport: http(rpcUrl),
+});
+
+const ERC20_ABI = [
+  {
+    name: 'balanceOf',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [{ name: 'account', type: 'address' }],
+    outputs: [{ name: 'balance', type: 'uint256' }],
+  },
+  {
+    name: 'decimals',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ name: 'decimals', type: 'uint8' }],
+  },
+] as const;
+
+const decimalsCache = new Map<string, number>();
+
+async function isBelowPremiumThreshold(
+  coinAddress: string,
+  walletAddress?: string | null
+): Promise<boolean> {
+  if (!walletAddress) return true;
+  try {
+    let decimals = decimalsCache.get(coinAddress);
+    if (decimals === undefined) {
+      const fetched = await publicClient.readContract({
+        address: coinAddress as Address,
+        abi: ERC20_ABI,
+        functionName: 'decimals',
+      });
+      decimals = Number(fetched);
+      decimalsCache.set(coinAddress, decimals);
+    }
+
+    const balance = await publicClient.readContract({
+      address: coinAddress as Address,
+      abi: ERC20_ABI,
+      functionName: 'balanceOf',
+      args: [walletAddress as Address],
+    });
+
+    const powerOfTenBigInt = (exp: number): bigint => {
+      let result = BigInt(1);
+      for (let i = 0; i < exp; i++) {
+        result *= BigInt(10);
+      }
+      return result;
+    };
+
+    const minimumTokens =
+      BigInt(PREMIUM_THRESHOLD) * powerOfTenBigInt(decimals);
+    return (balance as bigint) < minimumTokens;
+  } catch (err) {
+    console.error(
+      `Balance check failed for wallet ${walletAddress} and coin ${coinAddress}:`,
+      err
+    );
+    return true; // default to sending reminder on error
+  }
+}
 
 async function processReminders() {
   const now = Date.now();
@@ -58,21 +131,42 @@ async function processReminders() {
 
         // If player never played this game, they can get a reminder
         if (!gamePlayRecord) {
-          remindersToSend.push({ notification, gameName: coin.name });
+          if (
+            await isBelowPremiumThreshold(
+              coin.coinAddress,
+              player.wallet_address
+            )
+          ) {
+            remindersToSend.push({ notification, gameName: coin.name });
+          }
           continue;
         }
 
         // Check if created_at exists and is valid before comparing times
         if (!gamePlayRecord.created_at) {
           // If no timestamp, treat as eligible for reminder (could be old record)
-          remindersToSend.push({ notification, gameName: coin.name });
+          if (
+            await isBelowPremiumThreshold(
+              coin.coinAddress,
+              player.wallet_address
+            )
+          ) {
+            remindersToSend.push({ notification, gameName: coin.name });
+          }
           continue;
         }
 
         // Check if 24 hours have passed since last play of this specific game
         const lastPlayTime = new Date(gamePlayRecord.created_at).getTime();
         if (now - lastPlayTime >= dayMs) {
-          remindersToSend.push({ notification, gameName: coin.name });
+          if (
+            await isBelowPremiumThreshold(
+              coin.coinAddress,
+              player.wallet_address
+            )
+          ) {
+            remindersToSend.push({ notification, gameName: coin.name });
+          }
         }
       } catch (err) {
         console.error(
