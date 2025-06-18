@@ -94,10 +94,25 @@ export function GameWrapper({
   // Handle game start
   const handleGameStart = () => {
     try {
+      console.log('🎮 GameWrapper: Starting game - clearing all states');
+
+      // Clear any conflicting states first
+      setShowResult(false);
+      setGameFinished(false);
+      setIsScoreCreated(false);
+      setSaveError(null);
+      setIsCreatingScore(false);
+
+      // Reset game state
       gameStartTime.current = Date.now();
       setForceGameEnd(false);
       setFinalScore(0);
-      setShowGame(true);
+
+      // Force a small delay to ensure state cleanup, then show game
+      setTimeout(() => {
+        console.log('🎮 GameWrapper: Setting showGame to true');
+        setShowGame(true);
+      }, 10);
     } catch (error) {
       console.error('Failed to start game:', error);
       sentryTracker.gameError(
@@ -193,7 +208,7 @@ export function GameWrapper({
       });
 
       // Navigate to home/games list
-      // window.location.href = '/';
+      window.location.href = '/';
     } catch (error) {
       sentryTracker.gameError(
         error instanceof Error ? error : new Error('Failed to exit game'),
@@ -296,33 +311,21 @@ export function GameWrapper({
     return () => clearInterval(interval);
   }, [showGame, timeoutSeconds, finalScore]);
 
-  if (showResult) {
-    return (
-      <RoundResult
-        score={finalScore}
-        onShare={handleShare}
-        onExit={handleExit}
-        symbol={symbol}
-      />
-    );
-  }
+  // Debug logging for state changes
+  useEffect(() => {
+    console.log('🎮 GameWrapper State:', {
+      showGame,
+      showResult,
+      gameFinished,
+      isCreatingScore,
+      isScoreCreated,
+    });
+  }, [showGame, showResult, gameFinished, isCreatingScore, isScoreCreated]);
 
-  if (gameFinished) {
-    return (
-      <GameFinished
-        score={finalScore}
-        symbol={symbol}
-        onSaveScore={handleSaveScore}
-        isSaving={isCreatingScore}
-        isSaved={isScoreCreated}
-        error={saveError}
-        onShare={handleShare}
-        onExit={handleExit}
-      />
-    );
-  }
-
+  // Render logic with defensive checks
+  // Prioritize showGame when it's true to prevent navigation issues
   if (showGame) {
+    console.log('🎮 GameWrapper: Rendering game interface');
     return (
       <div className="flex flex-col h-full relative z-50">
         <div className="fixed top-4 left-4 z-50 flex items-center gap-3 rounded-full px-4 py-2 shadow-lg">
@@ -358,6 +361,32 @@ export function GameWrapper({
           />
         </div>
       </div>
+    );
+  }
+
+  if (showResult) {
+    return (
+      <RoundResult
+        score={finalScore}
+        onShare={handleShare}
+        onExit={handleExit}
+        symbol={symbol}
+      />
+    );
+  }
+
+  if (gameFinished) {
+    return (
+      <GameFinished
+        score={finalScore}
+        symbol={symbol}
+        onSaveScore={handleSaveScore}
+        isSaving={isCreatingScore}
+        isSaved={isScoreCreated}
+        error={saveError}
+        onShare={handleShare}
+        onExit={handleExit}
+      />
     );
   }
 

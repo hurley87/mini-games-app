@@ -41,11 +41,12 @@ export function Info({
   onPlay,
   coinId,
 }: InfoProps) {
-  const { isReady } = useFarcasterContext({ autoAddFrame: true });
+  const { context, isReady } = useFarcasterContext();
   const { playStatus, isLoading, error, checkPlayStatus } = usePlayStatus();
+  const { address, isConnected } = useAccount();
+  const { connect, connectors } = useConnect();
+  const [isStartingGame, setIsStartingGame] = useState(false);
   const [hasCheckedStatus, setHasCheckedStatus] = useState(false);
-  const { isConnected } = useAccount();
-  const { connectors, connect } = useConnect();
 
   const handleSwap = async () => {
     await sdk.actions.swapToken({
@@ -54,18 +55,43 @@ export function Info({
     });
   };
 
-  useEffect(() => {
-    console.log('INFO');
-    console.log('coinId', coinId);
-    console.log('coinAddress', coinAddress);
-    console.log('hasCheckedStatus', hasCheckedStatus);
-    console.log('isReady', isReady);
+  const handleViewCoinClick = async () => {
+    await handleViewCoin(coinAddress, {
+      element: 'coin_info',
+      page: 'game_info',
+    });
+  };
 
-    if (isReady && !hasCheckedStatus && coinId && coinAddress) {
+  const handlePlay = async () => {
+    if (isStartingGame) return; // Prevent multiple clicks
+
+    console.log('🎮 Info: Starting game...');
+    setIsStartingGame(true);
+
+    try {
+      await onPlay();
+    } catch (error) {
+      console.error('Error starting game:', error);
+    } finally {
+      // Reset loading state after a delay to prevent rapid clicking
+      setTimeout(() => setIsStartingGame(false), 1000);
+    }
+  };
+
+  // Check play status on mount and when dependencies change
+  useEffect(() => {
+    if (isReady && context?.user?.fid && !hasCheckedStatus) {
       checkPlayStatus(coinId, coinAddress);
       setHasCheckedStatus(true);
     }
-  }, [isReady, hasCheckedStatus, coinId, coinAddress, checkPlayStatus]);
+  }, [
+    isReady,
+    context?.user?.fid,
+    coinId,
+    coinAddress,
+    hasCheckedStatus,
+    checkPlayStatus,
+  ]);
 
   const handleViewProfile = async () => {
     try {
@@ -88,13 +114,6 @@ export function Info({
     } catch (error) {
       console.error('Failed to share:', error);
     }
-  };
-
-  const handleViewCoinClick = async () => {
-    await handleViewCoin(coinAddress, {
-      element: 'coin_info',
-      page: 'game_info',
-    });
   };
 
   if (!name) {
@@ -459,10 +478,11 @@ export function Info({
               {description}
             </p>
             <button
-              onClick={onPlay}
-              className="w-full bg-purple-600 text-white px-4 py-4 rounded-full font-semibold shadow-xl shadow-purple-500/20 hover:brightness-110 transition-all duration-200 text-lg"
+              onClick={handlePlay}
+              disabled={isStartingGame}
+              className="w-full bg-purple-600 text-white px-4 py-4 rounded-full font-semibold shadow-xl shadow-purple-500/20 hover:brightness-110 transition-all duration-200 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              PLAY
+              {isStartingGame ? 'Starting...' : 'PLAY'}
             </button>
           </div>
         )}
