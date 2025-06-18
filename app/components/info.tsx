@@ -93,14 +93,6 @@ export function Info({
     playStatus,
   ]);
 
-  const handlePlay = async () => {
-    if (!playStatus) return;
-
-    if (playStatus.canPlay) {
-      onPlay();
-    }
-  };
-
   const handleViewProfile = async () => {
     try {
       await sdk.actions.viewProfile({ fid });
@@ -493,7 +485,7 @@ export function Info({
               {description}
             </p>
             <button
-              onClick={handlePlay}
+              onClick={onPlay}
               className="w-full bg-purple-600 text-white px-4 py-4 rounded-full font-semibold shadow-xl shadow-purple-500/20 hover:brightness-110 transition-all duration-200 text-lg"
             >
               PLAY
