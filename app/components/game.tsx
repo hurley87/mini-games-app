@@ -295,7 +295,7 @@ export function Game({
   }
 
   return (
-    <div className="fixed inset-0 z-50 left-0 w-full h-full bg-black top-12">
+    <div className="fixed inset-0 z-40 left-0 w-full h-full bg-black top-0">
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center bg-black">
           <div className="flex flex-col items-center space-y-4">

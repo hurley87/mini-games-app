@@ -391,29 +391,29 @@ export function GameWrapper({
 
   if (showGame) {
     return (
-      <div className="flex flex-col h-full">
-        <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between p-2 backdrop-blur-md bg-black/20 border-b border-white/20 shadow-xl">
+      <div className="flex flex-col h-full relative z-50">
+        <div className="fixed top-4 left-4 z-50 flex items-center gap-3 rounded-full px-4 py-2 shadow-lg">
           <Button
             variant="ghost"
             size="sm"
             onClick={handleGameExit}
-            className="flex items-center gap-2 text-white/70 hover:brightness-110 transition-all duration-200"
+            className="flex items-center gap-2 text-white/70 hover:brightness-110 transition-all duration-200 p-0 h-auto"
           >
-            <ArrowLeft size={20} />
-            <span>Exit</span>
+            <ArrowLeft size={18} />
+            <span className="text-sm">Exit</span>
           </Button>
 
           {timeoutSeconds && (
-            <div className="flex items-center gap-2 text-white/70">
-              <Clock size={16} />
+            <div className="flex items-center gap-2 text-white/70 border-l border-white/20 pl-3">
+              <Clock size={14} />
               <span className="text-sm font-mono">
                 {Math.floor(remainingTime / 60)}:
                 {(remainingTime % 60).toString().padStart(2, '0')}
               </span>
             </div>
           )}
-        </header>
-        <div className="flex-1 pt-16">
+        </div>
+        <div className="flex-1">
           <Game
             id={id}
             timeoutSeconds={timeoutSeconds}

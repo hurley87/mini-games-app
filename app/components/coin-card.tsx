@@ -238,7 +238,7 @@ export function CoinCard({ coin }: CoinCardProps) {
 
       <Link href={`/coins/${coin.id}`}>
         <button className="bg-purple-600 text-white rounded-full font-semibold w-full mt-4 text-xl py-4 hover:brightness-110 transition-all duration-200 shadow-xl">
-          View {coin.name}
+          View Game
         </button>
       </Link>
 
