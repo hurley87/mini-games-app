@@ -105,7 +105,6 @@ export default async function GamePage({
         description={build.tutorial || 'An exciting game to play!'}
         coinAddress={coinAddress}
         imageUrl={coin.image}
-        zoraData={coin.zoraData}
         fid={coin.fid}
         creator={creator}
         coinId={coin.id}

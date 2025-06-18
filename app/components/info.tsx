@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useFarcasterContext } from '@/hooks/useFarcasterContext';
 import { usePlayStatus } from '@/hooks/usePlayStatus';
 import { useAccount, useConnect } from 'wagmi';
-import { ZoraCoinData, Creator } from '@/lib/types';
+import { Creator } from '@/lib/types';
 import { Coins, Share2 } from 'lucide-react';
 import {
   formatTokenBalance,
@@ -25,7 +25,6 @@ interface InfoProps {
   coinAddress: string;
   imageUrl?: string; // Optional game image
   symbol: string;
-  zoraData?: ZoraCoinData;
   fid: number;
   creator?: Creator;
   onPlay: () => void;

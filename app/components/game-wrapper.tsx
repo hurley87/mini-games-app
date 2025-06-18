@@ -5,12 +5,11 @@ import { Info } from './info';
 import { Game } from './game';
 import { RoundResult } from './round-result';
 import { GameFinished } from './game-finished';
-import { ZoraCoinData, Creator } from '@/lib/types';
+import { Creator } from '@/lib/types';
 import { ArrowLeft, Clock } from 'lucide-react';
 import { Button } from './ui/button';
 import { trackGameEvent, trackEvent } from '@/lib/posthog';
 import { sentryTracker, setSentryTags } from '@/lib/sentry';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { sdk } from '@farcaster/frame-sdk';
 import { TOKEN_MULTIPLIER } from '@/lib/config';
 
@@ -22,7 +21,6 @@ interface GameWrapperProps {
   coinAddress: string;
   imageUrl?: string;
   symbol: string;
-  zoraData?: ZoraCoinData;
   fid: number;
   creator?: Creator;
   coinId: string;
@@ -36,7 +34,6 @@ export function GameWrapper({
   coinAddress,
   imageUrl,
   symbol,
-  zoraData,
   fid,
   creator,
   coinId,
@@ -44,10 +41,6 @@ export function GameWrapper({
   const [showGame, setShowGame] = useState(false);
   const [showResult, setShowResult] = useState(false);
   const [finalScore, setFinalScore] = useState(0);
-  const [fetchedZoraData, setFetchedZoraData] = useState<
-    ZoraCoinData | undefined
-  >(zoraData);
-  const [isLoadingZoraData, setIsLoadingZoraData] = useState(false);
   const [remainingTime, setRemainingTime] = useState(timeoutSeconds);
   const [forceGameEnd, setForceGameEnd] = useState(false);
   const gameStartTime = useRef<number | null>(null);
@@ -301,17 +294,6 @@ export function GameWrapper({
     return () => clearInterval(interval);
   }, [showGame, timeoutSeconds, finalScore, id, name]);
 
-  if (isLoadingZoraData) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="flex flex-col items-center space-y-4">
-          <LoadingSpinner />
-          <div className="text-white/70">Loading...</div>
-        </div>
-      </div>
-    );
-  }
-
   if (showResult) {
     return (
       <RoundResult
@@ -384,7 +366,6 @@ export function GameWrapper({
       coinAddress={coinAddress}
       imageUrl={imageUrl}
       symbol={symbol}
-      zoraData={fetchedZoraData}
       fid={fid}
       creator={creator}
       onPlay={handleGameStart}
