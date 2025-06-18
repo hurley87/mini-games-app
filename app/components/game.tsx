@@ -242,7 +242,7 @@ export function Game({
     );
   }
 
-  if (!isReady || checkingTokens) {
+  if (!isReady || checkingTokens || !fid) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="flex flex-col items-center space-y-4">
