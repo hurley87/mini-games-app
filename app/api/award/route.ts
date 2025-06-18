@@ -117,14 +117,36 @@ export async function POST(request: Request) {
     }
 
     // 7. Verify the game exists and get coin data
-    const { data: coin, error: coinCheckError } = await supabaseService
+    // Try to find by ID first, then by coin_address if that fails
+    let coin = null;
+    let coinCheckError = null;
+
+    // First try to find by ID
+    const { data: coinById, error: idError } = await supabaseService
       .from('coins')
-      .select('id, coinAddress')
+      .select('id, coin_address')
       .eq('id', coinId)
       .single();
 
-    if (coinCheckError || !coin) {
-      console.error('Coin not found:', coinId, coinCheckError);
+    if (coinById) {
+      coin = coinById;
+    } else {
+      // If not found by ID, try by coin_address
+      const { data: coinByAddress, error: addressError } = await supabaseService
+        .from('coins')
+        .select('id, coin_address')
+        .eq('coin_address', coinId)
+        .single();
+
+      if (coinByAddress) {
+        coin = coinByAddress;
+      } else {
+        coinCheckError = addressError || idError;
+      }
+    }
+
+    if (!coin) {
+      console.error('Coin not found by ID or address:', coinId, coinCheckError);
       return NextResponse.json(
         { error: 'Coin not found' },
         { status: 404, headers }
@@ -212,7 +234,7 @@ export async function POST(request: Request) {
         await supabaseService.recordGamePlay({
           fid: authenticatedFid,
           game_id: coinId,
-          coin_address: coin.coinAddress,
+          coin_address: coin.coin_address,
           created_at: new Date().toISOString(),
         });
       } catch (error) {
