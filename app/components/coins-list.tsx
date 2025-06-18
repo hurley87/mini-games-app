@@ -1,63 +1,26 @@
 import { unstable_cache } from 'next/cache';
-import { getCoin } from '@zoralabs/coins-sdk';
-import { base } from 'viem/chains';
 import { supabaseService } from '@/lib/supabase';
-import { Coin, CoinWithCreator, ZoraCoinData } from '@/lib/types';
+import { Coin, CoinWithCreator } from '@/lib/types';
 import { CoinCard } from './coin-card';
-
-async function fetchZoraCoinData(
-  coinAddress: string
-): Promise<ZoraCoinData | undefined> {
-  try {
-    const response = await getCoin({ address: coinAddress, chain: base.id });
-    const zoraCoin = response.data?.zora20Token;
-    if (!zoraCoin) return undefined;
-    return {
-      volume24h: zoraCoin.volume24h,
-      marketCap: zoraCoin.marketCap,
-      uniqueHolders: zoraCoin.uniqueHolders,
-    };
-  } catch (error) {
-    console.error(`Failed to fetch Zora data for coin ${coinAddress}:`, error);
-    return undefined;
-  }
-}
 
 const getCoinsWithData = unstable_cache(
   async () => {
     const coins: Coin[] = await supabaseService.getCoins();
     const coinsWithCreators: CoinWithCreator[] = await Promise.all(
       coins.map(async (coin) => {
-        const [creatorResult, zoraResult] = await Promise.allSettled([
-          supabaseService.getCreatorByFID(coin.fid),
-          fetchZoraCoinData(coin.coin_address),
-        ]);
-
-        let creator = null;
-        if (creatorResult.status === 'fulfilled') {
-          creator = creatorResult.value[0] || null;
-        } else {
-          console.error(
-            `Failed to fetch creator for coin ${coin.fid}:`,
-            creatorResult.reason
-          );
+        try {
+          const creator = await supabaseService.getCreatorByFID(coin.fid);
+          return {
+            ...coin,
+            creator: creator[0] || undefined,
+          } as CoinWithCreator;
+        } catch (error) {
+          console.error(`Failed to fetch creator for coin ${coin.fid}:`, error);
+          return {
+            ...coin,
+            creator: undefined,
+          } as CoinWithCreator;
         }
-
-        let zoraData: ZoraCoinData | undefined = undefined;
-        if (zoraResult.status === 'fulfilled') {
-          zoraData = zoraResult.value;
-        } else {
-          console.error(
-            `Failed to fetch Zora data for coin ${coin.coin_address}:`,
-            zoraResult.reason
-          );
-        }
-
-        return {
-          ...coin,
-          creator,
-          zoraData,
-        } as CoinWithCreator;
       })
     );
     return coinsWithCreators;
@@ -71,7 +34,7 @@ export async function CoinsList() {
   try {
     coins = await getCoinsWithData();
   } catch (error) {
-    console.error('Error fetching coins with creators and Zora data:', error);
+    console.error('Error fetching coins with creators:', error);
     return (
       <div className="text-center text-red-400 py-8 bg-black/20 backdrop-blur rounded-2xl border border-white/20 shadow-xl mx-4 mt-4">
         <p>Failed to load coins</p>
