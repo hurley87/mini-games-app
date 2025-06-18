@@ -69,10 +69,6 @@ export function Info({
     if (!playStatus) return;
 
     if (playStatus.canPlay) {
-      // Record the play if they haven't played before
-      if (!playStatus.hasPlayed) {
-        await recordPlay(id, coinAddress);
-      }
       onPlay();
     }
   };
@@ -223,8 +219,8 @@ export function Info({
                 </h1>
 
                 <p
-                  onClick={handleViewCoinClick}
                   className="text-sm text-purple-400 mt-1 cursor-pointer"
+                  onClick={handleViewCoinClick}
                 >
                   ${symbol}
                 </p>

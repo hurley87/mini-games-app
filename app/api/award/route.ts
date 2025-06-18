@@ -116,14 +116,14 @@ export async function POST(request: Request) {
       );
     }
 
-    // 7. Verify the game exists
-    const { data: coinExists, error: coinCheckError } = await supabaseService
+    // 7. Verify the game exists and get coin data
+    const { data: coin, error: coinCheckError } = await supabaseService
       .from('coins')
-      .select('id')
+      .select('id, coinAddress')
       .eq('id', coinId)
       .single();
 
-    if (coinCheckError || !coinExists) {
+    if (coinCheckError || !coin) {
       console.error('Coin not found:', coinId, coinCheckError);
       return NextResponse.json(
         { error: 'Coin not found' },
@@ -200,6 +200,25 @@ export async function POST(request: Request) {
         coinId,
         score,
       });
+    }
+
+    // 12. Record the game play (after successful score save) - only for first-time players
+    const gamePlay = await supabaseService.getGamePlayRecord(
+      authenticatedFid,
+      coinId
+    );
+    if (!gamePlay) {
+      try {
+        await supabaseService.recordGamePlay({
+          fid: authenticatedFid,
+          game_id: coinId,
+          coin_address: coin.coinAddress,
+          created_at: new Date().toISOString(),
+        });
+      } catch (error) {
+        console.error('Failed to record game play (non-critical):', error);
+        // This is non-critical - user has already received points and score was saved
+      }
     }
 
     return NextResponse.json(
