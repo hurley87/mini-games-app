@@ -69,7 +69,14 @@ export function Info({
 
   // Re-check play status when wallet connection changes
   useEffect(() => {
-    if (isReady && hasCheckedStatus && coinId && coinAddress) {
+    if (
+      isReady &&
+      hasCheckedStatus &&
+      coinId &&
+      coinAddress &&
+      playStatus &&
+      !playStatus.canPlay
+    ) {
       console.log('Wallet connection changed - re-checking play status');
       console.log('isConnected:', isConnected);
       console.log('address:', address);
@@ -83,6 +90,7 @@ export function Info({
     coinId,
     coinAddress,
     checkPlayStatus,
+    playStatus,
   ]);
 
   const handlePlay = async () => {
