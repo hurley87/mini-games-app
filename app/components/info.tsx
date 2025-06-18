@@ -54,11 +54,6 @@ export function Info({
     });
   };
 
-  // Reset hasCheckedStatus when game changes
-  useEffect(() => {
-    setHasCheckedStatus(false);
-  }, [coinId, coinAddress]);
-
   useEffect(() => {
     console.log('INFO');
     console.log('coinId', coinId);
@@ -70,24 +65,6 @@ export function Info({
       checkPlayStatus(coinId, coinAddress);
       setHasCheckedStatus(true);
     }
-  }, [isReady, coinId, coinAddress]);
-
-  // Re-check play status when wallet connection changes
-  useEffect(() => {
-    if (
-      isReady &&
-      hasCheckedStatus &&
-      coinId &&
-      coinAddress &&
-      playStatus &&
-      !playStatus.canPlay
-    ) {
-      console.log('Wallet connection changed - re-checking play status');
-      console.log('isConnected:', isConnected);
-      console.log('address:', address);
-      checkPlayStatus(coinId, coinAddress);
-    }
-  }, [isConnected, address]);
   }, [isReady, hasCheckedStatus, coinId, coinAddress, checkPlayStatus]);
 
   const handleViewProfile = async () => {
@@ -140,7 +117,7 @@ export function Info({
     );
   }
 
-  if (!isReady || isLoading || (!playStatus && !error)) {
+  if (!isReady || isLoading || !hasCheckedStatus) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4">
         <div className="bg-black/20 backdrop-blur rounded-2xl shadow-xl p-8 text-center max-w-md border border-white/20">
