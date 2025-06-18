@@ -96,12 +96,10 @@ export function GameWrapper({
     try {
       gameStartTime.current = Date.now();
       setShowGame(true);
-      setForceGameEnd(false); // Reset force end flag
-      setFinalScore(0); // Reset score
-
-      // Track game start
-      trackGameEvent.gameStart(id, name, coinAddress);
+      setForceGameEnd(false);
+      setFinalScore(0);
     } catch (error) {
+      console.error('Failed to start game:', error);
       sentryTracker.gameError(
         error instanceof Error ? error : new Error('Failed to start game'),
         {
