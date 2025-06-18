@@ -1,4 +1,4 @@
-import { createClient } from '@farcaster/quick-auth';
+import { createClient, Errors } from '@farcaster/quick-auth';
 
 const quickAuthClient = createClient();
 
@@ -37,8 +37,13 @@ export class FarcasterAuth {
 
       return payload as unknown as AuthTokenPayload;
     } catch (error) {
+      if (error instanceof Errors.InvalidTokenError) {
+        console.info('Invalid token:', error.message);
+        throw new Error('Invalid or expired authentication token');
+      }
+      
       console.error('Token verification error:', error);
-      throw new Error('Invalid or expired authentication token');
+      throw new Error('Authentication service error');
     }
   }
 
