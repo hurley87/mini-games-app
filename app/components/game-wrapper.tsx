@@ -95,9 +95,9 @@ export function GameWrapper({
   const handleGameStart = () => {
     try {
       gameStartTime.current = Date.now();
-      setShowGame(true);
       setForceGameEnd(false);
       setFinalScore(0);
+      setShowGame(true);
     } catch (error) {
       console.error('Failed to start game:', error);
       sentryTracker.gameError(
@@ -294,7 +294,7 @@ export function GameWrapper({
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [showGame, timeoutSeconds, finalScore, id, name]);
+  }, [showGame, timeoutSeconds, finalScore]);
 
   if (showResult) {
     return (
