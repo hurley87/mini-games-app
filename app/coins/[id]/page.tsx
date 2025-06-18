@@ -1,5 +1,4 @@
 import { GameWrapper } from '@/app/components/game-wrapper';
-import { WelcomeDialog } from '@/app/components/welcome-dialog';
 import { supabaseService } from '@/lib/supabase';
 import { Metadata } from 'next';
 
@@ -9,7 +8,7 @@ interface TokenPageProps {
   }>;
 }
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 const appUrl = 'https://app.minigames.studio';
 
@@ -109,7 +108,6 @@ export default async function GamePage({
         creator={creator}
         coinId={coin.id}
       />
-      <WelcomeDialog />
     </div>
   );
 }
