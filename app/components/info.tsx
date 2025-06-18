@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useFarcasterContext } from '@/hooks/useFarcasterContext';
 import { usePlayStatus } from '@/hooks/usePlayStatus';
-import { BuyCoinButton } from './BuyCoinButton';
 import { useAccount, useConnect } from 'wagmi';
 import { ZoraCoinData, Creator } from '@/lib/types';
 import { Coins, Share2 } from 'lucide-react';
@@ -49,44 +48,15 @@ export function Info({
   const { playStatus, isLoading, error, checkPlayStatus, recordPlay } =
     usePlayStatus();
   const [hasCheckedStatus, setHasCheckedStatus] = useState(false);
-  const [buyAmount, setBuyAmount] = useState('0.01');
   const { isConnected } = useAccount();
   const { connectors, connect } = useConnect();
 
-  console.log('isConnected', isConnected);
-
-  // Validate and sanitize buy amount input
-  const handleBuyAmountChange = (value: string) => {
-    // Allow empty string temporarily for user input
-    if (value === '') {
-      setBuyAmount('');
-      return;
-    }
-
-    // Remove any non-numeric characters except decimal point
-    const sanitized = value.replace(/[^0-9.]/g, '');
-
-    // Ensure only one decimal point
-    const parts = sanitized.split('.');
-    if (parts.length > 2) {
-      return; // Don't update if more than one decimal point
-    }
-
-    // Parse as number to validate
-    const numValue = parseFloat(sanitized);
-
-    // Allow any valid positive number
-    if (!isNaN(numValue) && numValue >= 0) {
-      setBuyAmount(sanitized);
-    }
-  };
-
-  // Get validated buy amount for BuyCoinButton
-  const getValidatedBuyAmount = () => {
-    const numValue = parseFloat(buyAmount);
-    return !buyAmount || isNaN(numValue) || numValue < 0.01
-      ? '0.01'
-      : buyAmount;
+  const handleSwap = async () => {
+    await sdk.actions.swapToken({
+      sellToken: '0x0000000000000000000000000000000000000000',
+      buyToken: `eip155:8453/erc20:${coinAddress}`,
+      sellAmount: '0.01',
+    });
   };
 
   useEffect(() => {
@@ -365,7 +335,7 @@ export function Info({
           )}
 
           {/* Action Button */}
-          <div className="p-6">
+          <div className="p-6 pt-0">
             {!isConnected ? (
               <button
                 onClick={() => connect({ connector: connectors[0] })}
@@ -374,29 +344,35 @@ export function Info({
                 Connect Wallet
               </button>
             ) : (
-              <div className="flex flex-col gap-2">
-                <input
-                  type="text"
-                  placeholder="0.01"
-                  value={buyAmount}
-                  onChange={(e) => handleBuyAmountChange(e.target.value)}
-                  onBlur={() => {
-                    // Set to minimum if empty or invalid on blur
-                    if (!buyAmount || parseFloat(buyAmount) < 0.01) {
-                      setBuyAmount('0.01');
-                    }
-                  }}
-                  className="w-full px-3 py-2 rounded-md text-black border-2 border-gray-300 focus:border-blue-500 focus:outline-none"
-                />
-                <div className="text-xs text-white/70">Minimum: 0.01 ETH</div>
-                <BuyCoinButton
-                  coinAddress={coinAddress}
-                  amount={getValidatedBuyAmount()}
-                  symbol={symbol}
-                  onSuccess={() => {
-                    setHasCheckedStatus(false);
-                  }}
-                />
+              <div className="flex flex-col gap-4">
+                <button
+                  onClick={handleSwap}
+                  className="px-4 py-4 rounded-full font-semibold shadow-xl shadow-purple-500/20 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white transition-all duration-200 text-lg w-full"
+                >
+                  Get ${symbol} Tokens
+                </button>
+                <div className="bg-gradient-to-r from-purple-900/40 to-blue-900/40 p-4 rounded-lg border border-purple-500/20">
+                  <h3 className="text-sm font-semibold text-purple-200 mb-2">
+                    🎮 Unlock Unlimited Access
+                  </h3>
+                  <p className="text-xs text-white/70 leading-relaxed mb-3">
+                    Hold {PREMIUM_THRESHOLD.toLocaleString()} ${symbol} tokens
+                    to enjoy unlimited gameplay with no waiting periods or
+                    restrictions.
+                  </p>
+                  <div className="flex items-center gap-2 text-xs text-purple-300">
+                    <span className="w-1.5 h-1.5 bg-purple-400 rounded-full"></span>
+                    <span>Unlimited plays</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-purple-300">
+                    <span className="w-1.5 h-1.5 bg-purple-400 rounded-full"></span>
+                    <span>No cooldown periods</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-purple-300">
+                    <span className="w-1.5 h-1.5 bg-purple-400 rounded-full"></span>
+                    <span>Premium player status</span>
+                  </div>
+                </div>
               </div>
             )}
           </div>
