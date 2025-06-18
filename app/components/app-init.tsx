@@ -15,7 +15,13 @@ import { sdk } from '@farcaster/frame-sdk';
 
 export function AppInit() {
   const { context, isReady } = useFarcasterContext({ autoAddFrame: true });
+
+  console.log('context', context);
+  console.log('isReady', isReady);
+
   const { address } = useAccount();
+
+  console.log('address', address);
 
   // Avoid triggering the saveUser routine multiple times which can lead to 429 errors
   // Keep track of the last user that was persisted so we do not spam the endpoint
@@ -27,7 +33,7 @@ export function AppInit() {
   useEffect(() => {
     const saveUser = async () => {
       // Ensure we have the required data before continuing
-      if (!context?.user || !address) {
+      if (!context?.user) {
         return;
       }
 
@@ -97,6 +103,8 @@ export function AppInit() {
             }
           );
 
+          console.log('response', response);
+
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
           }
@@ -156,7 +164,14 @@ export function AppInit() {
         }
 
         // Mark as persisted to avoid duplicate requests regardless of success or failure
-        hasPersistedRef.current = { fid: user.fid, wallet: address };
+        hasPersistedRef.current = {
+          fid: user.fid,
+          wallet: address || '',
+        };
+
+        console.log('isNewPlayer', isNewPlayer);
+        console.log('playerDataSaved', playerDataSaved);
+        console.log('isValidSharerFid', isValidSharerFid);
 
         if (isNewPlayer && playerDataSaved && isValidSharerFid) {
           if (sharerFid !== user.fid) {
@@ -215,7 +230,7 @@ export function AppInit() {
       }
     };
 
-    if (context && address) {
+    if (context) {
       saveUser();
     }
   }, [context, address]);

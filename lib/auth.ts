@@ -41,7 +41,7 @@ export class FarcasterAuth {
         console.info('Invalid token:', error.message);
         throw new Error('Invalid or expired authentication token');
       }
-      
+
       console.error('Token verification error:', error);
       throw new Error('Authentication service error');
     }
@@ -71,9 +71,13 @@ export class FarcasterAuth {
   static async requireAuth(request: Request): Promise<number> {
     const authHeader = request.headers.get('Authorization');
 
+    console.log('authHeader', authHeader);
+
     if (!authHeader) {
       throw new Error('Missing authorization header');
     }
+
+    console.log('authHeader', authHeader);
 
     return this.getFidFromAuth(authHeader);
   }

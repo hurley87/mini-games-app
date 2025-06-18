@@ -44,8 +44,7 @@ export async function POST(request: Request) {
       !userData.fid ||
       !userData.name ||
       !userData.pfp ||
-      !userData.username ||
-      !userData.wallet_address
+      !userData.username
     ) {
       return NextResponse.json(
         { error: 'Missing required fields' },
