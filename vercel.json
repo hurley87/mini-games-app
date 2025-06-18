@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/free-play-reminder",
-      "schedule": "0 * * * *"
+      "schedule": "0 0 * * *"
     }
   ]
 }

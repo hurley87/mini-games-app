@@ -2,11 +2,13 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { useState, useEffect } from 'react';
 import {
   ExternalLink,
   Copy,
   MoreHorizontal,
   Link as LinkIcon,
+  Users,
 } from 'lucide-react';
 import { CoinWithCreator } from '@/lib/types';
 import { formatRelativeTime, handleViewCoin } from '@/lib/utils';
@@ -23,7 +25,32 @@ interface CoinCardProps {
   coin: CoinWithCreator;
 }
 
+interface CoinStats {
+  playerCount: number;
+}
+
 export function CoinCard({ coin }: CoinCardProps) {
+  const [coinStats, setCoinStats] = useState<CoinStats>({
+    playerCount: 0,
+  });
+
+  useEffect(() => {
+    const fetchCoinStats = async () => {
+      try {
+        const response = await fetch(`/api/leaderboard/${coin.id}`);
+        if (response.ok) {
+          const leaderboard = await response.json();
+          const playerCount = leaderboard.length;
+          setCoinStats({ playerCount });
+        }
+      } catch (error) {
+        console.error('Failed to fetch coin stats:', error);
+      }
+    };
+
+    fetchCoinStats();
+  }, [coin.id]);
+
   const handleCopyAddress = () => {
     try {
       navigator.clipboard.writeText(coin.coin_address);
@@ -78,32 +105,21 @@ export function CoinCard({ coin }: CoinCardProps) {
     }
   };
 
-  const handleGameCardView = () => {
-    try {
-      trackGameEvent.gameCardView(
-        coin.id,
-        coin.name,
-        coin.creator?.username || `Creator ${coin.fid}`
-      );
-    } catch (error) {
-      sentryTracker.userActionError(
-        error instanceof Error
-          ? error
-          : new Error('Failed to track game card view'),
-        {
-          action: 'game_card_view',
-          element: 'game_card',
-          page: 'coins_list',
-        }
-      );
-    }
-  };
-
   const handleViewCoinClick = async () => {
     await handleViewCoin(coin.coin_address, {
       element: 'coin_card',
       page: 'coins_list',
     });
+  };
+
+  const formatNumber = (num: number): string => {
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(1) + 'M';
+    }
+    if (num >= 1000) {
+      return (num / 1000).toFixed(1) + 'K';
+    }
+    return num.toString();
   };
 
   return (
@@ -182,28 +198,46 @@ export function CoinCard({ coin }: CoinCardProps) {
         </div>
       </div>
 
-      {/* Post Image */}
-      <Image
-        src={coin.image || '/placeholder.svg?height=500&width=500'}
-        alt="Post image"
-        width={500}
-        height={500}
-        className="w-full aspect-square object-cover rounded-xl"
-        onClick={handleGameCardView}
-        onError={() => {
-          sentryTracker.userActionError('Failed to load game image', {
-            action: 'image_load_error',
-            element: 'game_image',
-            page: 'coins_list',
-          });
-        }}
-      />
+      {/* Post Image with Overlay */}
+      <div className="relative w-full aspect-square rounded-xl overflow-hidden">
+        <Image
+          src={coin.image || '/placeholder.svg?height=500&width=500'}
+          alt="Post image"
+          width={500}
+          height={500}
+          className="w-full h-full object-cover cursor-pointer"
+          onError={() => {
+            sentryTracker.userActionError('Failed to load game image', {
+              action: 'image_load_error',
+              element: 'game_image',
+              page: 'coins_list',
+            });
+          }}
+        />
+
+        {/* Overlay with game stats */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent">
+          <div className="absolute bottom-0 left-0 right-0 p-4">
+            {/* Game Title */}
+            <h3 className="text-white font-bold text-xl mb-2 truncate">
+              {coin.name}
+            </h3>
+
+            {/* Stats Row */}
+            <div className="flex items-center text-white/90">
+              <div className="flex items-center gap-1">
+                <Users className="w-4 h-4" />
+                <span className="text-sm font-medium">
+                  {formatNumber(coinStats.playerCount)} players
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <Link href={`/coins/${coin.id}`}>
-        <button
-          className="bg-purple-600 text-white rounded-full font-semibold w-full mt-4 text-xl py-4 hover:brightness-110 transition-all duration-200 shadow-xl"
-          onClick={handleGameCardView}
-        >
+        <button className="bg-purple-600 text-white rounded-full font-semibold w-full mt-4 text-xl py-4 hover:brightness-110 transition-all duration-200 shadow-xl">
           View {coin.name}
         </button>
       </Link>

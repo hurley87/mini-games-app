@@ -46,6 +46,7 @@ export type Coin = {
   symbol: string;
   description: string;
   parent: string;
+  build_id: string;
 };
 
 export type GamePlay = {
