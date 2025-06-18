@@ -43,7 +43,7 @@ export function Info({
 }: InfoProps) {
   const { context, isReady } = useFarcasterContext();
   const { playStatus, isLoading, error, checkPlayStatus } = usePlayStatus();
-  const { address, isConnected } = useAccount();
+  const { isConnected } = useAccount();
   const { connect, connectors } = useConnect();
   const [isStartingGame, setIsStartingGame] = useState(false);
   const [hasCheckedStatus, setHasCheckedStatus] = useState(false);
