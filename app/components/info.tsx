@@ -45,8 +45,7 @@ export function Info({
   coinId,
 }: InfoProps) {
   const { isReady } = useFarcasterContext({ autoAddFrame: true });
-  const { playStatus, isLoading, error, checkPlayStatus, recordPlay } =
-    usePlayStatus();
+  const { playStatus, isLoading, error, checkPlayStatus } = usePlayStatus();
   const [hasCheckedStatus, setHasCheckedStatus] = useState(false);
   const { isConnected } = useAccount();
   const { connectors, connect } = useConnect();
