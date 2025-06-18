@@ -3,10 +3,6 @@
     {
       "path": "/api/distributor",
       "schedule": "* * * * *"
-    },
-    {
-      "path": "/api/free-play-reminder",
-      "schedule": "0 0 * * *"
     }
   ]
 }
