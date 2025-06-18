@@ -12,6 +12,7 @@ import { trackGameEvent, trackEvent } from '@/lib/posthog';
 import { sentryTracker, setSentryTags } from '@/lib/sentry';
 import { sdk } from '@farcaster/frame-sdk';
 import { TOKEN_MULTIPLIER } from '@/lib/config';
+import { usePlayStatus } from '@/hooks/usePlayStatus';
 
 interface GameWrapperProps {
   id: string;
@@ -48,6 +49,9 @@ export function GameWrapper({
   const [isScoreCreated, setIsScoreCreated] = useState(false);
   const [gameFinished, setGameFinished] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const { playStatus } = usePlayStatus();
+
+  console.log('coinId', coinId);
 
   const handleRoundComplete = (score: number) => {
     try {
@@ -352,6 +356,7 @@ export function GameWrapper({
             coinId={coinId}
             onRoundComplete={handleRoundComplete}
             forceEnd={forceGameEnd}
+            hasPlayedBefore={playStatus?.hasPlayed ?? false}
           />
         </div>
       </div>
@@ -360,7 +365,6 @@ export function GameWrapper({
 
   return (
     <Info
-      id={id}
       name={name}
       description={description}
       coinAddress={coinAddress}

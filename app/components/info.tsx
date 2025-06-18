@@ -21,7 +21,6 @@ import { BottomNav } from './bottom-nav';
 interface InfoProps {
   name: string;
   description: string;
-  id: string;
   coinAddress: string;
   imageUrl?: string; // Optional game image
   symbol: string;
@@ -34,7 +33,6 @@ interface InfoProps {
 export function Info({
   name,
   description,
-  id,
   coinAddress,
   imageUrl,
   symbol,
@@ -57,11 +55,17 @@ export function Info({
   };
 
   useEffect(() => {
-    if (isReady && !hasCheckedStatus && id && coinAddress) {
-      checkPlayStatus(id, coinAddress);
+    console.log('INFO');
+    console.log('coinId', coinId);
+    console.log('coinAddress', coinAddress);
+    console.log('hasCheckedStatus', hasCheckedStatus);
+    console.log('isReady', isReady);
+
+    if (isReady && !hasCheckedStatus && coinId && coinAddress) {
+      checkPlayStatus(coinId, coinAddress);
       setHasCheckedStatus(true);
     }
-  }, [isReady, hasCheckedStatus, id, coinAddress, checkPlayStatus]);
+  }, [isReady, hasCheckedStatus, coinId, coinAddress, checkPlayStatus]);
 
   const handlePlay = async () => {
     if (!playStatus) return;
@@ -342,7 +346,7 @@ export function Info({
                   onClick={handleSwap}
                   className="px-4 py-4 rounded-full font-semibold shadow-xl shadow-purple-500/20 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white transition-all duration-200 text-lg w-full"
                 >
-                  Get ${symbol} Tokens
+                  Get {PREMIUM_THRESHOLD.toLocaleString()} ${symbol}
                 </button>
                 <div className="bg-gradient-to-r from-purple-900/40 to-blue-900/40 p-4 rounded-lg border border-purple-500/20">
                   <h3 className="text-sm font-semibold text-purple-200 mb-2">

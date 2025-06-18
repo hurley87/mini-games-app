@@ -41,6 +41,7 @@ interface GameProps {
   coinId: string;
   onRoundComplete?: (score: number) => void;
   forceEnd?: boolean;
+  hasPlayedBefore?: boolean;
 }
 
 export function Game({
@@ -50,13 +51,12 @@ export function Game({
   coinId,
   onRoundComplete,
   forceEnd = false,
+  hasPlayedBefore = false,
 }: GameProps) {
   const [loading, setLoading] = useState(true);
   const [isGameOver, setIsGameOver] = useState(false);
   const [hasTokens, setHasTokens] = useState(false);
   const [checkingTokens, setCheckingTokens] = useState(true);
-  const [hasPlayedBefore, setHasPlayedBefore] = useState(false);
-  const [checkingPlayStatus, setCheckingPlayStatus] = useState(true);
   const [roundScore, setRoundScore] = useState<number | null>(null);
   const [tokenDecimals, setTokenDecimals] = useState<number>(18); // Default to 18, will be fetched
   const { context, isReady } = useFarcasterContext({
@@ -68,6 +68,9 @@ export function Game({
   // Define iframeUrl early to avoid declaration order issues
   const fid = context?.user?.fid;
   const iframeUrl = `/api/embed/${id}?fid=${fid}&coinId=${coinId}&coinAddress=${coinAddress}`;
+
+  console.log('GAME');
+  console.log('coinId', coinId);
 
   // Fetch token decimals when component mounts
   useEffect(() => {
@@ -137,44 +140,6 @@ export function Game({
     return () => window.removeEventListener('message', handleMessage);
   }, [onRoundComplete, iframeUrl, roundScore]);
 
-  // Check if player has played this game before
-  useEffect(() => {
-    const checkPlayStatus = async () => {
-      if (!context?.user?.fid) {
-        setCheckingPlayStatus(false);
-        return;
-      }
-
-      try {
-        const response = await fetch('/api/check-play-status', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            fid: context.user.fid,
-            coinId,
-            coinAddress,
-            walletAddress: address,
-          }),
-        });
-
-        if (response.ok) {
-          const status = await response.json();
-          setHasPlayedBefore(status.hasPlayed);
-        }
-      } catch (error) {
-        console.error('Error checking play status:', error);
-      } finally {
-        setCheckingPlayStatus(false);
-      }
-    };
-
-    if (isReady && context?.user?.fid) {
-      checkPlayStatus();
-    }
-  }, [context?.user?.fid, id, coinId, coinAddress, address, isReady]);
-
   // Check token balance
   useEffect(() => {
     const checkTokenBalance = async () => {
@@ -226,7 +191,7 @@ export function Game({
   // - First-time players always get 10-second preview (regardless of tokens)
   // - Returning players only get unlimited if they have tokens
   useEffect(() => {
-    if (checkingTokens || checkingPlayStatus || isGameOver) return; // Wait for all checks to complete
+    if (checkingTokens || isGameOver) return; // Wait for all checks to complete
 
     const shouldApplyTimeout =
       !hasPlayedBefore || (hasPlayedBefore && !hasTokens);
@@ -251,7 +216,6 @@ export function Game({
     hasTokens,
     hasPlayedBefore,
     checkingTokens,
-    checkingPlayStatus,
     isGameOver,
     onRoundComplete,
     roundScore,
@@ -278,7 +242,7 @@ export function Game({
     );
   }
 
-  if (!isReady || checkingTokens || checkingPlayStatus) {
+  if (!isReady || checkingTokens) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="flex flex-col items-center space-y-4">
