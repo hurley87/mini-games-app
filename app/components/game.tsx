@@ -59,9 +59,7 @@ export function Game({
   const [checkingTokens, setCheckingTokens] = useState(true);
   const [roundScore, setRoundScore] = useState<number | null>(null);
   const [tokenDecimals, setTokenDecimals] = useState<number>(18); // Default to 18, will be fetched
-  const { context, isReady } = useFarcasterContext({
-    disableNativeGestures: true,
-  });
+  const { context, isReady } = useFarcasterContext();
   const { address, isConnected } = useAccount();
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
 

@@ -1,5 +1,11 @@
 import { sdk } from '@farcaster/frame-sdk';
-import { useEffect, useState } from 'react';
+import {
+  createContext,
+  useContext,
+  type ReactNode,
+  useEffect,
+  useState,
+} from 'react';
 import { FarcasterFrameContext } from '@/lib/types/farcaster';
 
 interface UseFarcasterContextOptions {
@@ -13,7 +19,17 @@ interface UseFarcasterContextOptions {
   autoAddFrame?: boolean;
 }
 
-export function useFarcasterContext(options: UseFarcasterContextOptions = {}) {
+interface FarcasterContextValue {
+  context: FarcasterFrameContext | null;
+  isReady: boolean;
+  isLoading: boolean;
+}
+
+const FarcasterContext = createContext<FarcasterContextValue | undefined>(
+  undefined
+);
+
+function useProvideFarcasterContext(options: UseFarcasterContextOptions = {}) {
   const [context, setContext] = useState<FarcasterFrameContext | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -32,6 +48,17 @@ export function useFarcasterContext(options: UseFarcasterContextOptions = {}) {
         setIsReady(true);
       } catch (error) {
         console.error('Failed to initialize frame:', error);
+        try {
+          await sdk.actions.ready({
+            disableNativeGestures: options.disableNativeGestures,
+          });
+        } catch (readyError) {
+          console.error(
+            'Failed to signal ready after init failure:',
+            readyError
+          );
+        }
+        setIsReady(true);
       } finally {
         setIsLoading(false);
       }
@@ -59,4 +86,30 @@ export function useFarcasterContext(options: UseFarcasterContextOptions = {}) {
     isReady,
     isLoading,
   };
+}
+
+interface FarcasterProviderProps extends UseFarcasterContextOptions {
+  children: ReactNode;
+}
+
+export function FarcasterProvider({
+  children,
+  ...options
+}: FarcasterProviderProps) {
+  const value = useProvideFarcasterContext(options);
+  return (
+    <FarcasterContext.Provider value={value}>
+      {children}
+    </FarcasterContext.Provider>
+  );
+}
+
+export function useFarcasterContext() {
+  const ctx = useContext(FarcasterContext);
+  if (!ctx) {
+    throw new Error(
+      'useFarcasterContext must be used within FarcasterProvider'
+    );
+  }
+  return ctx;
 }

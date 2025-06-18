@@ -6,6 +6,7 @@ import { base } from 'wagmi/chains';
 import { farcasterFrame } from '@farcaster/frame-wagmi-connector';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PostHogProvider } from './components/posthog-provider';
+import { FarcasterProvider } from '@/hooks/useFarcasterContext';
 
 const config = createConfig({
   chains: [base],
@@ -22,7 +23,9 @@ export function Providers(props: { children: ReactNode }) {
     <PostHogProvider>
       <WagmiProvider config={config}>
         <QueryClientProvider client={queryClient}>
-          {props.children}
+          <FarcasterProvider autoAddFrame disableNativeGestures>
+            {props.children}
+          </FarcasterProvider>
         </QueryClientProvider>
       </WagmiProvider>
     </PostHogProvider>
