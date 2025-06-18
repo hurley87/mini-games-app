@@ -533,7 +533,7 @@ export function Info({
           </div>
         )}
 
-        {playStatus.hasPlayed && playStatus.reason === 'has_tokens' && (
+        {playStatus.reason === 'has_tokens' && (
           <div className="p-6 bg-blue-900/30 border-b border-blue-700/30">
             <div className="flex items-start space-x-3">
               <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
