@@ -44,7 +44,7 @@ export function Info({
   const { isReady } = useFarcasterContext({ autoAddFrame: true });
   const { playStatus, isLoading, error, checkPlayStatus } = usePlayStatus();
   const [hasCheckedStatus, setHasCheckedStatus] = useState(false);
-  const { isConnected } = useAccount();
+  const { isConnected, address } = useAccount();
   const { connectors, connect } = useConnect();
 
   const handleSwap = async () => {
@@ -66,6 +66,24 @@ export function Info({
       setHasCheckedStatus(true);
     }
   }, [isReady, hasCheckedStatus, coinId, coinAddress, checkPlayStatus]);
+
+  // Re-check play status when wallet connection changes
+  useEffect(() => {
+    if (isReady && hasCheckedStatus && coinId && coinAddress) {
+      console.log('Wallet connection changed - re-checking play status');
+      console.log('isConnected:', isConnected);
+      console.log('address:', address);
+      checkPlayStatus(coinId, coinAddress);
+    }
+  }, [
+    isConnected,
+    address,
+    isReady,
+    hasCheckedStatus,
+    coinId,
+    coinAddress,
+    checkPlayStatus,
+  ]);
 
   const handlePlay = async () => {
     if (!playStatus) return;
