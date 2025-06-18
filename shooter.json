@@ -3,10 +3,10 @@
   "name": "Shape Shooter",
   "description": "Mini Game created by @hurls on Farcaster",
   "image": "ipfs://bafybeietfzgmpv76ph7etckq2lca4nablpimz6ag3bofjc7yvt6czhjmlm",
-  "animation_url": "ipfs://bafkreifteow4kwpez233aauu4whzwmybgtawrgxczdw7tn6mxhv7zzc644",
+  "animation_url": "ipfs://bafkreib6awk2ciia3c6bdtcd7dawsr2kkinzojpf5tawsf4wsu7qgrywha",
   "content": {
     "mime": "text/html",
-    "uri": "ipfs://bafkreifteow4kwpez233aauu4whzwmybgtawrgxczdw7tn6mxhv7zzc644"
+    "uri": "ipfs://bafkreib6awk2ciia3c6bdtcd7dawsr2kkinzojpf5tawsf4wsu7qgrywha"
   },
   "properties": {
     "category": "game"
