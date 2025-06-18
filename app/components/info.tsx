@@ -7,7 +7,11 @@ import { BuyCoinButton } from './BuyCoinButton';
 import { useAccount, useConnect } from 'wagmi';
 import { ZoraCoinData, Creator } from '@/lib/types';
 import { Coins, Share2 } from 'lucide-react';
-import { formatTokenBalance, handleViewCoin, formatTimeUntil } from '@/lib/utils';
+import {
+  formatTokenBalance,
+  handleViewCoin,
+  formatTimeUntil,
+} from '@/lib/utils';
 import { sdk } from '@farcaster/frame-sdk';
 import { Header } from './header';
 import { CoinLeaderboard } from './coin-leaderboard';
@@ -48,6 +52,8 @@ export function Info({
   const [buyAmount, setBuyAmount] = useState('0.01');
   const { isConnected } = useAccount();
   const { connectors, connect } = useConnect();
+
+  console.log('isConnected', isConnected);
 
   // Validate and sanitize buy amount input
   const handleBuyAmountChange = (value: string) => {
@@ -190,7 +196,7 @@ export function Info({
   if (!playStatus.canPlay) {
     return (
       <div className="min-h-screen bg-black">
-         <div className="max-w-lg mx-auto bg-gradient-to-b from-black via-zinc-900 to-black pb-24">
+        <div className="max-w-lg mx-auto bg-gradient-to-b from-black via-zinc-900 to-black pb-24">
           {/* Header with app icon and basic info */}
           <div className="p-6 border-b border-white/20">
             <div className="flex items-start space-x-4">
@@ -473,15 +479,28 @@ export function Info({
         </div>
 
         {/* Description */}
-        <div className="p-6 border-t border-white/20 flex flex-col gap-6 items-center">
-          <p className="text-sm text-white/70 leading-relaxed">{description}</p>
-          <button
-            onClick={handlePlay}
-            className="w-full bg-purple-600 text-white px-4 py-4 rounded-full font-semibold shadow-xl shadow-purple-500/20 hover:brightness-110 transition-all duration-200 text-lg"
-          >
-            PLAY
-          </button>
-        </div>
+        {!isConnected ? (
+          <div className="py-6">
+            <button
+              onClick={() => connect({ connector: connectors[0] })}
+              className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-full transition-colors text-lg"
+            >
+              Connect Wallet
+            </button>
+          </div>
+        ) : (
+          <div className="p-6 border-t border-white/20 flex flex-col gap-6 items-center">
+            <p className="text-sm text-white/70 leading-relaxed">
+              {description}
+            </p>
+            <button
+              onClick={handlePlay}
+              className="w-full bg-purple-600 text-white px-4 py-4 rounded-full font-semibold shadow-xl shadow-purple-500/20 hover:brightness-110 transition-all duration-200 text-lg"
+            >
+              PLAY
+            </button>
+          </div>
+        )}
 
         {/* Status indicators */}
         {(!playStatus.hasPlayed || playStatus.reason === 'daily_free') && (
