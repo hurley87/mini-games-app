@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useAccount } from 'wagmi';
-import { useFarcasterContext } from '@/hooks/useFarcasterContext';
+import { useFarcasterContext } from '@/app/components/farcaster-provider';
 import {
   trackGameEvent,
   identifyUser,
@@ -14,7 +14,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { sdk } from '@farcaster/frame-sdk';
 
 export function AppInit() {
-  const { context, isReady } = useFarcasterContext({ autoAddFrame: true });
+  const { context, isReady } = useFarcasterContext();
   const { address } = useAccount();
 
   // Avoid triggering the saveUser routine multiple times which can lead to 429 errors

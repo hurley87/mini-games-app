@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useFarcasterContext } from '@/hooks/useFarcasterContext';
+import { useFarcasterContext } from '@/app/components/farcaster-provider';
 import { usePlayStatus } from '@/hooks/usePlayStatus';
 import { useAccount, useConnect } from 'wagmi';
 import { Creator } from '@/lib/types';

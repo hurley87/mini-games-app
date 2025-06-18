@@ -5,7 +5,7 @@ import { Leaderboard } from '@/components/leaderboard';
 import { Header } from '@/app/components/header';
 import { BottomNav } from '@/app/components/bottom-nav';
 import { trackGameEvent } from '@/lib/posthog';
-import { useFarcasterContext } from '@/hooks/useFarcasterContext';
+import { useFarcasterContext } from '@/app/components/farcaster-provider';
 import { usePlayerStats } from '@/hooks/usePlayerStats';
 import { Share2 } from 'lucide-react';
 import { sdk } from '@farcaster/frame-sdk';

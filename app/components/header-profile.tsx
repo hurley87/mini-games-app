@@ -15,7 +15,7 @@ import {
   Copy,
   Share2,
 } from 'lucide-react';
-import { useFarcasterContext } from '@/hooks/useFarcasterContext';
+import { useFarcasterContext } from '@/app/components/farcaster-provider';
 import { toast } from 'sonner';
 import { useAccount, useConnect } from 'wagmi';
 import { trackGameEvent } from '@/lib/posthog';

@@ -1,7 +1,7 @@
 'use client';
 
 import { useCoinLeaderboard } from '@/hooks/useCoinLeaderboard';
-import { useFarcasterContext } from '@/hooks/useFarcasterContext';
+import { useFarcasterContext } from '@/app/components/farcaster-provider';
 import { Trophy, Medal, Crown, Share2 } from 'lucide-react';
 import { sdk } from '@farcaster/frame-sdk';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';

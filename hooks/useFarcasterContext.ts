@@ -1,73 +1,36 @@
-import { sdk } from '@farcaster/frame-sdk';
-import { useEffect, useState } from 'react';
-import { FarcasterFrameContext } from '@/lib/types/farcaster';
+import { useFarcasterContext as useProviderContext } from '@/app/components/farcaster-provider';
 
 interface UseFarcasterContextOptions {
   /**
    * Whether to disable native gestures for gaming frames
+   * @deprecated This option is now handled at the provider level. 
+   * Use the actions.ready() method for component-specific ready calls.
    */
   disableNativeGestures?: boolean;
   /**
    * Whether to automatically try to add the frame
+   * @deprecated This option is now handled at the provider level
    */
   autoAddFrame?: boolean;
 }
 
+/**
+ * @deprecated Use the FarcasterProvider and useFarcasterContext from @/app/components/farcaster-provider instead.
+ * This hook is kept for backward compatibility.
+ */
 export function useFarcasterContext(options: UseFarcasterContextOptions = {}) {
-  const [context, setContext] = useState<FarcasterFrameContext | null>(null);
-  const [isReady, setIsReady] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const initializeFrame = async () => {
-      try {
-        // Get context from SDK
-        const frameContext = await sdk.context;
-        setContext(frameContext);
-
-        // Mark frame as ready
-        await sdk.actions.ready({
-          disableNativeGestures: options.disableNativeGestures,
-        });
-        setIsReady(true);
-      } catch (error) {
-        console.error('Failed to initialize frame:', error);
-        try {
-          await sdk.actions.ready({
-            disableNativeGestures: options.disableNativeGestures,
-          });
-        } catch (readyError) {
-          console.error(
-            'Failed to signal ready after init failure:',
-            readyError
-          );
-        }
-        setIsReady(true);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    initializeFrame();
-  }, [options.disableNativeGestures]);
-
-  useEffect(() => {
-    const handleAddFrame = async () => {
-      if (context && options.autoAddFrame && !context.client?.added) {
-        try {
-          await sdk.actions.addFrame();
-        } catch (error) {
-          console.error('Failed to add frame:', error);
-        }
-      }
-    };
-
-    handleAddFrame();
-  }, [context, options.autoAddFrame]);
+  const providerContext = useProviderContext();
+  
+  // If disableNativeGestures is true, we need to call ready again with this option
+  // This is a temporary solution for the Game component
+  if (options.disableNativeGestures && providerContext.isReady) {
+    // Call ready with disableNativeGestures once when the component mounts
+    // This is handled in the Game component itself now
+  }
 
   return {
-    context,
-    isReady,
-    isLoading,
+    context: providerContext.context,
+    isReady: providerContext.isReady,
+    isLoading: providerContext.isLoading,
   };
 }

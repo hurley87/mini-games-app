@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useFarcasterContext } from './useFarcasterContext';
+import { useFarcasterContext } from '@/app/components/farcaster-provider';
 
 interface PlayerStats {
   points: number;

@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useAccount } from 'wagmi';
-import { useFarcasterContext } from './useFarcasterContext';
+import { useFarcasterContext } from '@/app/components/farcaster-provider';
 
 export type PlayStatus = {
   canPlay: boolean;

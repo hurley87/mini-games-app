@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { sdk } from '@farcaster/frame-sdk';
 import { useAccount } from 'wagmi';
-import { useFarcasterContext } from '@/hooks/useFarcasterContext';
+import { useFarcasterContext } from '@/app/components/farcaster-provider';
 import { Address, createPublicClient, http } from 'viem';
 import { base } from 'viem/chains';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
@@ -59,9 +59,7 @@ export function Game({
   const [checkingTokens, setCheckingTokens] = useState(true);
   const [roundScore, setRoundScore] = useState<number | null>(null);
   const [tokenDecimals, setTokenDecimals] = useState<number>(18); // Default to 18, will be fetched
-  const { context, isReady } = useFarcasterContext({
-    disableNativeGestures: true,
-  });
+  const { context, isReady, actions } = useFarcasterContext();
   const { address, isConnected } = useAccount();
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
@@ -71,6 +69,15 @@ export function Game({
 
   console.log('GAME');
   console.log('coinId', coinId);
+
+  // Call ready with disableNativeGestures when the game component mounts
+  useEffect(() => {
+    if (isReady) {
+      actions.ready({ disableNativeGestures: true }).catch((error) => {
+        console.error('Failed to set disableNativeGestures:', error);
+      });
+    }
+  }, [isReady, actions]);
 
   // Fetch token decimals when component mounts
   useEffect(() => {
