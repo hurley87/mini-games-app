@@ -121,20 +121,17 @@ export const supabaseService = {
       Pick<Player, 'fid' | 'name' | 'pfp' | 'username' | 'wallet_address'>
   ): Promise<{ data: Player | null; isNew: boolean }> {
     // Use atomic upsert with RPC function to avoid race conditions
-    // Build params without points by default to avoid overwriting existing value
+    // Build params with all required parameters for the RPC function
     const params: Record<string, unknown> = {
       p_fid: record.fid,
       p_name: record.name,
       p_pfp: record.pfp,
+      p_points: record.points || 0,
+      p_token: record.token || null,
+      p_url: record.url || null,
       p_username: record.username,
       p_wallet_address: record.wallet_address,
-      p_url: record.url || null,
-      p_token: record.token || null,
     };
-
-    if (record.points !== undefined) {
-      params.p_points = record.points;
-    }
 
     const { data, error } = await supabase.rpc(
       'upsert_player_with_new_flag',

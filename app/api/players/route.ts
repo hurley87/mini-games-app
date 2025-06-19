@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { supabaseService } from '@/lib/supabase';
 import { FarcasterAuth } from '@/lib/auth';
 import { SecurityService } from '@/lib/security';
-import { RateLimiter } from '@/lib/rate-limit';
 
 export async function POST(request: Request) {
   try {
@@ -26,23 +25,6 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: 'Unauthorized: FID mismatch' },
         { status: 403 }
-      );
-    }
-
-    // Check rate limit
-    const rateLimitResult = await RateLimiter.checkRateLimit(
-      `players:${authenticatedFid}`,
-      10, // 10 requests per hour
-      3600 // 1 hour window
-    );
-
-    if (!rateLimitResult.success) {
-      return NextResponse.json(
-        {
-          error: 'Rate limit exceeded',
-          retryAfter: rateLimitResult.reset,
-        },
-        { status: 429 }
       );
     }
 
