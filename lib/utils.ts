@@ -108,6 +108,31 @@ export function formatHolders(count: number | undefined): string {
 }
 
 /**
+ * Formats large numbers with abbreviations (K, M, B, T)
+ * @param num - Number to format
+ * @param decimals - Number of decimal places to show (default 0)
+ * @returns Formatted number string
+ */
+export function formatNumber(
+  num: number | undefined,
+  decimals: number = 0
+): string {
+  if (!num || num === 0) return '0';
+
+  if (num >= 1e12) {
+    return `${(num / 1e12).toFixed(decimals)}T`;
+  } else if (num >= 1e9) {
+    return `${(num / 1e9).toFixed(decimals)}B`;
+  } else if (num >= 1e6) {
+    return `${(num / 1e6).toFixed(decimals)}M`;
+  } else if (num >= 1e3) {
+    return `${(num / 1e3).toFixed(decimals)}K`;
+  } else {
+    return num.toString();
+  }
+}
+
+/**
  * Formats token balance from wei to readable format
  * @param balance - Token balance as string (in wei)
  * @param decimals - Number of decimal places (default 18)

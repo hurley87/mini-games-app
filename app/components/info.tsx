@@ -10,6 +10,7 @@ import {
   formatTokenBalance,
   handleViewCoin,
   formatTimeUntil,
+  formatNumber,
 } from '@/lib/utils';
 import { sdk } from '@farcaster/frame-sdk';
 import { Header } from './header';
@@ -88,6 +89,23 @@ export function Info({
       setHasCheckedStatus(true);
     }
   }, [
+    isReady,
+    context?.user?.fid,
+    coinId,
+    coinAddress,
+    hasCheckedStatus,
+    checkPlayStatus,
+  ]);
+
+  // Re-check play status when wallet connection changes
+  useEffect(() => {
+    if (isReady && context?.user?.fid && isConnected && hasCheckedStatus) {
+      setHasCheckedStatus(false);
+      checkPlayStatus(coinId, coinAddress);
+      setHasCheckedStatus(true);
+    }
+  }, [
+    isConnected,
     isReady,
     context?.user?.fid,
     coinId,
@@ -276,8 +294,8 @@ export function Info({
                     Premium Access Required
                   </h3>
                   <p className="text-xs text-amber-300 mt-1">
-                    You need at least {PREMIUM_THRESHOLD.toLocaleString()}{' '}
-                    {symbol} tokens or wait{' '}
+                    You need at least {formatNumber(PREMIUM_THRESHOLD)} {symbol}{' '}
+                    tokens or wait{' '}
                     {formatTimeUntil(playStatus.nextFreePlayTime!)} for your
                     next free play.
                   </p>
@@ -360,15 +378,15 @@ export function Info({
                   onClick={handleSwap}
                   className="px-4 py-4 rounded-full font-semibold shadow-xl shadow-purple-500/20 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white transition-all duration-200 text-lg w-full"
                 >
-                  Get {PREMIUM_THRESHOLD.toLocaleString()} ${symbol}
+                  Get {formatNumber(PREMIUM_THRESHOLD)} ${symbol}
                 </button>
                 <div className="bg-gradient-to-r from-purple-900/40 to-blue-900/40 p-4 rounded-lg border border-purple-500/20">
                   <h3 className="text-sm font-semibold text-purple-200 mb-2">
                     🎮 Unlock Unlimited Access
                   </h3>
                   <p className="text-xs text-white/70 leading-relaxed mb-3">
-                    Hold {PREMIUM_THRESHOLD.toLocaleString()} ${symbol} tokens
-                    to enjoy unlimited gameplay with no waiting periods or
+                    Hold {formatNumber(PREMIUM_THRESHOLD)} ${symbol} tokens to
+                    enjoy unlimited gameplay with no waiting periods or
                     restrictions.
                   </p>
                   <div className="flex items-center gap-2 text-xs text-purple-300">
@@ -589,13 +607,13 @@ export function Info({
                 <div className="flex justify-between items-center py-1 px-2 bg-black/20 rounded">
                   <span className="text-yellow-300/70">Token Multiplier:</span>
                   <span className="text-yellow-200 font-mono">
-                    {TOKEN_MULTIPLIER.toLocaleString()}
+                    {formatNumber(TOKEN_MULTIPLIER)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-1 px-2 bg-black/20 rounded">
                   <span className="text-yellow-300/70">Premium Threshold:</span>
                   <span className="text-yellow-200 font-mono">
-                    {PREMIUM_THRESHOLD.toLocaleString()} ${symbol}
+                    {formatNumber(PREMIUM_THRESHOLD)} ${symbol}
                   </span>
                 </div>
               </div>
