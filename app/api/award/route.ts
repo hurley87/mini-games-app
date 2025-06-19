@@ -85,7 +85,7 @@ export async function POST(request: Request) {
     // 5. Check general rate limit
     const rateLimitResult = await RateLimiter.checkRateLimit(
       `award:${authenticatedFid}`,
-      5, // 5 requests per hour
+      50, // 50 requests per hour
       3600 // 1 hour window
     );
 
