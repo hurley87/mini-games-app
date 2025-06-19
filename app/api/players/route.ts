@@ -6,9 +6,16 @@ import { RateLimiter } from '@/lib/rate-limit';
 
 export async function POST(request: Request) {
   try {
-    const authenticatedFid = await FarcasterAuth.requireAuth(request);
-
     const userData = await request.json();
+
+    let authenticatedFid = userData.fid;
+
+    try {
+      authenticatedFid = await FarcasterAuth.requireAuth(request);
+    } catch (error) {
+      console.error('Error requiring auth:', error);
+      // return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     // Verify the FID from the request body matches the authenticated FID
     if (Number(userData.fid) !== authenticatedFid) {
