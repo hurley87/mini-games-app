@@ -61,7 +61,7 @@ export async function POST(request: Request) {
 
     // Check user's Farcaster score
     const user = await getUserByFid(Number(authenticatedFid));
-    if (!user || user.score < 0.5) {
+    if (!user || user.score < 0.3) {
       return NextResponse.json(
         { error: "User's Farcaster score is too low to earn points." },
         { status: 403, headers }
