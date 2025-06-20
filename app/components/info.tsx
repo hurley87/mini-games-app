@@ -305,7 +305,7 @@ export function Info({
           )}
 
           {playStatus.reason === 'no_wallet' && (
-            <div className="p-6 bg-blue-900/30 border-b border-blue-700/30">
+            <div className="p-6 bg-blue-900/30 border-b border-blue-700/30 flex flex-col gap-4">
               <div className="flex items-start space-x-3">
                 <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                   <svg
@@ -332,6 +332,12 @@ export function Info({
                   </p>
                 </div>
               </div>
+              <button
+                onClick={() => connect({ connector: connectors[0] })}
+                className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-full transition-colors text-lg"
+              >
+                Connect Wallet
+              </button>
             </div>
           )}
 
@@ -364,15 +370,8 @@ export function Info({
           )}
 
           {/* Action Button */}
-          <div className="p-6 pt-0">
-            {!isConnected ? (
-              <button
-                onClick={() => connect({ connector: connectors[0] })}
-                className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-full transition-colors text-lg"
-              >
-                Connect Wallet
-              </button>
-            ) : (
+          {isConnected && (
+            <div className="p-6 pt-0">
               <div className="flex flex-col gap-4">
                 <button
                   onClick={handleSwap}
@@ -403,8 +402,8 @@ export function Info({
                   </div>
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Coin Leaderboard */}
           <CoinLeaderboard coinId={coinId} symbol={symbol} limit={10} />
