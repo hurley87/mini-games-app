@@ -39,7 +39,7 @@ async function processTransfers() {
         console.log('fid', fid);
       }
 
-      const tokenCount = transfer.total_score;
+      const tokenCount = Math.min(transfer.total_score, 25);
       if (process.env.NODE_ENV !== 'production') {
         console.log('tokenCount', tokenCount);
       }
