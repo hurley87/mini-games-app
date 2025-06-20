@@ -120,32 +120,56 @@ export const supabaseService = {
     record: Partial<Player> &
       Pick<Player, 'fid' | 'name' | 'pfp' | 'username' | 'wallet_address'>
   ): Promise<{ data: Player | null; isNew: boolean }> {
-    // Use atomic upsert with RPC function to avoid race conditions
-    // Build params with all required parameters for the RPC function
-    const params: Record<string, unknown> = {
-      p_fid: record.fid,
-      p_name: record.name,
-      p_pfp: record.pfp,
-      p_points: record.points || 0,
-      p_token: record.token || null,
-      p_url: record.url || null,
-      p_username: record.username,
-      p_wallet_address: record.wallet_address,
-    };
+    try {
+      // Use atomic upsert with RPC function to avoid race conditions
+      // Pass parameters in the correct order as expected by the database function
+      const { data, error } = await supabase.rpc(
+        'upsert_player_with_new_flag',
+        {
+          p_fid: record.fid,
+          p_name: record.name,
+          p_pfp: record.pfp,
+          p_points: record.points || 0,
+          p_token: record.token || null,
+          p_url: record.url || null,
+          p_username: record.username,
+          p_wallet_address: record.wallet_address,
+        }
+      );
 
-    const { data, error } = await supabase.rpc(
-      'upsert_player_with_new_flag',
-      params
-    );
+      if (error) {
+        console.error(
+          'Supabase RPC error (upsert_player_with_new_flag):',
+          error
+        );
+        // If RPC function fails, fall back to checking existence and then upserting
+        return await this.upsertPlayerWithFallback(record);
+      }
 
-    if (error) {
-      console.error('Supabase RPC error (upsert_player_with_new_flag):', error);
-      throw new Error('Failed to upsert player with new flag');
+      return {
+        data: data?.player || null,
+        isNew: data?.is_new || false,
+      };
+    } catch (error) {
+      console.error('Error in upsertPlayerWithNewFlag, using fallback:', error);
+      return await this.upsertPlayerWithFallback(record);
     }
+  },
+
+  async upsertPlayerWithFallback(
+    record: Partial<Player> &
+      Pick<Player, 'fid' | 'name' | 'pfp' | 'username' | 'wallet_address'>
+  ): Promise<{ data: Player | null; isNew: boolean }> {
+    // Check if player exists first
+    const existingPlayers = await this.getPlayerByFid(record.fid);
+    const isNew = !existingPlayers || existingPlayers.length === 0;
+
+    // Upsert the player
+    const upsertedData = await this.upsertPlayer(record);
 
     return {
-      data: data?.player || null,
-      isNew: data?.is_new || false,
+      data: upsertedData?.[0] || null,
+      isNew,
     };
   },
 
