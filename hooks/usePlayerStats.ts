@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useFarcasterContext } from './useFarcasterContext';
+import { useMiniApp } from '@/contexts/miniapp-context';
 
 interface PlayerStats {
   points: number;
@@ -13,7 +13,7 @@ export function usePlayerStats() {
   const [playerStats, setPlayerStats] = useState<PlayerStats | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { context } = useFarcasterContext();
+  const { context } = useMiniApp();
 
   const fetchPlayerStats = useCallback(async () => {
     if (!context?.user?.fid) {

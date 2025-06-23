@@ -6,24 +6,19 @@ import {
   DrawerContent,
   DrawerFooter,
   DrawerTrigger,
-} from '@/app/components/ui/drawer';
-import { Button } from '@/app/components/ui/button';
+} from '@/components/ui/drawer';
+import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-import {
-  List,
-  Wallet,
-  Copy,
-  Share2,
-} from 'lucide-react';
-import { useFarcasterContext } from '@/hooks/useFarcasterContext';
+import { List, Wallet, Copy, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAccount, useConnect } from 'wagmi';
 import { trackGameEvent } from '@/lib/posthog';
 import { sentryTracker } from '@/lib/sentry';
 import { sdk } from '@farcaster/frame-sdk';
+import { useMiniApp } from '@/contexts/miniapp-context';
 
 export function HeaderProfile() {
-  const { context, isLoading } = useFarcasterContext();
+  const { context } = useMiniApp();
   const { address } = useAccount();
   const {
     connect,
@@ -119,7 +114,7 @@ export function HeaderProfile() {
   const userPfp = context?.user?.pfpUrl;
 
   // Show connect button if not connected
-  if (!isLoading && !isConnected) {
+  if (!isConnected) {
     return (
       <Button
         onClick={handleConnect}
@@ -165,15 +160,13 @@ export function HeaderProfile() {
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-white font-semibold">
-                    {isLoading
-                      ? '...'
-                      : userDisplayName.charAt(0).toUpperCase()}
+                    {userDisplayName.charAt(0).toUpperCase()}
                   </div>
                 )}
               </div>
               <div className="flex flex-col">
                 <span className="font-medium text-white">
-                  {isLoading ? 'Loading...' : userDisplayName}
+                  {userDisplayName}
                 </span>
                 {address && (
                   <button

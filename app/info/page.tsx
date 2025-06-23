@@ -1,5 +1,5 @@
-import { Header } from '@/app/components/header';
-import { BottomNav } from '@/app/components/bottom-nav';
+import { Header } from '@/components/header';
+import { BottomNav } from '@/components/bottom-nav';
 import {
   Coins,
   Trophy,

@@ -5,7 +5,7 @@ import { http, createConfig, WagmiProvider } from 'wagmi';
 import { base } from 'wagmi/chains';
 import { farcasterFrame } from '@farcaster/frame-wagmi-connector';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { PostHogProvider } from './components/posthog-provider';
+import { PostHogProvider } from '../components/posthog-provider';
 
 const config = createConfig({
   chains: [base],
@@ -17,7 +17,7 @@ const config = createConfig({
 
 const queryClient = new QueryClient();
 
-export function Providers(props: { children: ReactNode }) {
+export default function FrameWalletProvider(props: { children: ReactNode }) {
   return (
     <PostHogProvider>
       <WagmiProvider config={config}>

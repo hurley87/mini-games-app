@@ -10,8 +10,8 @@ import {
   DrawerDescription,
   DrawerFooter,
   DrawerTrigger,
-} from '@/app/components/ui/drawer';
-import { Button } from '@/app/components/ui/button';
+} from '@/components/ui/drawer';
+import { Button } from '@/components/ui/button';
 import {
   PlayCircle,
   Coins,

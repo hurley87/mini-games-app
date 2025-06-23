@@ -2,16 +2,16 @@
 
 import { useEffect, useState } from 'react';
 import { Leaderboard } from '@/components/leaderboard';
-import { Header } from '@/app/components/header';
-import { BottomNav } from '@/app/components/bottom-nav';
+import { Header } from '@/components/header';
+import { BottomNav } from '@/components/bottom-nav';
 import { trackGameEvent } from '@/lib/posthog';
-import { useFarcasterContext } from '@/hooks/useFarcasterContext';
 import { usePlayerStats } from '@/hooks/usePlayerStats';
 import { Share2 } from 'lucide-react';
 import { sdk } from '@farcaster/frame-sdk';
+import { useMiniApp } from '@/contexts/miniapp-context';
 
 export default function LeaderboardPage() {
-  const { context } = useFarcasterContext();
+  const { context } = useMiniApp();
   const { playerStats } = usePlayerStats();
   const [isSharing, setIsSharing] = useState(false);
   const [lastShareTime, setLastShareTime] = useState<number | null>(null);

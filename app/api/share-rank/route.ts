@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { supabaseService } from '@/lib/supabase';
-import { FarcasterAuth } from '@/lib/auth';
 import { SecurityService } from '@/lib/security';
 import { RateLimiter } from '@/lib/rate-limit';
 
@@ -11,7 +10,7 @@ export async function POST(request: Request) {
     // 1. Verify authentication
     let authenticatedFid: number | undefined;
     try {
-      authenticatedFid = await FarcasterAuth.requireAuth(request);
+      authenticatedFid = parseInt(request.headers.get('x-user-fid') || '0');
     } catch (error) {
       console.warn('Authentication failed:', error);
     }
@@ -63,7 +62,7 @@ export async function POST(request: Request) {
     }
 
     // 5. Verify FID exists on Farcaster
-    const fidExists = await SecurityService.verifyFidExists(fidNum);
+    const fidExists = await SecurityService.verifyFidExists(fidNum.toString());
     if (!fidExists) {
       console.error('Invalid FID - does not exist on Farcaster:', fidNum);
       return NextResponse.json({ error: 'Invalid FID' }, { status: 400 });

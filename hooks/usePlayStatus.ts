@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useAccount } from 'wagmi';
-import { useFarcasterContext } from './useFarcasterContext';
+import { useMiniApp } from '@/contexts/miniapp-context';
 
 export type PlayStatus = {
   canPlay: boolean;
@@ -21,7 +21,7 @@ export function usePlayStatus() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { address } = useAccount();
-  const { context } = useFarcasterContext();
+  const { context } = useMiniApp();
 
   const checkPlayStatus = useCallback(
     async (coinId: string, coinAddress: string) => {

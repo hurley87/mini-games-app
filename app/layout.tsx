@@ -2,9 +2,9 @@ import './theme.css';
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { Inter } from 'next/font/google';
-import { Providers } from './providers';
 import { Toaster } from '@/components/ui/sonner';
-import { AppInit } from './components/app-init';
+import { MiniAppProvider } from '@/contexts/miniapp-context';
+import { AppInit } from '@/components/app-init';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -51,10 +51,9 @@ export default function RootLayout({
         <link rel="preconnect" href="https://auth.farcaster.xyz" />
       </head>
       <body className="antialiased bg-black text-white">
-        <Providers>
-          <AppInit />
-          {children}
-        </Providers>
+        <MiniAppProvider>
+          <AppInit>{children}</AppInit>
+        </MiniAppProvider>
         <Toaster theme="dark" />
       </body>
     </html>

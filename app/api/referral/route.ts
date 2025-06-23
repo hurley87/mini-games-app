@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { supabaseService } from '@/lib/supabase';
-import { FarcasterAuth } from '@/lib/auth';
 import { SecurityService } from '@/lib/security';
 import { RateLimiter } from '@/lib/rate-limit';
 
@@ -11,7 +10,7 @@ export async function POST(request: Request) {
     // 1. Verify authentication (optional until SDK is upgraded to 0.0.61+)
     let authenticatedFid: number | undefined;
     try {
-      authenticatedFid = await FarcasterAuth.requireAuth(request);
+      authenticatedFid = parseInt(request.headers.get('x-user-fid') || '0');
     } catch (error) {
       console.warn(
         'Authentication failed (optional until SDK upgrade):',
@@ -78,8 +77,8 @@ export async function POST(request: Request) {
 
     // 6. Verify both FIDs exist on Farcaster
     const [sharerExists, playerExists] = await Promise.all([
-      SecurityService.verifyFidExists(sharerFidNum),
-      SecurityService.verifyFidExists(playerFidNum),
+      SecurityService.verifyFidExists(sharerFidNum.toString()),
+      SecurityService.verifyFidExists(playerFidNum.toString()),
     ]);
 
     if (!sharerExists) {

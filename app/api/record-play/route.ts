@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseService } from '@/lib/supabase';
-import { FarcasterAuth } from '@/lib/auth';
 import { SecurityService } from '@/lib/security';
 import { RateLimiter } from '@/lib/rate-limit';
 
@@ -9,7 +8,7 @@ export async function POST(request: NextRequest) {
     // 1. Verify authentication (optional until SDK is upgraded to 0.0.61+)
     let authenticatedFid: number | undefined;
     try {
-      authenticatedFid = await FarcasterAuth.requireAuth(request);
+      authenticatedFid = parseInt(request.headers.get('x-user-fid') || '0');
     } catch (error) {
       console.warn(
         'Authentication failed (optional until SDK upgrade):',

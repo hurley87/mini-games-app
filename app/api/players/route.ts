@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { supabaseService } from '@/lib/supabase';
-import { FarcasterAuth } from '@/lib/auth';
 import { SecurityService } from '@/lib/security';
 
 export async function POST(request: Request) {
@@ -10,7 +9,7 @@ export async function POST(request: Request) {
     let authenticatedFid = userData.fid;
 
     try {
-      authenticatedFid = await FarcasterAuth.requireAuth(request);
+      authenticatedFid = parseInt(request.headers.get('x-user-fid') || '0');
     } catch (error) {
       console.error('Error requiring auth:', error);
       // return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

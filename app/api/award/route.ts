@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
 import { supabaseService } from '@/lib/supabase';
-import { FarcasterAuth } from '@/lib/auth';
 import { RateLimiter } from '@/lib/rate-limit';
 import { SecurityService } from '@/lib/security';
-import { getUserByFid } from '@/lib/neynar';
+import { fetchUser } from '@/lib/neynar';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,7 +27,8 @@ export async function POST(request: Request) {
   };
 
   try {
-    const authenticatedFid = await FarcasterAuth.requireAuth(request);
+    // Get authenticated FID from middleware-set header
+    const authenticatedFid = parseInt(request.headers.get('x-user-fid') || '0');
 
     const { coinId, score } = await request.json();
 
@@ -47,7 +47,9 @@ export async function POST(request: Request) {
     }
 
     // 4. Verify FID exists on Farcaster
-    const fidExists = await SecurityService.verifyFidExists(authenticatedFid);
+    const fidExists = await SecurityService.verifyFidExists(
+      authenticatedFid.toString()
+    );
     if (!fidExists) {
       console.error(
         'Invalid FID - does not exist on Farcaster:',
@@ -60,7 +62,8 @@ export async function POST(request: Request) {
     }
 
     // Check user's Farcaster score
-    const user = await getUserByFid(Number(authenticatedFid));
+    const user = await fetchUser(authenticatedFid.toString());
+    console.log('user', user);
     if (!user || user.score < 0.3) {
       return NextResponse.json(
         { error: "User's Farcaster score is too low to earn points." },

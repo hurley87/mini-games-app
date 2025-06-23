@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useFarcasterContext } from '@/hooks/useFarcasterContext';
 import { usePlayStatus } from '@/hooks/usePlayStatus';
 import { useAccount, useConnect } from 'wagmi';
 import { Creator } from '@/lib/types';
@@ -18,6 +17,7 @@ import { CoinLeaderboard } from './coin-leaderboard';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { PREMIUM_THRESHOLD, TOKEN_MULTIPLIER } from '@/lib/config';
 import { BottomNav } from './bottom-nav';
+import { useMiniApp } from '@/contexts/miniapp-context';
 
 interface InfoProps {
   name: string;
@@ -42,7 +42,7 @@ export function Info({
   onPlay,
   coinId,
 }: InfoProps) {
-  const { context, isReady } = useFarcasterContext();
+  const { context } = useMiniApp();
   const { playStatus, isLoading, error, checkPlayStatus } = usePlayStatus();
   const { isConnected } = useAccount();
   const { connect, connectors } = useConnect();
@@ -84,12 +84,11 @@ export function Info({
 
   // Check play status on mount and when dependencies change
   useEffect(() => {
-    if (isReady && context?.user?.fid && !hasCheckedStatus) {
+    if (context?.user?.fid && !hasCheckedStatus) {
       checkPlayStatus(coinId, coinAddress);
       setHasCheckedStatus(true);
     }
   }, [
-    isReady,
     context?.user?.fid,
     coinId,
     coinAddress,
@@ -99,14 +98,13 @@ export function Info({
 
   // Re-check play status when wallet connection changes
   useEffect(() => {
-    if (isReady && context?.user?.fid && isConnected && hasCheckedStatus) {
+    if (context?.user?.fid && isConnected && hasCheckedStatus) {
       setHasCheckedStatus(false);
       checkPlayStatus(coinId, coinAddress);
       setHasCheckedStatus(true);
     }
   }, [
     isConnected,
-    isReady,
     context?.user?.fid,
     coinId,
     coinAddress,
@@ -157,14 +155,12 @@ export function Info({
     );
   }
 
-  if (!isReady || isLoading || !hasCheckedStatus) {
+  if (isLoading || !hasCheckedStatus) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center p-4">
-        <div className="bg-black/20 backdrop-blur rounded-2xl shadow-xl p-8 text-center max-w-md border border-white/20">
-          <div className="flex flex-col items-center space-y-4">
-            <LoadingSpinner className="h-8 w-8" />
-            <div className="text-white/70">Loading...</div>
-          </div>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="flex flex-col items-center space-y-4">
+          <LoadingSpinner />
+          <div className="text-white/70">Loading...</div>
         </div>
       </div>
     );

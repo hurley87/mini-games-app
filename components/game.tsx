@@ -3,11 +3,11 @@
 import { useEffect, useState, useRef } from 'react';
 import { sdk } from '@farcaster/frame-sdk';
 import { useAccount } from 'wagmi';
-import { useFarcasterContext } from '@/hooks/useFarcasterContext';
 import { Address, createPublicClient, http } from 'viem';
 import { base } from 'viem/chains';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { PREMIUM_THRESHOLD } from '@/lib/config';
+import { useMiniApp } from '@/contexts/miniapp-context';
 
 const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL!;
 
@@ -59,9 +59,7 @@ export function Game({
   const [checkingTokens, setCheckingTokens] = useState(true);
   const [roundScore, setRoundScore] = useState<number | null>(null);
   const [tokenDecimals, setTokenDecimals] = useState<number>(18); // Default to 18, will be fetched
-  const { context, isReady } = useFarcasterContext({
-    disableNativeGestures: true,
-  });
+  const { context } = useMiniApp();
   const { address, isConnected } = useAccount();
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
@@ -242,7 +240,7 @@ export function Game({
     );
   }
 
-  if (!isReady || checkingTokens || !fid) {
+  if (checkingTokens || !fid) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="flex flex-col items-center space-y-4">

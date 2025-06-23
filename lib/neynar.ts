@@ -1,5 +1,15 @@
 import { NeynarAPIClient } from '@neynar/nodejs-sdk';
 
+export interface NeynarUser {
+  fid: string;
+  username: string;
+  display_name: string;
+  pfp_url: string;
+  custody_address: string;
+  verifications: string[];
+  score: number;
+}
+
 // Initialize client
 const neynarClient = new NeynarAPIClient({
   apiKey: process.env.NEYNAR_API_KEY as string,
@@ -48,29 +58,23 @@ export const getConversation = async (threadId: string) => {
 /**
  * Fetch a Farcaster user by FID using Neynar API
  */
-export const getUserByFid = async (fid: number) => {
-  const res = await fetch(
+export const fetchUser = async (fid: string): Promise<NeynarUser> => {
+  const response = await fetch(
     `https://api.neynar.com/v2/farcaster/user/bulk?fids=${fid}`,
     {
       headers: {
-        accept: 'application/json',
-        api_key: process.env.NEYNAR_API_KEY as string,
+        'x-api-key': process.env.NEYNAR_API_KEY!,
       },
     }
   );
-
-  if (!res.ok) {
-    throw new Error(`Failed to fetch user with fid ${fid}`);
+  if (!response.ok) {
+    console.error(
+      'Failed to fetch Farcaster user on Neynar',
+      await response.json()
+    );
+    throw new Error('Failed to fetch Farcaster user on Neynar');
   }
-
-  const json = await res.json();
-  const user = json?.users?.[0];
-
-  if (user) {
-    const { follower_count = 0, following_count = 0 } = user;
-    user.score = follower_count / (following_count + 1);
-  }
-
-  // v2 endpoint returns { users: [...] }
-  return user;
+  const data = await response.json();
+  console.log('data', data);
+  return data.users[0];
 };

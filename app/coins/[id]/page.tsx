@@ -1,4 +1,4 @@
-import { GameWrapper } from '@/app/components/game-wrapper';
+import { GameWrapper } from '@/components/game-wrapper';
 import { supabaseService } from '@/lib/supabase';
 import { Metadata } from 'next';
 

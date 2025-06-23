@@ -2,13 +2,11 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
 import {
   ExternalLink,
   Copy,
   MoreHorizontal,
   Link as LinkIcon,
-  Users,
 } from 'lucide-react';
 import { CoinWithCreator } from '@/lib/types';
 import { formatRelativeTime, handleViewCoin } from '@/lib/utils';
@@ -25,32 +23,7 @@ interface CoinCardProps {
   coin: CoinWithCreator;
 }
 
-interface CoinStats {
-  playerCount: number;
-}
-
 export function CoinCard({ coin }: CoinCardProps) {
-  const [coinStats, setCoinStats] = useState<CoinStats>({
-    playerCount: 0,
-  });
-
-  useEffect(() => {
-    const fetchCoinStats = async () => {
-      try {
-        const response = await fetch(`/api/leaderboard/${coin.id}`);
-        if (response.ok) {
-          const leaderboard = await response.json();
-          const playerCount = leaderboard.length;
-          setCoinStats({ playerCount });
-        }
-      } catch (error) {
-        console.error('Failed to fetch coin stats:', error);
-      }
-    };
-
-    fetchCoinStats();
-  }, [coin.id]);
-
   const handleCopyAddress = () => {
     try {
       navigator.clipboard.writeText(coin.coin_address);
@@ -110,16 +83,6 @@ export function CoinCard({ coin }: CoinCardProps) {
       element: 'coin_card',
       page: 'coins_list',
     });
-  };
-
-  const formatNumber = (num: number): string => {
-    if (num >= 1000000) {
-      return (num / 1000000).toFixed(1) + 'M';
-    }
-    if (num >= 1000) {
-      return (num / 1000).toFixed(1) + 'K';
-    }
-    return num.toString();
   };
 
   return (
@@ -222,16 +185,6 @@ export function CoinCard({ coin }: CoinCardProps) {
             <h3 className="text-white font-bold text-xl mb-2 truncate">
               {coin.name}
             </h3>
-
-            {/* Stats Row */}
-            <div className="flex items-center text-white/90">
-              <div className="flex items-center gap-1">
-                <Users className="w-4 h-4" />
-                <span className="text-sm font-medium">
-                  {formatNumber(coinStats.playerCount)} players
-                </span>
-              </div>
-            </div>
           </div>
         </div>
       </div>

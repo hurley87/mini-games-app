@@ -1,4 +1,4 @@
-import { getUserByFid } from '@/lib/neynar';
+import { fetchUser } from '@/lib/neynar';
 import { supabaseService } from '@/lib/supabase';
 
 export class SecurityService {
@@ -7,9 +7,9 @@ export class SecurityService {
    * @param fid The FID to verify
    * @returns Whether the FID exists
    */
-  static async verifyFidExists(fid: number): Promise<boolean> {
+  static async verifyFidExists(fid: string): Promise<boolean> {
     try {
-      const user = await getUserByFid(fid);
+      const user = await fetchUser(fid.toString());
       return !!user;
     } catch (error) {
       console.error(`Failed to verify FID ${fid}:`, error);

@@ -1,10 +1,10 @@
 'use client';
 
 import { useCoinLeaderboard } from '@/hooks/useCoinLeaderboard';
-import { useFarcasterContext } from '@/hooks/useFarcasterContext';
 import { Trophy, Medal, Crown, Share2 } from 'lucide-react';
 import { sdk } from '@farcaster/frame-sdk';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { useMiniApp } from '@/contexts/miniapp-context';
 
 interface CoinLeaderboardProps {
   coinId: string;
@@ -18,7 +18,7 @@ export function CoinLeaderboard({
   limit = 10,
 }: CoinLeaderboardProps) {
   const { leaderboard, isLoading, error } = useCoinLeaderboard(coinId, limit);
-  const { context } = useFarcasterContext();
+  const { context } = useMiniApp();
 
   const handleViewProfile = async (fid: number) => {
     try {
