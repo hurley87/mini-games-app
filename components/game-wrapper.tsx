@@ -172,7 +172,7 @@ export function GameWrapper({
       // Use Farcaster SDK to compose cast
       await sdk.actions.composeCast({
         text: shareText,
-        embeds: [window.location.href],
+        embeds: [`${process.env.NEXT_PUBLIC_URL}/coins/${coinId}`],
       });
 
       // Track share action using custom event

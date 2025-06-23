@@ -17,6 +17,7 @@ export async function generateMetadata({
 }: TokenPageProps): Promise<Metadata> {
   const { id } = await params;
   const coin = await supabaseService.getCoinById(id);
+  console.log('coin', coin);
 
   try {
     const frame = {
