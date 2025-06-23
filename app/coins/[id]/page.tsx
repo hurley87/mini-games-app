@@ -8,9 +8,7 @@ interface TokenPageProps {
   }>;
 }
 
-export const revalidate = 300;
-
-const appUrl = 'https://app.minigames.studio';
+const appUrl = process.env.NEXT_PUBLIC_URL!;
 
 export async function generateMetadata({
   params,

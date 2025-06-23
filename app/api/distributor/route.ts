@@ -30,10 +30,6 @@ async function processTransfers() {
         .eq('id', transfer.coin_id)
         .single();
 
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('coin', coin);
-      }
-
       const fid = transfer.fid;
       if (process.env.NODE_ENV !== 'production') {
         console.log('fid', fid);
