@@ -17,61 +17,36 @@ export async function generateMetadata({
   const coin = await supabaseService.getCoinById(id);
   console.log('coin', coin);
 
-  try {
-    const frame = {
-      version: 'next',
-      imageUrl: coin.image || `${appUrl}/logo.png`,
-      button: {
-        title: `Play ${coin.name}, Earn $${coin.symbol}`,
-        action: {
-          type: 'launch_frame',
-          name: coin.name,
-          url: `${appUrl}/coins/${id}`,
-          splashImageUrl: `${appUrl}/splash.jpg`,
-          splashBackgroundColor: '#000000',
-        },
+  const frame = {
+    version: 'next',
+    imageUrl: coin.image || `${appUrl}/logo.png`,
+    button: {
+      title: `Play ${coin.name}, Earn $${coin.symbol}`,
+      action: {
+        type: 'launch_frame',
+        name: coin.name,
+        url: `${appUrl}/coins/${id}`,
+        splashImageUrl: `${appUrl}/splash.jpg`,
+        splashBackgroundColor: '#000000',
       },
-    };
+    },
+  };
 
-    return {
+  return {
+    title: `${coin.name}`,
+    openGraph: {
       title: `${coin.name}`,
-      openGraph: {
-        title: `${coin.name}`,
-        description: 'View your game details.',
-      },
-      other: {
-        'fc:frame': JSON.stringify(frame),
-      },
-    };
-  } catch (error) {
-    // Return a default frame for non-existent tokens
-    console.error('Error fetching token metadata:', error);
-    const frame = {
-      version: 'next',
-      imageUrl: `${appUrl}/splash.jpg`,
-      button: {
-        title: 'View Token',
-        action: {
-          type: 'launch_frame',
-          name: 'Token Not Found',
-          url: `${appUrl}/coins/${id}`,
-          splashImageUrl: `${appUrl}/splash.jpg`,
-          splashBackgroundColor: '#000000',
+      description: coin.description,
+      images: [
+        {
+          url: coin.image,
         },
-      },
-    };
-
-    return {
-      title: `Game #${id} Not Found`,
-      openGraph: {
-        title: `Game #${id} Not Found`,
-        description: 'This game does not exist or has been burned.',
-      },
-      other: {
-        'fc:frame': JSON.stringify(frame),
-      },
-    };
-  }
+      ],
+    },
+    other: {
+      'fc:frame': JSON.stringify(frame),
+    },
+  };
 }
 
 export default async function GamePage({
