@@ -128,7 +128,7 @@ export function Info({
 
       await sdk.actions.composeCast({
         text: shareText,
-        embeds: [`https://app.minigames.studio/coins/${coinId}`],
+        embeds: ['https://app.minigames.studio'],
       });
     } catch (error) {
       console.error('Failed to share:', error);
