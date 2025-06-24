@@ -33,8 +33,21 @@ export function AppInit({ children }: AppInitProps) {
   // Show error state if sign-in failed
   if (error) {
     console.error('Sign-in error:', error);
-    // Still render children even if sign-in fails
-    // Users can still interact with the app
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-white/70">Error signing in.</div>
+      </div>
+    );
+  }
+
+  if (!isLoading && !user) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-white/70">
+          The games are only available to users on Farcaster.
+        </div>
+      </div>
+    );
   }
 
   return <>{children}</>;
