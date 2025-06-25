@@ -61,19 +61,15 @@ async function processTransfers() {
       const player = await supabaseService.getPlayerByFid(fid);
 
       if (!player || player.length === 0) {
-        return NextResponse.json({
-          success: false,
-          error: 'Player not found',
-        });
+        console.error('Player not found for fid:', fid);
+        continue;
       }
 
       const playerWalletAddress = player?.[0]?.wallet_address;
 
       if (!playerWalletAddress) {
-        return NextResponse.json({
-          success: false,
-          error: 'Player wallet address not found',
-        });
+        console.error('Player wallet address not found for fid:', fid);
+        continue;
       }
 
       console.log('playerWalletAddress', playerWalletAddress);
