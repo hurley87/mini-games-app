@@ -17,16 +17,21 @@ export async function generateMetadata({
   const coin = await supabaseService.getCoinById(id);
   console.log('coin', coin);
 
+  // Ensure all URLs are absolute for Farcaster frames
+  const imageUrl = coin.image?.startsWith('http')
+    ? coin.image
+    : `${appUrl}/logo.png`;
+
   const frame = {
     version: 'next',
-    imageUrl: coin.image || `${appUrl}/logo.png`,
+    imageUrl,
     button: {
       title: `Play ${coin.name}, Earn $${coin.symbol}`,
       action: {
         type: 'launch_frame',
         name: coin.name,
         url: `${appUrl}/coins/${id}`,
-        splashImageUrl: `${appUrl}/splash.jpg`,
+        splashImageUrl: `${appUrl}/splash.png`,
         splashBackgroundColor: '#000000',
       },
     },
@@ -39,7 +44,7 @@ export async function generateMetadata({
       description: coin.description,
       images: [
         {
-          url: coin.image,
+          url: imageUrl,
         },
       ],
     },

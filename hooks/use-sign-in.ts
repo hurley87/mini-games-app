@@ -87,11 +87,6 @@ export const useSignIn = ({
   }, [onSuccess, refetchUser, address]);
 
   useEffect(() => {
-    // if autoSignIn is true, sign in automatically on mount
-    console.log('autoSignIn', autoSignIn);
-    console.log('context', context);
-    console.log('address', address);
-    console.log('isSignedIn', isSignedIn);
     if (autoSignIn && context && address) {
       if (!isSignedIn) {
         handleSignIn();
