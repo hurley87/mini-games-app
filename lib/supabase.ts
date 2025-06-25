@@ -653,12 +653,20 @@ export const supabaseService = {
         (1000 * 60 * 60 * 24);
       if (diff >= 1 && diff < 2) newStreak = row.streak + 1;
       else if (diff >= 2) newStreak = 1;
+    } else {
+      // Handle null last_login by resetting streak to 1
+      newStreak = 1;
     }
 
-    await supabase
+    const { error: updateError } = await supabase
       .from('daily_streaks')
       .update({ streak: newStreak, last_login: today })
       .eq('fid', fid);
+
+    if (updateError) {
+      console.error('Error updating daily streak:', updateError);
+      throw new Error('Failed to record daily login');
+    }
 
     return { streak: newStreak, claimed: row?.last_claimed === today };
   },
