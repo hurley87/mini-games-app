@@ -49,6 +49,11 @@ export function AppInit({ children }: AppInitProps) {
           const data = await res.json();
           setStreak(data);
         } else {
+          console.error(
+            'Failed to fetch daily streak:',
+            res.status,
+            res.statusText
+          );
           // Set a default streak to prevent infinite loop
           setStreak({ streak: 0, claimed: true });
         }
@@ -106,7 +111,9 @@ export function AppInit({ children }: AppInitProps) {
         <DailyStreakDialog
           streak={streak.streak}
           onClaim={async () => {
-            if (!context?.user?.fid) {
+            const userFid = context?.user?.fid;
+
+            if (!userFid) {
               console.error('No user FID available for claiming streak');
               return;
             }
@@ -116,15 +123,16 @@ export function AppInit({ children }: AppInitProps) {
                 method: 'PUT',
                 headers: {
                   'Content-Type': 'application/json',
-                  'x-user-fid': context.user.fid.toString(),
+                  'x-user-fid': userFid.toString(),
                 },
               });
 
               if (!response.ok) {
-                const errorData = await response.json();
+                const errorData = await response.json().catch(() => ({}));
                 console.error(
                   'Failed to claim streak:',
                   response.status,
+                  response.statusText,
                   errorData
                 );
                 return;
