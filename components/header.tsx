@@ -4,6 +4,7 @@ import { Sparkles, Info as InfoIcon } from 'lucide-react';
 import Link from 'next/link';
 import { WelcomeDialog } from './welcome-dialog';
 import { trackGameEvent } from '@/lib/posthog';
+import { DailyStreakIndicator } from './daily-streak-indicator';
 
 export function Header() {
   const handleHomeClick = () => {
@@ -24,16 +25,19 @@ export function Header() {
         <Sparkles className="w-6 h-6 text-purple-400" />
       </Link>
 
-      <WelcomeDialog
-        trigger={
-          <button
-            className="flex items-center justify-center w-8 h-8 rounded-full bg-white/10 backdrop-blur border border-white/20 text-white hover:brightness-110 transition-all duration-200"
-            onClick={handleInfoNavigation}
-          >
-            <InfoIcon className="w-4 h-4" />
-          </button>
-        }
-      />
+      <div className="flex items-center gap-2">
+        <DailyStreakIndicator />
+        <WelcomeDialog
+          trigger={
+            <button
+              className="flex items-center justify-center w-8 h-8 rounded-full bg-white/10 backdrop-blur border border-white/20 text-white hover:brightness-110 transition-all duration-200"
+              onClick={handleInfoNavigation}
+            >
+              <InfoIcon className="w-4 h-4" />
+            </button>
+          }
+        />
+      </div>
     </header>
   );
 }

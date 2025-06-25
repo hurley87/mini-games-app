@@ -5,6 +5,7 @@ import { useMiniApp } from '@/contexts/miniapp-context';
 import type { ReactNode } from 'react';
 import { LoadingSpinner } from './ui/loading-spinner';
 import { useState, useEffect } from 'react';
+import { DailyStreakDialog } from './daily-streak-dialog';
 
 interface AppInitProps {
   children: ReactNode;
@@ -13,6 +14,7 @@ interface AppInitProps {
 export function AppInit({ children }: AppInitProps) {
   const { context } = useMiniApp();
   const [hasInitialized, setHasInitialized] = useState(false);
+  const [streak, setStreak] = useState<{ streak: number; claimed: boolean } | null>(null);
   const { isLoading, error, user } = useSignIn({
     autoSignIn: true,
     onSuccess: (user) => {
@@ -25,6 +27,24 @@ export function AppInit({ children }: AppInitProps) {
     const timer = setTimeout(() => setHasInitialized(true), 100);
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    const fetchStreak = async () => {
+      try {
+        const res = await fetch('/api/daily-streak', { method: 'POST' });
+        if (res.ok) {
+          const data = await res.json();
+          setStreak(data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch daily streak', err);
+      }
+    };
+
+    if (user && !streak) {
+      fetchStreak();
+    }
+  }, [user, streak]);
 
   console.log('user', user);
 
@@ -61,5 +81,22 @@ export function AppInit({ children }: AppInitProps) {
     );
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      {streak && !streak.claimed && (
+        <DailyStreakDialog
+          streak={streak.streak}
+          onClaim={async () => {
+            try {
+              await fetch('/api/daily-streak', { method: 'PUT' });
+              setStreak({ ...streak, claimed: true });
+            } catch (err) {
+              console.error('Failed to claim streak', err);
+            }
+          }}
+        />
+      )}
+    </>
+  );
 }

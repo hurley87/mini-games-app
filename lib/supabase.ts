@@ -595,6 +595,91 @@ export const supabaseService = {
     return data || [];
   },
 
+  async getDailyStreak(fid: number) {
+    const { data, error } = await supabase
+      .from('daily_streaks')
+      .select('streak, last_claimed')
+      .eq('fid', fid)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error getting daily streak:', error);
+      throw new Error('Failed to get daily streak');
+    }
+
+    if (!data) return null;
+
+    const today = new Date().toISOString().split('T')[0];
+    return {
+      streak: data.streak as number,
+      claimed: data.last_claimed === today,
+    };
+  },
+
+  async recordDailyLogin(fid: number) {
+    const today = new Date().toISOString().split('T')[0];
+    const { data: row, error } = await supabase
+      .from('daily_streaks')
+      .select('last_login, streak, last_claimed')
+      .eq('fid', fid)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error fetching daily streak:', error);
+      throw new Error('Failed to get daily streak');
+    }
+
+    if (!row) {
+      const { data, error: insertError } = await supabase
+        .from('daily_streaks')
+        .insert({ fid, streak: 1, last_login: today })
+        .select('streak, last_claimed')
+        .single();
+
+      if (insertError) {
+        console.error('Error inserting daily streak:', insertError);
+        throw new Error('Failed to record daily login');
+      }
+
+      return { streak: data.streak as number, claimed: false };
+    }
+
+    let newStreak = row.streak as number;
+    const lastLogin = row.last_login as string | null;
+
+    if (lastLogin) {
+      const diff =
+        (new Date(today).getTime() - new Date(lastLogin).getTime()) /
+        (1000 * 60 * 60 * 24);
+      if (diff >= 1 && diff < 2) newStreak = row.streak + 1;
+      else if (diff >= 2) newStreak = 1;
+    }
+
+    await supabase
+      .from('daily_streaks')
+      .update({ streak: newStreak, last_login: today })
+      .eq('fid', fid);
+
+    return { streak: newStreak, claimed: row?.last_claimed === today };
+  },
+
+  async claimDailyStreak(fid: number) {
+    const today = new Date().toISOString().split('T')[0];
+    const { data, error } = await supabase
+      .from('daily_streaks')
+      .update({ last_claimed: today })
+      .eq('fid', fid)
+      .select('streak, last_claimed')
+      .single();
+
+    if (error) {
+      console.error('Error claiming daily streak:', error);
+      throw new Error('Failed to claim daily streak');
+    }
+
+    return { streak: data.streak as number, claimed: true };
+  },
+
   // Add direct access to supabase client
   from: supabase.from.bind(supabase),
 };
