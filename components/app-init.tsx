@@ -14,7 +14,10 @@ interface AppInitProps {
 export function AppInit({ children }: AppInitProps) {
   const { context } = useMiniApp();
   const [hasInitialized, setHasInitialized] = useState(false);
-  const [streak, setStreak] = useState<{ streak: number; claimed: boolean } | null>(null);
+  const [streak, setStreak] = useState<{
+    streak: number;
+    claimed: boolean;
+  } | null>(null);
   const { isLoading, error, user } = useSignIn({
     autoSignIn: true,
     onSuccess: (user) => {
@@ -30,21 +33,36 @@ export function AppInit({ children }: AppInitProps) {
 
   useEffect(() => {
     const fetchStreak = async () => {
+      if (!context?.user?.fid) {
+        setStreak({ streak: 0, claimed: true });
+        return;
+      }
+
       try {
-        const res = await fetch('/api/daily-streak', { method: 'POST' });
+        const res = await fetch('/api/daily-streak', {
+          method: 'GET',
+          headers: {
+            'x-user-fid': context.user.fid.toString(),
+          },
+        });
         if (res.ok) {
           const data = await res.json();
           setStreak(data);
+        } else {
+          // Set a default streak to prevent infinite loop
+          setStreak({ streak: 0, claimed: true });
         }
       } catch (err) {
         console.error('Failed to fetch daily streak', err);
+        // Set a default streak to prevent infinite loop
+        setStreak({ streak: 0, claimed: true });
       }
     };
 
     if (user && !streak) {
       fetchStreak();
     }
-  }, [user, streak]);
+  }, [user, streak, context?.user?.fid]);
 
   console.log('user', user);
 
@@ -88,8 +106,30 @@ export function AppInit({ children }: AppInitProps) {
         <DailyStreakDialog
           streak={streak.streak}
           onClaim={async () => {
+            if (!context?.user?.fid) {
+              console.error('No user FID available for claiming streak');
+              return;
+            }
+
             try {
-              await fetch('/api/daily-streak', { method: 'PUT' });
+              const response = await fetch('/api/daily-streak', {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'x-user-fid': context.user.fid.toString(),
+                },
+              });
+
+              if (!response.ok) {
+                const errorData = await response.json();
+                console.error(
+                  'Failed to claim streak:',
+                  response.status,
+                  errorData
+                );
+                return;
+              }
+
               setStreak({ ...streak, claimed: true });
             } catch (err) {
               console.error('Failed to claim streak', err);

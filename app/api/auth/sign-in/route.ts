@@ -51,7 +51,14 @@ export const POST = async (req: NextRequest) => {
     wallet_address: walletAddress,
   });
 
-  const streak = await supabaseService.recordDailyLogin(fid);
+  let streak;
+  try {
+    streak = await supabaseService.recordDailyLogin(fid);
+  } catch (e) {
+    console.error('Error recording daily login streak:', e);
+    // Provide default streak value to ensure sign-in continues
+    streak = { current_streak: 0, longest_streak: 0, last_login: new Date() };
+  }
 
   // Generate JWT token
   const secret = new TextEncoder().encode(process.env.JWT_SECRET);
