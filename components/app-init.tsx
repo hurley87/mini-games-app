@@ -17,6 +17,7 @@ export function AppInit({ children }: AppInitProps) {
   const [streak, setStreak] = useState<{
     streak: number;
     claimed: boolean;
+    fid?: number; // Track which FID this streak belongs to
   } | null>(null);
   const { isLoading, error, user } = useSignIn({
     autoSignIn: true,
@@ -34,7 +35,7 @@ export function AppInit({ children }: AppInitProps) {
   useEffect(() => {
     const fetchStreak = async () => {
       if (!context?.user?.fid) {
-        setStreak({ streak: 0, claimed: true });
+        setStreak({ streak: 0, claimed: true, fid: undefined });
         return;
       }
 
@@ -42,12 +43,13 @@ export function AppInit({ children }: AppInitProps) {
         const res = await fetch('/api/daily-streak', {
           method: 'GET',
           headers: {
+            'Content-Type': 'application/json',
             'x-user-fid': context.user.fid.toString(),
           },
         });
         if (res.ok) {
           const data = await res.json();
-          setStreak(data);
+          setStreak({ ...data, fid: context.user.fid });
         } else {
           console.error(
             'Failed to fetch daily streak:',
@@ -55,16 +57,23 @@ export function AppInit({ children }: AppInitProps) {
             res.statusText
           );
           // Set a default streak to prevent infinite loop
-          setStreak({ streak: 0, claimed: true });
+          setStreak({ streak: 0, claimed: true, fid: context.user.fid });
         }
       } catch (err) {
         console.error('Failed to fetch daily streak', err);
         // Set a default streak to prevent infinite loop
-        setStreak({ streak: 0, claimed: true });
+        setStreak({ streak: 0, claimed: true, fid: context.user.fid });
       }
     };
 
-    if (user && !streak) {
+    // Fetch streak if we have a user and either:
+    // 1. No streak data yet, or
+    // 2. The current streak belongs to a different FID
+    if (
+      user &&
+      context?.user?.fid &&
+      (!streak || streak.fid !== context?.user?.fid)
+    ) {
       fetchStreak();
     }
   }, [user, streak, context?.user?.fid]);
@@ -111,9 +120,7 @@ export function AppInit({ children }: AppInitProps) {
         <DailyStreakDialog
           streak={streak.streak}
           onClaim={async () => {
-            const userFid = context?.user?.fid;
-
-            if (!userFid) {
+            if (!context?.user?.fid) {
               console.error('No user FID available for claiming streak');
               return;
             }
@@ -123,7 +130,7 @@ export function AppInit({ children }: AppInitProps) {
                 method: 'PUT',
                 headers: {
                   'Content-Type': 'application/json',
-                  'x-user-fid': userFid.toString(),
+                  'x-user-fid': context.user.fid.toString(),
                 },
               });
 
