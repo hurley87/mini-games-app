@@ -1,7 +1,5 @@
 'use client';
 
-import { useEffect } from 'react';
-import confetti from 'canvas-confetti';
 import { Button } from './ui/button';
 
 interface DailyStreakDialogProps {
@@ -10,9 +8,6 @@ interface DailyStreakDialogProps {
 }
 
 export function DailyStreakDialog({ streak, onClaim }: DailyStreakDialogProps) {
-  useEffect(() => {
-    confetti({ particleCount: 100, spread: 70 });
-  }, []);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md">
