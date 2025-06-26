@@ -4,7 +4,7 @@ import { createPublicClient, http, Address } from 'viem';
 import { base } from 'viem/chains';
 import { RateLimiter } from '@/lib/rate-limit';
 
-const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL!;
+const rpcUrl = process.env.RPC_URL!;
 
 // Create a public client for reading blockchain data
 const publicClient = createPublicClient({
@@ -60,10 +60,7 @@ export async function POST(request: NextRequest) {
     // Get coin data to check max_plays
     const coin = await supabaseService.getCoinById(coinId);
     if (!coin) {
-      return NextResponse.json(
-        { error: 'Coin not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Coin not found' }, { status: 404 });
     }
 
     // Check current daily play count
