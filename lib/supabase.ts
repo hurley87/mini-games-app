@@ -687,15 +687,22 @@ export const supabaseService = {
       .from('daily_streaks')
       .update({ last_claimed: today })
       .eq('fid', fid)
-      .select('streak, last_claimed')
-      .single();
+      .select('streak, last_claimed');
 
     if (error) {
       console.error('Error claiming daily streak:', error);
       throw new Error('Failed to claim daily streak');
     }
 
-    return { streak: data.streak as number, claimed: true };
+    if (!data || data.length === 0) {
+      throw new Error('No daily streak record found');
+    }
+
+    // Handle multiple rows case by using the first one
+    // This shouldn't happen ideally, but we handle it gracefully
+    const streakData = Array.isArray(data) ? data[0] : data;
+
+    return { streak: streakData.streak as number, claimed: true };
   },
 
   // Add direct access to supabase client

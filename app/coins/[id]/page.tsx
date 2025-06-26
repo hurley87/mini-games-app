@@ -15,7 +15,6 @@ export async function generateMetadata({
 }: TokenPageProps): Promise<Metadata> {
   const { id } = await params;
   const coin = await supabaseService.getCoinById(id);
-  console.log('coin', coin);
 
   // Ensure all URLs are absolute for Farcaster frames
   const imageUrl = coin.image?.startsWith('http')

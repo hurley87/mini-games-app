@@ -57,7 +57,7 @@ export const POST = async (req: NextRequest) => {
   } catch (e) {
     console.error('Error recording daily login streak:', e);
     // Provide default streak value to ensure sign-in continues
-    streak = { streak: 0, claimed: false };
+    streak = { streak: 1, claimed: false };
   }
 
   // Generate JWT token

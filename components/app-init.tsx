@@ -35,7 +35,7 @@ export function AppInit({ children }: AppInitProps) {
   useEffect(() => {
     const fetchStreak = async () => {
       if (!context?.user?.fid) {
-        setStreak({ streak: 0, claimed: true, fid: undefined });
+        setStreak({ streak: 1, claimed: true, fid: undefined });
         return;
       }
 
@@ -57,12 +57,12 @@ export function AppInit({ children }: AppInitProps) {
             res.statusText
           );
           // Set a default streak to prevent infinite loop
-          setStreak({ streak: 0, claimed: true, fid: context.user.fid });
+          setStreak({ streak: 1, claimed: true, fid: context.user.fid });
         }
       } catch (err) {
         console.error('Failed to fetch daily streak', err);
         // Set a default streak to prevent infinite loop
-        setStreak({ streak: 0, claimed: true, fid: context.user.fid });
+        setStreak({ streak: 1, claimed: true, fid: context.user.fid });
       }
     };
 

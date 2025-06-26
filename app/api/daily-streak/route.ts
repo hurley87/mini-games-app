@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   }
   try {
     const streak = await supabaseService.getDailyStreak(fid);
-    return NextResponse.json(streak || { streak: 0, claimed: false });
+    return NextResponse.json(streak || { streak: 1, claimed: false });
   } catch (error) {
     console.error('Error getting daily streak:', error);
     return NextResponse.json(
