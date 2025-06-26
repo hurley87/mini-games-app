@@ -15,6 +15,8 @@ import { sdk } from '@farcaster/frame-sdk';
 import { Header } from './header';
 import { CoinLeaderboard } from './coin-leaderboard';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { Button } from '@/components/ui/button';
+import { EnhancedAuthScreen } from './enhanced-auth-screen';
 import { PREMIUM_THRESHOLD, TOKEN_MULTIPLIER } from '@/lib/config';
 import { BottomNav } from './bottom-nav';
 import { useMiniApp } from '@/contexts/miniapp-context';
@@ -167,11 +169,32 @@ export function Info({
   }
 
   if (error) {
+    // If it's an authentication error, show the enhanced auth screen
+    if (error.includes('not authenticated') || error.includes('Failed to check play status')) {
+      return (
+        <EnhancedAuthScreen 
+          onAuthSuccess={() => {
+            // Reset the error and retry checking play status
+            setHasCheckedStatus(false);
+          }}
+        />
+      );
+    }
+    
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4">
         <div className="bg-black/20 backdrop-blur rounded-2xl shadow-xl p-8 text-center max-w-md border border-white/20">
           <div className="text-red-400 font-medium">Error</div>
           <div className="text-white/70 mt-2">{error}</div>
+          <Button
+            onClick={() => {
+              setHasCheckedStatus(false);
+              checkPlayStatus(coinId, coinAddress);
+            }}
+            className="mt-4 bg-purple-600 hover:bg-purple-700 text-white"
+          >
+            Try Again
+          </Button>
         </div>
       </div>
     );
@@ -181,7 +204,21 @@ export function Info({
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4">
         <div className="bg-black/20 backdrop-blur rounded-2xl shadow-xl p-8 text-center max-w-md border border-white/20">
-          <div className="text-white/70">Unable to check play status</div>
+          <div className="text-white/70 mb-4">Unable to check play status</div>
+          <Button
+            onClick={() => {
+              // Try to check authentication and show enhanced auth if needed
+              if (!context?.user?.fid || !isConnected) {
+                window.location.href = '/auth';
+              } else {
+                setHasCheckedStatus(false);
+                checkPlayStatus(coinId, coinAddress);
+              }
+            }}
+            className="bg-purple-600 hover:bg-purple-700 text-white"
+          >
+            {!context?.user?.fid || !isConnected ? 'Complete Login' : 'Retry'}
+          </Button>
         </div>
       </div>
     );
