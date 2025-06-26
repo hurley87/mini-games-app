@@ -23,6 +23,12 @@ export function usePlayStatus() {
   const { address } = useAccount();
   const { context } = useMiniApp();
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const currentParamsRef = useRef<{
+    coinId: string;
+    coinAddress: string;
+    fid: number;
+    walletAddress: string | undefined;
+  } | null>(null);
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -41,6 +47,14 @@ export function usePlayStatus() {
         );
         return;
       }
+
+      // Store current parameters for potential retry
+      currentParamsRef.current = {
+        coinId,
+        coinAddress,
+        fid: context.user.fid,
+        walletAddress: address,
+      };
 
       setIsLoading(true);
       setError(null);
@@ -93,10 +107,17 @@ export function usePlayStatus() {
           if (retryTimeoutRef.current) {
             clearTimeout(retryTimeoutRef.current);
           }
-          // Store timeout for cleanup and use current callback values
+          // Store timeout for cleanup and use current parameters to avoid stale closure
           retryTimeoutRef.current = setTimeout(() => {
             retryTimeoutRef.current = null;
-            checkPlayStatus(coinId, coinAddress, 1);
+            const params = currentParamsRef.current;
+            if (
+              params &&
+              context?.user?.fid === params.fid &&
+              address === params.walletAddress
+            ) {
+              checkPlayStatus(params.coinId, params.coinAddress, 1);
+            }
           }, 1000);
           // Don't set loading to false when retrying
           return;
