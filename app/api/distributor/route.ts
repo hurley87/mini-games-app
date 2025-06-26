@@ -57,6 +57,12 @@ async function processTransfers() {
       );
 
       const walletClient = createClientForWallet(account);
+      const publicClient = getPublicClient();
+
+      // Fetch the next nonce directly from the chain to avoid race conditions
+      const nextNonce = await publicClient.getTransactionCount({
+        address: account.address,
+      });
 
       const player = await supabaseService.getPlayerByFid(fid);
 
@@ -97,6 +103,7 @@ async function processTransfers() {
           ],
           account: account,
           chain: walletClient.chain,
+          nonce: nextNonce,
         });
         if (process.env.NODE_ENV !== 'production') {
           console.log('Transfer transaction hash:', hash);
