@@ -51,6 +51,15 @@ export const POST = async (req: NextRequest) => {
     wallet_address: walletAddress,
   });
 
+  let streak;
+  try {
+    streak = await supabaseService.recordDailyLogin(fid);
+  } catch (e) {
+    console.error('Error recording daily login streak:', e);
+    // Provide default streak value to ensure sign-in continues
+    streak = { streak: 1, claimed: false };
+  }
+
   // Generate JWT token
   const secret = new TextEncoder().encode(process.env.JWT_SECRET);
   const token = await new jose.SignJWT({
@@ -64,7 +73,7 @@ export const POST = async (req: NextRequest) => {
     .sign(secret);
 
   // Create the response
-  const response = NextResponse.json({ success: true, user });
+  const response = NextResponse.json({ success: true, user, streak });
 
   // Set the auth cookie with the JWT token
   response.cookies.set({

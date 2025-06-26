@@ -119,3 +119,15 @@ To get started building your own frame, follow these steps:
 - [OnchainKit Documentation](https://docs.base.org/builderkits/onchainkit/getting-started)
 - [Next.js Documentation](https://nextjs.org/docs)
 - [Tailwind CSS Documentation](https://tailwindcss.com/docs)
+
+## Supabase Setup
+
+Add a `daily_streaks` table to track consecutive logins.
+
+| Column       | Type    | Notes                                  |
+| ------------ | ------- | -------------------------------------- |
+| `fid`        | int     | Primary key, references `players.fid`  |
+| `streak`     | int     | Current streak count                   |
+| `last_login` | date    | Date of the most recent login          |
+| `last_claimed` | date  | Date when the reward was claimed       |
+
