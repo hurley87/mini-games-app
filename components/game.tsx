@@ -36,7 +36,7 @@ const ERC20_ABI = [
 
 interface GameProps {
   id: string;
-  timeoutSeconds?: number;
+  timeoutSeconds: number;
   coinAddress: string;
   coinId: string;
   onRoundComplete?: (score: number) => void;
@@ -46,7 +46,7 @@ interface GameProps {
 
 export function Game({
   id,
-  timeoutSeconds = 10,
+  timeoutSeconds,
   coinAddress,
   coinId,
   onRoundComplete,

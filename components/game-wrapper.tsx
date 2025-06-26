@@ -18,7 +18,7 @@ interface GameWrapperProps {
   id: string;
   name: string;
   description: string;
-  timeoutSeconds?: number;
+  timeoutSeconds: number;
   coinAddress: string;
   imageUrl?: string;
   symbol: string;
@@ -31,7 +31,7 @@ export function GameWrapper({
   id,
   name,
   description,
-  timeoutSeconds = 10,
+  timeoutSeconds,
   coinAddress,
   imageUrl,
   symbol,
@@ -291,20 +291,21 @@ export function GameWrapper({
     }
   };
 
-  // Timer with forced timeout after 10 seconds
+  // Timer with forced timeout
   useEffect(() => {
-    if (!showGame || !timeoutSeconds) return;
+    if (!showGame) return;
 
     setRemainingTime(timeoutSeconds);
     const interval = setInterval(() => {
       setRemainingTime((prev) => {
-        if (prev <= 1) {
+        const currentTime = prev ?? 0;
+        if (currentTime <= 1) {
           // Signal the Game component to end itself
           console.log('⏰ GameWrapper: Time up, signaling game to end');
           setForceGameEnd(true);
           return 0;
         }
-        return prev - 1;
+        return currentTime - 1;
       });
     }, 1000);
 
@@ -339,15 +340,13 @@ export function GameWrapper({
             <span className="text-sm">Exit</span>
           </Button>
 
-          {timeoutSeconds && (
-            <div className="flex items-center gap-2 text-white/70 border-l border-white/20 pl-3">
-              <Clock size={14} />
-              <span className="text-sm font-mono">
-                {Math.floor(remainingTime / 60)}:
-                {(remainingTime % 60).toString().padStart(2, '0')}
-              </span>
-            </div>
-          )}
+          <div className="flex items-center gap-2 text-white/70 border-l border-white/20 pl-3">
+            <Clock size={14} />
+            <span className="text-sm font-mono">
+              {Math.floor((remainingTime ?? 0) / 60)}:
+              {((remainingTime ?? 0) % 60).toString().padStart(2, '0')}
+            </span>
+          </div>
         </div>
         <div className="flex-1">
           <Game
