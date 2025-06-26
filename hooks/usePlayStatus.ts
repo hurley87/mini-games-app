@@ -24,9 +24,9 @@ export function usePlayStatus() {
   const { context } = useMiniApp();
 
   const checkPlayStatus = useCallback(
-    async (coinId: string, coinAddress: string) => {
+    async (coinId: string, coinAddress: string, retryCount = 0) => {
       if (!context?.user?.fid) {
-        setError('User not authenticated');
+        setError('User not authenticated - Please make sure you\'re logged in to Farcaster');
         return;
       }
 
@@ -50,13 +50,33 @@ export function usePlayStatus() {
         console.log('response', response);
 
         if (!response.ok) {
-          throw new Error('Failed to check play status');
+          const errorData = await response.json().catch(() => ({}));
+          const errorMessage = errorData.error || 'Failed to check play status';
+          
+          // Provide more specific error messages
+          if (response.status === 401) {
+            throw new Error('Authentication required - Please sign in again');
+          } else if (response.status === 500) {
+            throw new Error('Server error - Please try again in a moment');
+          } else {
+            throw new Error(errorMessage);
+          }
         }
 
         const status: PlayStatus = await response.json();
         setPlayStatus(status);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error');
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+        console.error('Play status check failed:', err);
+        
+        // Auto-retry once for network errors
+        if (retryCount === 0 && (errorMessage.includes('fetch') || errorMessage.includes('network'))) {
+          console.log('Retrying play status check...');
+          setTimeout(() => checkPlayStatus(coinId, coinAddress, 1), 1000);
+          return;
+        }
+        
+        setError(errorMessage);
         setPlayStatus(null);
       } finally {
         setIsLoading(false);

@@ -4,6 +4,7 @@ import { useSignIn } from '@/hooks/use-sign-in';
 import { useMiniApp } from '@/contexts/miniapp-context';
 import type { ReactNode } from 'react';
 import { LoadingSpinner } from './ui/loading-spinner';
+import { EnhancedAuthScreen } from './enhanced-auth-screen';
 import { useState, useEffect } from 'react';
 import { DailyStreakDialog } from './daily-streak-dialog';
 
@@ -96,9 +97,12 @@ export function AppInit({ children }: AppInitProps) {
   if (error) {
     console.error('Sign-in error:', error);
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-white/70">Error signing in.</div>
-      </div>
+      <EnhancedAuthScreen 
+        onAuthSuccess={() => {
+          // User successfully authenticated, continue to app
+          console.log('Authentication successful from error recovery');
+        }}
+      />
     );
   }
 
