@@ -40,6 +40,7 @@ interface GameProps {
   coinAddress: string;
   coinId: string;
   onRoundComplete?: (score: number) => void;
+  onScoreUpdate?: (score: number) => void;
   forceEnd?: boolean;
   hasPlayedBefore?: boolean;
 }
@@ -50,6 +51,7 @@ export function Game({
   coinAddress,
   coinId,
   onRoundComplete,
+  onScoreUpdate,
   forceEnd = false,
   hasPlayedBefore = false,
 }: GameProps) {
@@ -121,6 +123,7 @@ export function Game({
               newScore,
               '(+' + score + ')'
             );
+            onScoreUpdate?.(newScore);
             return newScore;
           });
         }
@@ -130,7 +133,9 @@ export function Game({
           roundScore
         );
         setIsGameOver(true);
-        onRoundComplete?.(roundScore || 0);
+        const finalScore = roundScore || 0;
+        onScoreUpdate?.(finalScore);
+        onRoundComplete?.(finalScore);
       }
     };
 
@@ -202,7 +207,9 @@ export function Game({
         // Get the current score when timeout occurs
         setRoundScore((currentScore) => {
           console.log('⏰ Game: Final score at timeout:', currentScore);
-          onRoundComplete?.(currentScore || 0);
+          const finalScore = currentScore || 0;
+          onScoreUpdate?.(finalScore);
+          onRoundComplete?.(finalScore);
           return currentScore;
         });
       }, timeoutSeconds * 1000);
@@ -226,11 +233,13 @@ export function Game({
       setIsGameOver(true);
       setRoundScore((currentScore) => {
         console.log('🚨 Game: Final score at forced end:', currentScore);
-        onRoundComplete?.(currentScore || 0);
+        const finalScore = currentScore || 0;
+        onScoreUpdate?.(finalScore);
+        onRoundComplete?.(finalScore);
         return currentScore;
       });
     }
-  }, [forceEnd, isGameOver, onRoundComplete]);
+  }, [forceEnd, isGameOver, onRoundComplete, onScoreUpdate]);
 
   if (!id) {
     return (

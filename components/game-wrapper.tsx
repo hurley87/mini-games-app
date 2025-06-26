@@ -25,6 +25,7 @@ interface GameWrapperProps {
   fid: number;
   creator?: Creator;
   coinId: string;
+  maxPoints: number;
 }
 
 export function GameWrapper({
@@ -38,6 +39,7 @@ export function GameWrapper({
   fid,
   creator,
   coinId,
+  maxPoints,
 }: GameWrapperProps) {
   const [showGame, setShowGame] = useState(false);
   const [showResult, setShowResult] = useState(false);
@@ -49,9 +51,25 @@ export function GameWrapper({
   const [isScoreCreated, setIsScoreCreated] = useState(false);
   const [gameFinished, setGameFinished] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [currentScore, setCurrentScore] = useState(0);
+  const [scoreHitMax, setScoreHitMax] = useState(false);
   const { playStatus } = usePlayStatus();
 
   console.log('coinId', coinId);
+
+  const handleScoreUpdate = (score: number) => {
+    setCurrentScore(score);
+    if (score >= maxPoints && !scoreHitMax) {
+      setScoreHitMax(true);
+      setForceGameEnd(true);
+    }
+  };
+
+  useEffect(() => {
+    if (!scoreHitMax) return;
+    const t = setTimeout(() => setScoreHitMax(false), 1500);
+    return () => clearTimeout(t);
+  }, [scoreHitMax]);
 
   const handleRoundComplete = (score: number) => {
     try {
@@ -62,6 +80,7 @@ export function GameWrapper({
         : 0;
 
       setFinalScore(score);
+      setCurrentScore(score);
       setShowGame(false);
       setGameFinished(true);
 
@@ -107,6 +126,8 @@ export function GameWrapper({
       gameStartTime.current = Date.now();
       setForceGameEnd(false);
       setFinalScore(0);
+      setCurrentScore(0);
+      setScoreHitMax(false);
 
       // Force a small delay to ensure state cleanup, then show game
       setTimeout(() => {
@@ -136,6 +157,8 @@ export function GameWrapper({
 
       setShowGame(false);
       setShowResult(false);
+      setCurrentScore(0);
+      setScoreHitMax(false);
 
       // Track game exit
       trackGameEvent.gameExit(id, name, sessionTime);
@@ -348,6 +371,16 @@ export function GameWrapper({
             </span>
           </div>
         </div>
+        <div className="fixed top-4 right-4 z-50">
+          <div
+            className={
+              'px-4 py-2 rounded-full border border-white/20 bg-black/40 backdrop-blur-md text-sm font-mono text-white/70 ' +
+              (currentScore >= maxPoints ? 'text-emerald-400 animate-bounce' : '')
+            }
+          >
+            {currentScore}/{maxPoints}
+          </div>
+        </div>
         <div className="flex-1">
           <Game
             id={id}
@@ -355,6 +388,7 @@ export function GameWrapper({
             coinAddress={coinAddress}
             coinId={coinId}
             onRoundComplete={handleRoundComplete}
+            onScoreUpdate={handleScoreUpdate}
             forceEnd={forceGameEnd}
             hasPlayedBefore={playStatus?.hasPlayed ?? false}
           />
