@@ -8,6 +8,11 @@ export interface NeynarUser {
   custody_address: string;
   verifications: string[];
   score: number;
+  verified_addresses: {
+    primary: {
+      eth_address: string;
+    };
+  };
 }
 
 // Initialize client

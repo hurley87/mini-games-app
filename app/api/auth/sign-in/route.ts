@@ -24,9 +24,6 @@ export const POST = async (req: NextRequest) => {
     });
     isValidSignature = !!payload;
     fid = Number(payload.sub);
-    console.log('fid', fid);
-    console.log('payload', payload);
-    walletAddress = payload.address as `0x${string}`;
     expirationTime = payload.exp ?? Date.now() + 7 * 24 * 60 * 60 * 1000;
   } catch (e) {
     if (e instanceof Errors.InvalidTokenError) {
@@ -45,12 +42,16 @@ export const POST = async (req: NextRequest) => {
 
   const neynarUser = await fetchUser(fid.toString());
 
+  console.log('neynarUser', neynarUser);
+  console.log('verified_addresses', neynarUser.verified_addresses);
+  console.log('eth_address', neynarUser.verified_addresses.primary.eth_address);
+
   const user = await supabaseService.upsertPlayer({
     fid,
     name: neynarUser.display_name,
     username: neynarUser.username,
     pfp: neynarUser.pfp_url,
-    wallet_address: walletAddress,
+    wallet_address: neynarUser.verified_addresses.primary.eth_address,
   });
 
   let streak;
