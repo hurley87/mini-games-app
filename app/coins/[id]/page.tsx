@@ -85,7 +85,7 @@ export default async function GamePage({
         fid={coin.fid}
         creator={creator}
         coinId={coin.id}
-        timeoutSeconds={coin.duration ?? 10}
+        timeoutSeconds={coin.duration && coin.duration > 0 ? coin.duration : 10}
       />
     </div>
   );
