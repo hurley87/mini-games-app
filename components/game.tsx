@@ -203,15 +203,14 @@ export function Game({
       console.log('⏰ Game: Setting timeout for', timeoutSeconds, 'seconds');
       const timer = setTimeout(() => {
         console.log('⏰ Game: Timeout reached, ending game');
+
+        // Get current score and call callbacks outside of state updater
+        const currentScore = roundScore || 0;
+        console.log('⏰ Game: Final score at timeout:', currentScore);
+        onScoreUpdate?.(currentScore);
+        onRoundComplete?.(currentScore);
+
         setIsGameOver(true);
-        // Get the current score when timeout occurs
-        setRoundScore((currentScore) => {
-          console.log('⏰ Game: Final score at timeout:', currentScore);
-          const finalScore = currentScore || 0;
-          onScoreUpdate?.(finalScore);
-          onRoundComplete?.(finalScore);
-          return currentScore;
-        });
       }, timeoutSeconds * 1000);
 
       return () => clearTimeout(timer);
@@ -231,16 +230,16 @@ export function Game({
   useEffect(() => {
     if (forceEnd && !isGameOver) {
       console.log('🚨 Game: Forced to end by GameWrapper');
+
+      // Get current score and call callbacks outside of state updater
+      const currentScore = roundScore || 0;
+      console.log('🚨 Game: Final score at forced end:', currentScore);
+      onScoreUpdate?.(currentScore);
+      onRoundComplete?.(currentScore);
+
       setIsGameOver(true);
-      setRoundScore((currentScore) => {
-        console.log('🚨 Game: Final score at forced end:', currentScore);
-        const finalScore = currentScore || 0;
-        onScoreUpdate?.(finalScore);
-        onRoundComplete?.(finalScore);
-        return currentScore;
-      });
     }
-  }, [forceEnd, isGameOver, onRoundComplete, onScoreUpdate]);
+  }, [forceEnd, isGameOver, onRoundComplete, onScoreUpdate, roundScore]);
 
   if (!id) {
     return (
