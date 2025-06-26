@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { useMiniApp } from '@/contexts/miniapp-context';
 
@@ -22,11 +22,23 @@ export function usePlayStatus() {
   const [error, setError] = useState<string | null>(null);
   const { address } = useAccount();
   const { context } = useMiniApp();
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const checkPlayStatus = useCallback(
     async (coinId: string, coinAddress: string, retryCount = 0) => {
       if (!context?.user?.fid) {
-        setError('User not authenticated - Please make sure you\'re logged in to Farcaster');
+        setError(
+          "User not authenticated - Please make sure you're logged in to Farcaster"
+        );
         return;
       }
 
@@ -52,7 +64,7 @@ export function usePlayStatus() {
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
           const errorMessage = errorData.error || 'Failed to check play status';
-          
+
           // Provide more specific error messages
           if (response.status === 401) {
             throw new Error('Authentication required - Please sign in again');
@@ -65,20 +77,33 @@ export function usePlayStatus() {
 
         const status: PlayStatus = await response.json();
         setPlayStatus(status);
+        setIsLoading(false);
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+        const errorMessage =
+          err instanceof Error ? err.message : 'Unknown error occurred';
         console.error('Play status check failed:', err);
-        
+
         // Auto-retry once for network errors
-        if (retryCount === 0 && (errorMessage.includes('fetch') || errorMessage.includes('network'))) {
+        if (
+          retryCount === 0 &&
+          (errorMessage.includes('fetch') || errorMessage.includes('network'))
+        ) {
           console.log('Retrying play status check...');
-          setTimeout(() => checkPlayStatus(coinId, coinAddress, 1), 1000);
+          // Clear any existing timeout
+          if (retryTimeoutRef.current) {
+            clearTimeout(retryTimeoutRef.current);
+          }
+          // Store timeout for cleanup and use current callback values
+          retryTimeoutRef.current = setTimeout(() => {
+            retryTimeoutRef.current = null;
+            checkPlayStatus(coinId, coinAddress, 1);
+          }, 1000);
+          // Don't set loading to false when retrying
           return;
         }
-        
+
         setError(errorMessage);
         setPlayStatus(null);
-      } finally {
         setIsLoading(false);
       }
     },
@@ -120,6 +145,11 @@ export function usePlayStatus() {
   );
 
   const reset = useCallback(() => {
+    // Clear any pending retry timeout
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = null;
+    }
     setPlayStatus(null);
     setError(null);
     setIsLoading(false);

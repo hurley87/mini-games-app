@@ -6,7 +6,14 @@ import { LoadingSpinner } from './ui/loading-spinner';
 import { useMiniApp } from '@/contexts/miniapp-context';
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
 import { useSignIn } from '@/hooks/use-sign-in';
-import { CheckCircle, XCircle, AlertCircle, Wallet, Smartphone, RefreshCw } from 'lucide-react';
+import {
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  Wallet,
+  Smartphone,
+  RefreshCw,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 interface AuthStep {
@@ -24,15 +31,20 @@ interface EnhancedAuthScreenProps {
   showSteps?: boolean;
 }
 
-export function EnhancedAuthScreen({ 
-  onAuthSuccess, 
-  showSteps = true 
+export function EnhancedAuthScreen({
+  onAuthSuccess,
+  showSteps = true,
 }: EnhancedAuthScreenProps) {
   const { context, isMiniAppReady } = useMiniApp();
   const { address, isConnected } = useAccount();
   const { connect, connectors, isPending: isConnecting } = useConnect();
   const { disconnect } = useDisconnect();
-  const { signIn, isLoading: isSigningIn, error: signInError, user } = useSignIn({
+  const {
+    signIn,
+    isLoading: isSigningIn,
+    error: signInError,
+    user,
+  } = useSignIn({
     autoSignIn: false,
   });
 
@@ -67,63 +79,65 @@ export function EnhancedAuthScreen({
 
   // Update step statuses based on current state
   useEffect(() => {
-    setSteps(prev => prev.map(step => {
-      switch (step.id) {
-        case 'miniapp':
-          if (!isMiniAppReady) {
-            return { ...step, status: 'loading' as const };
-          } else if (context?.user?.fid) {
-            return { ...step, status: 'success' as const };
-          } else {
-            return { 
-              ...step, 
-              status: 'error' as const,
-              errorMessage: 'MiniApp ready but no user context found'
-            };
-          }
-        
-        case 'wallet':
-          if (isConnecting) {
-            return { ...step, status: 'loading' as const };
-          } else if (isConnected && address) {
-            return { ...step, status: 'success' as const };
-          } else {
-            return { 
-              ...step, 
-              status: 'pending' as const,
-              action: () => handleConnectWallet(),
-              actionLabel: 'Connect Wallet'
-            };
-          }
-        
-        case 'farcaster':
-          if (isSigningIn) {
-            return { ...step, status: 'loading' as const };
-          } else if (user) {
-            return { ...step, status: 'success' as const };
-          } else if (signInError) {
-            return { 
-              ...step, 
-              status: 'error' as const,
-              errorMessage: signInError,
-              action: () => handleFarcasterSignIn(),
-              actionLabel: 'Retry Sign In'
-            };
-          } else if (isConnected && context?.user?.fid) {
-            return { 
-              ...step, 
-              status: 'pending' as const,
-              action: () => handleFarcasterSignIn(),
-              actionLabel: 'Sign In'
-            };
-          } else {
-            return { ...step, status: 'pending' as const };
-          }
-        
-        default:
-          return step;
-      }
-    }));
+    setSteps((prev) =>
+      prev.map((step) => {
+        switch (step.id) {
+          case 'miniapp':
+            if (!isMiniAppReady) {
+              return { ...step, status: 'loading' as const };
+            } else if (context?.user?.fid) {
+              return { ...step, status: 'success' as const };
+            } else {
+              return {
+                ...step,
+                status: 'error' as const,
+                errorMessage: 'MiniApp ready but no user context found',
+              };
+            }
+
+          case 'wallet':
+            if (isConnecting) {
+              return { ...step, status: 'loading' as const };
+            } else if (isConnected && address) {
+              return { ...step, status: 'success' as const };
+            } else {
+              return {
+                ...step,
+                status: 'pending' as const,
+                action: () => handleConnectWallet(),
+                actionLabel: 'Connect Wallet',
+              };
+            }
+
+          case 'farcaster':
+            if (isSigningIn) {
+              return { ...step, status: 'loading' as const };
+            } else if (user) {
+              return { ...step, status: 'success' as const };
+            } else if (signInError) {
+              return {
+                ...step,
+                status: 'error' as const,
+                errorMessage: signInError,
+                action: () => handleFarcasterSignIn(),
+                actionLabel: 'Retry Sign In',
+              };
+            } else if (isConnected && context?.user?.fid) {
+              return {
+                ...step,
+                status: 'pending' as const,
+                action: () => handleFarcasterSignIn(),
+                actionLabel: 'Sign In',
+              };
+            } else {
+              return { ...step, status: 'pending' as const };
+            }
+
+          default:
+            return step;
+        }
+      })
+    );
   }, [
     isMiniAppReady,
     context,
@@ -136,7 +150,7 @@ export function EnhancedAuthScreen({
   ]);
 
   // Check if all steps are complete
-  const allStepsComplete = steps.every(step => step.status === 'success');
+  const allStepsComplete = steps.every((step) => step.status === 'success');
 
   // Handle wallet connection
   const handleConnectWallet = async () => {
@@ -166,7 +180,7 @@ export function EnhancedAuthScreen({
   // Handle disconnecting wallet (for retry)
   const handleDisconnectWallet = () => {
     disconnect();
-    setManualRetryCount(prev => prev + 1);
+    setManualRetryCount((prev) => prev + 1);
   };
 
   // Check authentication status manually
@@ -179,7 +193,7 @@ export function EnhancedAuthScreen({
           'Content-Type': 'application/json',
         },
       });
-      
+
       if (response.ok) {
         toast.success('Authentication verified!');
         onAuthSuccess?.();
@@ -239,16 +253,15 @@ export function EnhancedAuthScreen({
             Connect to Mini Games
           </h1>
           <p className="text-white/70">
-            {allStepsComplete 
-              ? 'All set! You can now play games.' 
-              : 'Complete the steps below to start playing'
-            }
+            {allStepsComplete
+              ? 'All set! You can now play games.'
+              : 'Complete the steps below to start playing'}
           </p>
         </div>
 
         {showSteps && (
           <div className="space-y-4 mb-6">
-            {steps.map((step, index) => (
+            {steps.map((step) => (
               <div key={step.id} className={getStepStyles(step.status)}>
                 <div className="flex items-start space-x-3">
                   <div className="flex-shrink-0 mt-0.5">
@@ -259,15 +272,17 @@ export function EnhancedAuthScreen({
                       <h3 className="text-sm font-semibold text-white">
                         {step.title}
                       </h3>
-                                             {step.action && (step.status === 'pending' || step.status === 'error') && (
-                         <Button
-                           onClick={step.action}
-                           size="sm"
-                           className="bg-purple-600 hover:bg-purple-700 text-white text-xs"
-                         >
-                           {step.actionLabel}
-                         </Button>
-                       )}
+                      {step.action &&
+                        (step.status === 'pending' ||
+                          step.status === 'error') && (
+                          <Button
+                            onClick={step.action}
+                            size="sm"
+                            className="bg-purple-600 hover:bg-purple-700 text-white text-xs"
+                          >
+                            {step.actionLabel}
+                          </Button>
+                        )}
                     </div>
                     <p className="text-xs text-white/70 mt-1">
                       {step.description}
@@ -304,10 +319,12 @@ export function EnhancedAuthScreen({
             <>
               {!context?.user?.fid && (
                 <div className="text-center text-white/60 text-sm">
-                  <p>Make sure you're accessing this from within Farcaster</p>
+                  <p>
+                    Make sure you&apos;re accessing this from within Farcaster
+                  </p>
                 </div>
               )}
-              
+
               {context?.user?.fid && !isConnected && (
                 <Button
                   onClick={handleConnectWallet}
@@ -327,7 +344,7 @@ export function EnhancedAuthScreen({
                   )}
                 </Button>
               )}
-              
+
               {isConnected && context?.user?.fid && !user && (
                 <Button
                   onClick={handleFarcasterSignIn}
@@ -382,7 +399,9 @@ export function EnhancedAuthScreen({
         {/* Debug info for development */}
         {process.env.NODE_ENV === 'development' && (
           <div className="mt-6 p-4 bg-gray-900/50 rounded-lg text-xs text-white/60">
-            <p><strong>Debug Info:</strong></p>
+            <p>
+              <strong>Debug Info:</strong>
+            </p>
             <p>MiniApp Ready: {isMiniAppReady ? 'Yes' : 'No'}</p>
             <p>Has Context: {context ? 'Yes' : 'No'}</p>
             <p>FID: {context?.user?.fid || 'None'}</p>
