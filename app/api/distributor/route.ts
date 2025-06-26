@@ -57,25 +57,6 @@ async function processTransfers() {
       );
 
       const walletClient = createClientForWallet(account);
-      const publicClient = getPublicClient();
-
-      // Fetch the starting nonce once for the batch
-      let currentNonce: number;
-      try {
-        currentNonce = await publicClient.getTransactionCount({
-          address: account.address,
-        });
-      } catch (nonceError) {
-        console.error('Error fetching nonce for account:', account.address, nonceError);
-        // Skip this iteration if we can’t get a nonce
-        continue;
-      }
-
-      // …later, when sending each transaction in the batch:
-      await publicClient.sendTransaction({
-        /* other tx params */,
-        nonce: currentNonce++,
-      });
 
       const player = await supabaseService.getPlayerByFid(fid);
 
@@ -92,6 +73,22 @@ async function processTransfers() {
       }
 
       console.log('playerWalletAddress', playerWalletAddress);
+
+      const publicClient = getPublicClient();
+      let currentNonce: number;
+      try {
+        currentNonce = await publicClient.getTransactionCount({
+          address: account.address,
+        });
+      } catch (nonceError) {
+        console.error(
+          'Error fetching nonce for account:',
+          account.address,
+          nonceError
+        );
+        // Skip this iteration if we can’t get a nonce
+        continue;
+      }
 
       try {
         // Transfer tokens using ERC-20 transfer function
@@ -116,13 +113,13 @@ async function processTransfers() {
           ],
           account: account,
           chain: walletClient.chain,
-          nonce: nextNonce,
+          nonce: currentNonce++,
         });
         if (process.env.NODE_ENV !== 'production') {
           console.log('Transfer transaction hash:', hash);
         }
         // Wait for transaction confirmation
-        const publicClient = getPublicClient();
+
         const receipt = await publicClient.waitForTransactionReceipt({ hash });
         if (process.env.NODE_ENV !== 'production') {
           console.log('receipt', receipt);
