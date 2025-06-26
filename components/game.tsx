@@ -130,14 +130,16 @@ export function Game({
           });
         }
       } else if (event.data && event.data.type === 'game-over') {
+        if (isGameOver) return; // Prevent duplicate execution
+
+        const currentScore = roundScoreRef.current;
         console.log(
           '🏁 Game: Game over message received, final score:',
-          roundScore
+          currentScore
         );
         setIsGameOver(true);
-        const finalScore = roundScore || 0;
-        onScoreUpdate?.(finalScore);
-        onRoundComplete?.(finalScore);
+        onScoreUpdate?.(currentScore);
+        onRoundComplete?.(currentScore);
       }
     };
 
