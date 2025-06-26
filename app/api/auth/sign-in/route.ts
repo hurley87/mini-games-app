@@ -15,7 +15,7 @@ export const POST = async (req: NextRequest) => {
   let fid;
   let isValidSignature;
   let walletAddress: Address = zeroAddress;
-  let expirationTime = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+  const expirationTime = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
   // Verify signature matches custody address and auth address
   try {
     const payload = await quickAuthClient.verifyJwt({
