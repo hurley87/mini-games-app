@@ -49,6 +49,7 @@ export function GameWrapper({
   const [isScoreCreated, setIsScoreCreated] = useState(false);
   const [gameFinished, setGameFinished] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [reservationId, setReservationId] = useState<string | null>(null);
   const { playStatus } = usePlayStatus();
 
   console.log('coinId', coinId);
@@ -92,7 +93,7 @@ export function GameWrapper({
   }, [id, name, coinAddress, fid]);
 
   // Handle game start
-  const handleGameStart = () => {
+  const handleGameStart = async () => {
     try {
       console.log('🎮 GameWrapper: Starting game - clearing all states');
 
@@ -101,6 +102,40 @@ export function GameWrapper({
         console.log('🚫 GameWrapper: Cannot start game - daily limit reached');
         return;
       }
+
+      // Reserve a play slot before starting the game
+      console.log('🎯 GameWrapper: Reserving play slot...');
+      const reserveResponse = await fetch('/api/reserve-play', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          coinId,
+        }),
+      });
+
+      if (!reserveResponse.ok) {
+        const errorData = await reserveResponse.json();
+        console.error(
+          '🚫 GameWrapper: Failed to reserve play slot:',
+          errorData
+        );
+
+        if (reserveResponse.status === 429) {
+          // Daily limit reached
+          setSaveError(errorData.error || 'Daily play limit reached');
+        } else {
+          setSaveError(errorData.error || 'Failed to start game');
+        }
+        return;
+      }
+
+      const reserveData = await reserveResponse.json();
+      const playReservationId = reserveData.reservationId;
+
+      console.log('✅ GameWrapper: Play slot reserved:', playReservationId);
+      setReservationId(playReservationId);
 
       // Clear any conflicting states first
       setShowResult(false);
@@ -121,6 +156,7 @@ export function GameWrapper({
       }, 10);
     } catch (error) {
       console.error('Failed to start game:', error);
+      setSaveError('Failed to start game. Please try again.');
       sentryTracker.gameError(
         error instanceof Error ? error : new Error('Failed to start game'),
         {
@@ -134,11 +170,35 @@ export function GameWrapper({
   };
 
   // Handle game exit
-  const handleGameExit = () => {
+  const handleGameExit = async () => {
     try {
       const sessionTime = gameStartTime.current
         ? Math.round((Date.now() - gameStartTime.current) / 1000)
         : 0;
+
+      // Release the play reservation if we have one
+      if (reservationId) {
+        try {
+          console.log(
+            '🎯 GameWrapper: Releasing play reservation on exit:',
+            reservationId
+          );
+          await fetch('/api/release-play', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              coinId,
+              reservationId,
+            }),
+          });
+          setReservationId(null);
+        } catch (releaseError) {
+          console.error('Failed to release play reservation:', releaseError);
+          // Non-critical error - reservation will expire automatically
+        }
+      }
 
       setShowGame(false);
       setShowResult(false);
@@ -229,6 +289,11 @@ export function GameWrapper({
   };
 
   const handleCreateScore = async () => {
+    // Check if we have a valid reservation ID
+    if (!reservationId) {
+      throw new Error('No play reservation found. Please restart the game.');
+    }
+
     const response = await sdk.quickAuth.fetch(
       `${process.env.NEXT_PUBLIC_URL}/api/award`,
       {
@@ -237,6 +302,7 @@ export function GameWrapper({
         body: JSON.stringify({
           coinId: coinId,
           score: finalScore,
+          reservationId,
         }),
       }
     );

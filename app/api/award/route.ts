@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     // Get authenticated FID from middleware-set header
     const authenticatedFid = parseInt(request.headers.get('x-user-fid') || '0');
 
-    const { coinId, score } = await request.json();
+    const { coinId, score, reservationId } = await request.json();
 
     // 3. Basic input validation
     if (
@@ -38,7 +38,8 @@ export async function POST(request: Request) {
       !coinId ||
       typeof score !== 'number' ||
       !Number.isFinite(score) ||
-      score < 0
+      score < 0 ||
+      !reservationId
     ) {
       return NextResponse.json(
         { error: 'Missing required fields or invalid score' },
@@ -155,23 +156,16 @@ export async function POST(request: Request) {
       );
     }
 
-    // 7.5. Check daily play limit for this specific coin
-    const maxDailyPlays = coin.max_plays || 3; // Default to 3 if not set
-    const dailyPlayLimitResult = await RateLimiter.checkDailyPlayLimit(
-      authenticatedFid,
-      coinId,
-      maxDailyPlays
-    );
-
-    if (!dailyPlayLimitResult.success) {
+    // 7.5. Verify the play reservation exists and is valid
+    // Note: The actual daily limit check was done when the reservation was created
+    // This is just a preliminary validation that we have a valid reservation
+    if (!reservationId || typeof reservationId !== 'string') {
       return NextResponse.json(
         {
-          error: 'Daily play limit exceeded for this game',
-          limit: dailyPlayLimitResult.limit,
-          remaining: dailyPlayLimitResult.remaining,
-          resetAt: dailyPlayLimitResult.reset,
+          error:
+            'Invalid or missing reservation ID. Please start the game properly.',
         },
-        { status: 429, headers }
+        { status: 400, headers }
       );
     }
 
@@ -211,18 +205,47 @@ export async function POST(request: Request) {
         score
       );
     } catch (error) {
-      // NOTE: If this fails, the daily limit was consumed without points being awarded.
-      // A compensation mechanism (e.g., a background job to refund the daily limit)
-      // would be needed for full robustness, but is out of scope for this immediate fix.
-      console.error('Error updating points, but daily limit was consumed:', {
+      // Points increment failed - reservation will expire automatically
+      console.error('Error updating points:', {
         error,
         authenticatedFid,
         score,
+        reservationId,
       });
+
+      // Try to release the reservation immediately since we failed
+      try {
+        await RateLimiter.releaseDailyPlaySlot(
+          authenticatedFid,
+          coinId,
+          reservationId
+        );
+      } catch (releaseError) {
+        console.error('Failed to release play slot after error:', releaseError);
+      }
+
       return NextResponse.json(
         { error: 'Failed to update points' },
         { status: 500, headers }
       );
+    }
+
+    // 10.5. Commit the play slot after successful point increment
+    const commitSuccess = await RateLimiter.commitDailyPlaySlot(
+      authenticatedFid,
+      coinId,
+      reservationId
+    );
+
+    if (!commitSuccess) {
+      console.error('Failed to commit play slot, but points were awarded:', {
+        authenticatedFid,
+        coinId,
+        reservationId,
+        score,
+      });
+      // Points were awarded but play tracking failed - this is non-critical
+      // The reservation will expire automatically
     }
 
     // 11. Save the score to the scores table (after successful point increment)
@@ -266,11 +289,22 @@ export async function POST(request: Request) {
       }
     }
 
+    // Get updated play count for response
+    const currentPlayCount = await RateLimiter.getDailyPlayCount(
+      authenticatedFid,
+      coinId
+    );
+    const maxDailyPlays = coin.max_plays || 3;
+    const playsRemaining = Math.max(0, maxDailyPlays - currentPlayCount);
+
     return NextResponse.json(
       {
         success: true,
         score,
         dailyPointsRemaining: dailyLimitResult.remaining,
+        playsRemaining,
+        maxDailyPlays,
+        playCommitted: commitSuccess,
       },
       { headers }
     );

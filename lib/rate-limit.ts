@@ -7,6 +7,7 @@ export interface RateLimitResult {
   limit: number;
   remaining: number;
   reset: number;
+  reservationId?: string; // For play reservations
 }
 
 export class RateLimiter {
@@ -102,11 +103,191 @@ export class RateLimiter {
   }
 
   /**
+   * Reserve a play slot at game start to prevent race conditions
+   * @param fid The user's FID
+   * @param coinId The coin/game ID
+   * @param maxPlays The maximum plays per day for this coin
+   * @returns Whether the reservation was successful and a reservation ID
+   */
+  static async reserveDailyPlaySlot(
+    fid: number,
+    coinId: string,
+    maxPlays: number
+  ): Promise<RateLimitResult> {
+    const dateStr = new Date().toISOString().split('T')[0];
+    const playsKey = `daily_plays:${fid}:${coinId}:${dateStr}`;
+    const reservationsKey = `play_reservations:${fid}:${coinId}:${dateStr}`;
+    const ttl = 86400; // 24 hours in seconds
+    const reservationTtl = 1800; // 30 minutes for reservations
+
+    try {
+      // Get current committed plays and active reservations
+      const [currentPlaysResult, reservationsResult] = await Promise.all([
+        redis.get<number>(playsKey),
+        redis.smembers<string[]>(reservationsKey),
+      ]);
+
+      const currentPlays = currentPlaysResult || 0;
+      const reservations = reservationsResult || [];
+
+      // Calculate total used slots (committed + reserved)
+      const totalUsedSlots = currentPlays + reservations.length;
+
+      // Check if we can reserve a slot
+      if (totalUsedSlots >= maxPlays) {
+        return {
+          success: false,
+          limit: maxPlays,
+          remaining: Math.max(0, maxPlays - totalUsedSlots),
+          reset: Date.now() + ttl * 1000,
+        };
+      }
+
+      // Create a unique reservation ID
+      const reservationId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+      // Add reservation to the set with expiration
+      const multi = redis.multi();
+      multi.sadd(reservationsKey, reservationId);
+      multi.expire(reservationsKey, ttl);
+
+      // Set individual reservation with shorter TTL for cleanup
+      const reservationDetailKey = `reservation:${reservationId}`;
+      multi.setex(
+        reservationDetailKey,
+        reservationTtl,
+        JSON.stringify({
+          fid,
+          coinId,
+          dateStr,
+          created: Date.now(),
+        })
+      );
+
+      await multi.exec();
+
+      return {
+        success: true,
+        limit: maxPlays,
+        remaining: maxPlays - (totalUsedSlots + 1),
+        reset: Date.now() + ttl * 1000,
+        reservationId,
+      };
+    } catch (error) {
+      console.error('Rate limit error:', error);
+      // Allow the request if Redis is down
+      return {
+        success: true,
+        limit: maxPlays,
+        remaining: maxPlays - 1,
+        reset: Date.now() + ttl * 1000,
+        reservationId: `fallback-${Date.now()}`,
+      };
+    }
+  }
+
+  /**
+   * Commit a reserved play slot after successful game completion
+   * @param fid The user's FID
+   * @param coinId The coin/game ID
+   * @param reservationId The reservation ID from reserveDailyPlaySlot
+   * @returns Whether the commit was successful
+   */
+  static async commitDailyPlaySlot(
+    fid: number,
+    coinId: string,
+    reservationId: string
+  ): Promise<boolean> {
+    const dateStr = new Date().toISOString().split('T')[0];
+    const playsKey = `daily_plays:${fid}:${coinId}:${dateStr}`;
+    const reservationsKey = `play_reservations:${fid}:${coinId}:${dateStr}`;
+    const reservationDetailKey = `reservation:${reservationId}`;
+    const ttl = 86400; // 24 hours in seconds
+
+    try {
+      // Verify the reservation exists and belongs to this user/game
+      const reservationData = await redis.get<string>(reservationDetailKey);
+      if (!reservationData) {
+        console.warn('Reservation not found or expired:', reservationId);
+        return false;
+      }
+
+      const reservation = JSON.parse(reservationData);
+      if (
+        reservation.fid !== fid ||
+        reservation.coinId !== coinId ||
+        reservation.dateStr !== dateStr
+      ) {
+        console.error('Reservation mismatch:', {
+          reservation,
+          fid,
+          coinId,
+          dateStr,
+        });
+        return false;
+      }
+
+      // Remove reservation and increment committed plays atomically
+      const multi = redis.multi();
+      multi.srem(reservationsKey, reservationId);
+      multi.del(reservationDetailKey);
+      multi.incr(playsKey);
+      multi.expire(playsKey, ttl);
+      await multi.exec();
+
+      return true;
+    } catch (error) {
+      console.error('Error committing play slot:', error);
+      // In case of error, still try to clean up the reservation
+      try {
+        const multi = redis.multi();
+        multi.srem(reservationsKey, reservationId);
+        multi.del(reservationDetailKey);
+        await multi.exec();
+      } catch (cleanupError) {
+        console.error('Error cleaning up reservation:', cleanupError);
+      }
+      return false;
+    }
+  }
+
+  /**
+   * Release a reserved play slot if game is abandoned or fails
+   * @param fid The user's FID
+   * @param coinId The coin/game ID
+   * @param reservationId The reservation ID from reserveDailyPlaySlot
+   * @returns Whether the release was successful
+   */
+  static async releaseDailyPlaySlot(
+    fid: number,
+    coinId: string,
+    reservationId: string
+  ): Promise<boolean> {
+    const dateStr = new Date().toISOString().split('T')[0];
+    const reservationsKey = `play_reservations:${fid}:${coinId}:${dateStr}`;
+    const reservationDetailKey = `reservation:${reservationId}`;
+
+    try {
+      // Remove reservation
+      const multi = redis.multi();
+      multi.srem(reservationsKey, reservationId);
+      multi.del(reservationDetailKey);
+      await multi.exec();
+
+      return true;
+    } catch (error) {
+      console.error('Error releasing play slot:', error);
+      return false;
+    }
+  }
+
+  /**
    * Check if a user has exceeded their daily play limit for a specific coin
    * @param fid The user's FID
    * @param coinId The coin/game ID
    * @param maxPlays The maximum plays per day for this coin
    * @returns Whether the request should be allowed
+   * @deprecated Use reserveDailyPlaySlot and commitDailyPlaySlot instead
    */
   static async checkDailyPlayLimit(
     fid: number,
@@ -158,14 +339,23 @@ export class RateLimiter {
    * @param coinId The coin/game ID
    * @returns The current play count for today
    */
-  static async getDailyPlayCount(
-    fid: number,
-    coinId: string
-  ): Promise<number> {
-    const key = `daily_plays:${fid}:${coinId}:${new Date().toISOString().split('T')[0]}`;
+  static async getDailyPlayCount(fid: number, coinId: string): Promise<number> {
+    const dateStr = new Date().toISOString().split('T')[0];
+    const playsKey = `daily_plays:${fid}:${coinId}:${dateStr}`;
+    const reservationsKey = `play_reservations:${fid}:${coinId}:${dateStr}`;
 
     try {
-      return (await redis.get<number>(key)) || 0;
+      // Get both committed plays and active reservations
+      const [currentPlaysResult, reservationsResult] = await Promise.all([
+        redis.get<number>(playsKey),
+        redis.smembers<string[]>(reservationsKey),
+      ]);
+
+      const currentPlays = currentPlaysResult || 0;
+      const reservations = reservationsResult || [];
+
+      // Return total used slots (committed + reserved)
+      return currentPlays + reservations.length;
     } catch (error) {
       console.error('Error getting daily play count:', error);
       return 0;
