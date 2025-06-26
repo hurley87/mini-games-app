@@ -636,32 +636,84 @@ export const supabaseService = {
 
   async recordDailyLogin(fid: number) {
     const today = new Date().toISOString().split('T')[0];
-    const { data: row, error } = await supabase
-      .from('daily_streaks')
-      .select('last_login, streak, last_claimed')
-      .eq('fid', fid)
-      .single();
 
-    if (error && error.code !== 'PGRST116') {
-      console.error('Error fetching daily streak:', error);
-      throw new Error('Failed to get daily streak');
-    }
-
-    if (!row) {
-      const { data, error: insertError } = await supabase
+    try {
+      // First, try to get existing record
+      const { data: row, error } = await supabase
         .from('daily_streaks')
-        .insert({ fid, streak: 1, last_login: today })
-        .select('streak, last_claimed')
-        .single();
+        .select('last_login, streak, last_claimed')
+        .eq('fid', fid)
+        .maybeSingle(); // Use maybeSingle to avoid throwing on no results
 
-      if (insertError) {
-        console.error('Error inserting daily streak:', insertError);
-        throw new Error('Failed to record daily login');
+      if (error) {
+        console.error('Error fetching daily streak:', error);
+        throw new Error('Failed to get daily streak');
       }
 
-      return { streak: data.streak as number, claimed: false };
-    }
+      if (!row) {
+        // No existing record, try to insert
+        try {
+          const { data, error: insertError } = await supabase
+            .from('daily_streaks')
+            .insert({ fid, streak: 1, last_login: today })
+            .select('streak, last_claimed')
+            .single();
 
+          if (insertError) {
+            // If we get a unique constraint violation, it means another request
+            // created the record between our SELECT and INSERT
+            if (insertError.code === '23505') {
+              // Retry by fetching the now-existing record
+              const { data: retryRow, error: retryError } = await supabase
+                .from('daily_streaks')
+                .select('last_login, streak, last_claimed')
+                .eq('fid', fid)
+                .single();
+
+              if (retryError) {
+                console.error(
+                  'Error fetching daily streak on retry:',
+                  retryError
+                );
+                throw new Error('Failed to get daily streak');
+              }
+
+              // Process the existing record that was created by another request
+              return supabaseService.processExistingStreak(
+                retryRow,
+                fid,
+                today
+              );
+            }
+
+            console.error('Error inserting daily streak:', insertError);
+            throw new Error('Failed to record daily login');
+          }
+
+          return { streak: data.streak as number, claimed: false };
+        } catch (insertErr) {
+          console.error('Insert error:', insertErr);
+          throw insertErr;
+        }
+      }
+
+      // Process existing record
+      return supabaseService.processExistingStreak(row, fid, today);
+    } catch (error) {
+      console.error('Error in recordDailyLogin:', error);
+      throw error;
+    }
+  },
+
+  async processExistingStreak(
+    row: {
+      last_login: string | null;
+      streak: number;
+      last_claimed: string | null;
+    },
+    fid: number,
+    today: string
+  ) {
     let newStreak = row.streak as number;
     const lastLogin = row.last_login as string | null;
 
@@ -675,7 +727,13 @@ export const supabaseService = {
       } else if (diff >= 2) {
         newStreak = 1;
       }
-      // If diff < 1 (same day), keep current streak
+      // If diff < 1 (same day), keep current streak and don't update last_login
+      if (diff < 1) {
+        return {
+          streak: row.streak as number,
+          claimed: row.last_claimed === today,
+        };
+      }
     } else {
       // Handle null last_login by resetting streak to 1
       newStreak = 1;
