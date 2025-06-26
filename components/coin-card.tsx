@@ -180,9 +180,43 @@ export function CoinCard({ coin }: CoinCardProps) {
 
         {/* Overlay with game stats */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent">
+          {/* Top corner stats */}
+          <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-start">
+            {/* Duration - Top Left */}
+            {coin.duration && (
+              <div className="bg-black/60 backdrop-blur-sm rounded-lg px-3 py-1.5">
+                <div className="text-white/80 text-xs font-medium">Duration</div>
+                <div className="text-white font-bold text-sm">{coin.duration}min</div>
+              </div>
+            )}
+            
+            {/* Premium Threshold - Top Right */}
+            <div className="bg-black/60 backdrop-blur-sm rounded-lg px-3 py-1.5">
+              <div className="text-white/80 text-xs font-medium">Premium</div>
+              <div className="text-white font-bold text-sm">{coin.premium_threshold.toLocaleString()}</div>
+            </div>
+          </div>
+
+          {/* Bottom overlay */}
           <div className="absolute bottom-0 left-0 right-0 p-4">
+            <div className="flex justify-between items-end mb-2">
+              {/* Max earning potential - Bottom Left */}
+              <div className="bg-black/60 backdrop-blur-sm rounded-lg px-3 py-1.5">
+                <div className="text-white/80 text-xs font-medium">Max Earn</div>
+                <div className="text-green-400 font-bold text-sm">
+                  {(coin.max_points * coin.token_multiplier).toLocaleString()} ${coin.symbol}
+                </div>
+              </div>
+              
+              {/* Token Multiplier - Bottom Right */}
+              <div className="bg-black/60 backdrop-blur-sm rounded-lg px-3 py-1.5">
+                <div className="text-white/80 text-xs font-medium">Multiplier</div>
+                <div className="text-purple-400 font-bold text-sm">{coin.token_multiplier}x</div>
+              </div>
+            </div>
+            
             {/* Game Title */}
-            <h3 className="text-white font-bold text-xl mb-2 truncate">
+            <h3 className="text-white font-bold text-xl truncate">
               {coin.name}
             </h3>
           </div>
