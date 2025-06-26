@@ -26,7 +26,15 @@ export function useApiQuery<T>({
       });
 
       if (!response.ok) {
-        throw new Error('API request failed');
+        // Handle token expiration specifically
+        if (response.status === 401) {
+          const errorData = await response.json().catch(() => ({}));
+          if (errorData.code === 'TOKEN_EXPIRED') {
+            throw new Error('Session expired. Please sign in again.');
+          }
+          throw new Error('Authentication required. Please sign in.');
+        }
+        throw new Error(`API request failed: ${response.status}`);
       }
 
       return response.json() as Promise<T>;

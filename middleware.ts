@@ -42,7 +42,16 @@ export default async function middleware(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error(error);
+    console.error('JWT verification failed:', error);
+    
+    // Check if it's specifically an expiration error
+    if (error instanceof Error && error.message.includes('exp')) {
+      return NextResponse.json(
+        { error: 'Token expired', code: 'TOKEN_EXPIRED' }, 
+        { status: 401 }
+      );
+    }
+    
     return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
   }
 }
