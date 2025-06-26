@@ -22,7 +22,7 @@ export function AppInit({ children }: AppInitProps) {
   const { isLoading, error, user } = useSignIn({
     autoSignIn: true,
     onSuccess: (user) => {
-      console.log('User signed in successfully:', user.username);
+      console.log('User signed in successfully:', user?.username);
     },
   });
 
