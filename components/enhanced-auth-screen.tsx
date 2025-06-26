@@ -8,7 +8,6 @@ import { useAccount, useConnect, useDisconnect } from 'wagmi';
 import { useSignIn } from '@/hooks/use-sign-in';
 import { CheckCircle, XCircle, AlertCircle, Wallet, Smartphone, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
-import { sdk } from '@farcaster/frame-sdk';
 
 interface AuthStep {
   id: string;
