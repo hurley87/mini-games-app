@@ -59,9 +59,22 @@ async function processTransfers() {
       const walletClient = createClientForWallet(account);
       const publicClient = getPublicClient();
 
-      // Fetch the next nonce directly from the chain to avoid race conditions
-      const nextNonce = await publicClient.getTransactionCount({
-        address: account.address,
+      // Fetch the starting nonce once for the batch
+      let currentNonce: number;
+      try {
+        currentNonce = await publicClient.getTransactionCount({
+          address: account.address,
+        });
+      } catch (nonceError) {
+        console.error('Error fetching nonce for account:', account.address, nonceError);
+        // Skip this iteration if we can’t get a nonce
+        continue;
+      }
+
+      // …later, when sending each transaction in the batch:
+      await publicClient.sendTransaction({
+        /* other tx params */,
+        nonce: currentNonce++,
       });
 
       const player = await supabaseService.getPlayerByFid(fid);
