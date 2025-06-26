@@ -20,6 +20,7 @@ export interface Coin {
   created_at: string;
   updated_at: string;
   image: string;
+  duration?: number;
 }
 
 // Zora-specific coin data types

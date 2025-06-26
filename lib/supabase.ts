@@ -47,6 +47,7 @@ export type Coin = {
   description: string;
   parent: string;
   build_id: string;
+  duration?: number;
 };
 
 export type GamePlay = {
