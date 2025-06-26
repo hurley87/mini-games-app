@@ -100,6 +100,12 @@ export const supabaseService = {
     record: Partial<Player> &
       Pick<Player, 'fid' | 'name' | 'pfp' | 'username' | 'wallet_address'>
   ) {
+    if (!record.wallet_address) {
+      console.warn(
+        'Skipping player upsert because wallet address is null or undefined'
+      );
+      return null;
+    }
     // Use standard upsert to set fid and openai_thread_id
     // Note: This will NOT increment message_count
     const { data, error } = await supabase
@@ -120,6 +126,12 @@ export const supabaseService = {
     record: Partial<Player> &
       Pick<Player, 'fid' | 'name' | 'pfp' | 'username' | 'wallet_address'>
   ): Promise<{ data: Player | null; isNew: boolean }> {
+    if (!record.wallet_address) {
+      console.warn(
+        'Skipping upsertPlayerWithNewFlag because wallet address is null or undefined'
+      );
+      return { data: null, isNew: false };
+    }
     try {
       // Use atomic upsert with RPC function to avoid race conditions
       // Pass parameters in the correct order as expected by the database function
@@ -160,6 +172,12 @@ export const supabaseService = {
     record: Partial<Player> &
       Pick<Player, 'fid' | 'name' | 'pfp' | 'username' | 'wallet_address'>
   ): Promise<{ data: Player | null; isNew: boolean }> {
+    if (!record.wallet_address) {
+      console.warn(
+        'Skipping upsertPlayerWithFallback because wallet address is null or undefined'
+      );
+      return { data: null, isNew: false };
+    }
     // Check if player exists first
     const existingPlayers = await this.getPlayerByFid(record.fid);
     const isNew = !existingPlayers || existingPlayers.length === 0;
