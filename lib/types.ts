@@ -21,6 +21,9 @@ export interface Coin {
   updated_at: string;
   image: string;
   duration?: number;
+  token_multiplier: number;
+  premium_threshold: number;
+  max_points: number;
 }
 
 // Zora-specific coin data types
