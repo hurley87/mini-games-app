@@ -141,7 +141,7 @@ export function Game({
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [onRoundComplete, iframeUrl, roundScore]);
+  }, [onRoundComplete, onScoreUpdate, iframeUrl, roundScore]);
 
   // Check token balance
   useEffect(() => {
