@@ -48,6 +48,9 @@ export type Coin = {
   parent: string;
   build_id: string;
   duration?: number;
+  token_multiplier: number;
+  premium_threshold: number;
+  max_points: number;
 };
 
 export type GamePlay = {

@@ -6,7 +6,6 @@ import {
 import { supabaseService } from '@/lib/supabase';
 import { SendNotificationRequest } from '@farcaster/frame-node';
 import { NextResponse } from 'next/server';
-import { TOKEN_MULTIPLIER } from '@/lib/config';
 
 // Route configuration
 export const runtime = 'nodejs';
@@ -35,7 +34,7 @@ async function processTransfers() {
         console.log('fid', fid);
       }
 
-      const tokenCount = Math.min(transfer.total_score, 25);
+      const tokenCount = Math.min(transfer.total_score, coin?.max_points || 25);
       if (process.env.NODE_ENV !== 'production') {
         console.log('tokenCount', tokenCount);
       }
@@ -86,12 +85,13 @@ async function processTransfers() {
           account.address,
           nonceError
         );
-        // Skip this iteration if we can’t get a nonce
+        // Skip this iteration if we can't get a nonce
         continue;
       }
 
       try {
         // Transfer tokens using ERC-20 transfer function
+        const tokenMultiplier = coin?.token_multiplier || 1000; // fallback to 1000 if not set
         const hash = await walletClient.writeContract({
           address: coinAddress as `0x${string}`,
           abi: [
@@ -109,7 +109,7 @@ async function processTransfers() {
           functionName: 'transfer',
           args: [
             playerWalletAddress as `0x${string}`,
-            BigInt(tokenCount * TOKEN_MULTIPLIER) * BigInt(10 ** 18),
+            BigInt(tokenCount * tokenMultiplier) * BigInt(10 ** 18),
           ],
           account: account,
           chain: walletClient.chain,
@@ -149,7 +149,7 @@ async function processTransfers() {
                   },
                   body: JSON.stringify({
                     notificationId: crypto.randomUUID(),
-                    title: `You earned ${(tokenCount * TOKEN_MULTIPLIER).toLocaleString()} ${coin.symbol} tokens`,
+                    title: `You earned ${(tokenCount * tokenMultiplier).toLocaleString()} ${coin.symbol} tokens`,
                     body: `Check your wallet: ${formatAddress(playerWalletAddress)}`,
                     targetUrl: `https://app.minigames.studio/coins/${coin.id}`,
                     tokens: [notification.token],
