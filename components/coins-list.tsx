@@ -5,33 +5,25 @@ import { CoinCard } from './coin-card';
 
 const getCoinsWithData = unstable_cache(
   async () => {
-    try {
-      const coins: Coin[] = await supabaseService.getCoins();
-      const coinsWithCreators: CoinWithCreator[] = await Promise.all(
-        coins.map(async (coin) => {
-          try {
-            const creator = await supabaseService.getCreatorByFID(coin.fid);
-            return {
-              ...coin,
-              creator: creator[0] || undefined,
-            } as CoinWithCreator;
-          } catch (error) {
-            console.error(
-              `Failed to fetch creator for coin ${coin.fid}:`,
-              error
-            );
-            return {
-              ...coin,
-              creator: undefined,
-            } as CoinWithCreator;
-          }
-        })
-      );
-      return coinsWithCreators;
-    } catch (error) {
-      console.error('Failed to fetch coins:', error);
-      return [] as CoinWithCreator[];
-    }
+    const coins: Coin[] = await supabaseService.getCoins();
+    const coinsWithCreators: CoinWithCreator[] = await Promise.all(
+      coins.map(async (coin) => {
+        try {
+          const creator = await supabaseService.getCreatorByFID(coin.fid);
+          return {
+            ...coin,
+            creator: creator[0] || undefined,
+          } as CoinWithCreator;
+        } catch (error) {
+          console.error(`Failed to fetch creator for coin ${coin.fid}:`, error);
+          return {
+            ...coin,
+            creator: undefined,
+          } as CoinWithCreator;
+        }
+      })
+    );
+    return coinsWithCreators;
   },
   ['coins-with-data'],
   { revalidate: 300 }
