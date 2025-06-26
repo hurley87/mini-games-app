@@ -64,6 +64,7 @@ export function Game({
   const { context } = useMiniApp();
   const { address, isConnected } = useAccount();
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const roundScoreRef = useRef<number>(0);
 
   // Define iframeUrl early to avoid declaration order issues
   const fid = context?.user?.fid;
@@ -116,6 +117,7 @@ export function Game({
           // Accumulate points instead of overwriting
           setRoundScore((prev) => {
             const newScore = (prev || 0) + score;
+            roundScoreRef.current = newScore; // Keep ref in sync
             console.log(
               '🎯 Game: Accumulating score from',
               prev,
@@ -204,8 +206,8 @@ export function Game({
       const timer = setTimeout(() => {
         console.log('⏰ Game: Timeout reached, ending game');
 
-        // Get current score and call callbacks outside of state updater
-        const currentScore = roundScore || 0;
+        // Get current score from ref to avoid dependency issues
+        const currentScore = roundScoreRef.current;
         console.log('⏰ Game: Final score at timeout:', currentScore);
         onScoreUpdate?.(currentScore);
         onRoundComplete?.(currentScore);
@@ -223,7 +225,6 @@ export function Game({
     isGameOver,
     onRoundComplete,
     onScoreUpdate,
-    roundScore,
   ]);
 
   // Handle forced game end from GameWrapper
@@ -231,15 +232,15 @@ export function Game({
     if (forceEnd && !isGameOver) {
       console.log('🚨 Game: Forced to end by GameWrapper');
 
-      // Get current score and call callbacks outside of state updater
-      const currentScore = roundScore || 0;
+      // Get current score from ref to avoid dependency issues
+      const currentScore = roundScoreRef.current;
       console.log('🚨 Game: Final score at forced end:', currentScore);
       onScoreUpdate?.(currentScore);
       onRoundComplete?.(currentScore);
 
       setIsGameOver(true);
     }
-  }, [forceEnd, isGameOver, onRoundComplete, onScoreUpdate, roundScore]);
+  }, [forceEnd, isGameOver, onRoundComplete, onScoreUpdate]);
 
   if (!id) {
     return (
