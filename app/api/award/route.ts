@@ -126,7 +126,7 @@ export async function POST(request: Request) {
     // First try to find by ID
     const { data: coinById, error: idError } = await supabaseService
       .from('coins')
-      .select('id, coin_address')
+      .select('id, coin_address, max_plays')
       .eq('id', coinId)
       .single();
 
@@ -136,7 +136,7 @@ export async function POST(request: Request) {
       // If not found by ID, try by coin_address
       const { data: coinByAddress, error: addressError } = await supabaseService
         .from('coins')
-        .select('id, coin_address')
+        .select('id, coin_address, max_plays')
         .eq('coin_address', coinId)
         .single();
 
@@ -152,6 +152,26 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: 'Coin not found' },
         { status: 404, headers }
+      );
+    }
+
+    // 7.5. Check daily play limit for this specific coin
+    const maxDailyPlays = coin.max_plays || 3; // Default to 3 if not set
+    const dailyPlayLimitResult = await RateLimiter.checkDailyPlayLimit(
+      authenticatedFid,
+      coinId,
+      maxDailyPlays
+    );
+
+    if (!dailyPlayLimitResult.success) {
+      return NextResponse.json(
+        {
+          error: 'Daily play limit exceeded for this game',
+          limit: dailyPlayLimitResult.limit,
+          remaining: dailyPlayLimitResult.remaining,
+          resetAt: dailyPlayLimitResult.reset,
+        },
+        { status: 429, headers }
       );
     }
 

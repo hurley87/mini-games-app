@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseService } from '@/lib/supabase';
-import { Address, createPublicClient, http } from 'viem';
+import { createPublicClient, http, Address } from 'viem';
 import { base } from 'viem/chains';
-import { PREMIUM_THRESHOLD } from '@/lib/config';
+import { RateLimiter } from '@/lib/rate-limit';
 
-const rpcUrl = process.env.RPC_URL!;
+const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL!;
 
 // Create a public client for reading blockchain data
 const publicClient = createPublicClient({
@@ -29,6 +29,11 @@ const ERC20_ABI = [
   },
 ] as const;
 
+const PREMIUM_THRESHOLD = parseInt(
+  process.env.NEXT_PUBLIC_PREMIUM_THRESHOLD ?? '1000000',
+  10
+);
+
 export async function POST(request: NextRequest) {
   try {
     const { fid, coinId, coinAddress, walletAddress } = await request.json();
@@ -52,12 +57,42 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get coin data to check max_plays
+    const coin = await supabaseService.getCoinById(coinId);
+    if (!coin) {
+      return NextResponse.json(
+        { error: 'Coin not found' },
+        { status: 404 }
+      );
+    }
+
+    // Check current daily play count
+    const currentDailyPlays = await RateLimiter.getDailyPlayCount(fid, coinId);
+    const maxDailyPlays = coin.max_plays || 3; // Default to 3 if not set
+    const dailyPlaysRemaining = Math.max(0, maxDailyPlays - currentDailyPlays);
+
     // Check if player has played this game before
     const gamePlay = await supabaseService.getGamePlayRecord(fid, coinId);
     const hasPlayed = !!gamePlay;
 
     console.log('gamePlay', gamePlay);
     console.log('hasPlayed', hasPlayed);
+    console.log('currentDailyPlays', currentDailyPlays);
+    console.log('maxDailyPlays', maxDailyPlays);
+    console.log('dailyPlaysRemaining', dailyPlaysRemaining);
+
+    // Check daily play limit first (applies to everyone)
+    if (currentDailyPlays >= maxDailyPlays) {
+      return NextResponse.json({
+        canPlay: false,
+        reason: 'daily_limit_reached',
+        hasPlayed,
+        tokenBalance: '0',
+        dailyPlaysRemaining: 0,
+        maxDailyPlays,
+        currentDailyPlays,
+      });
+    }
 
     // If user hasn't played before, allow free play
     if (!hasPlayed) {
@@ -66,6 +101,9 @@ export async function POST(request: NextRequest) {
         reason: 'first_time',
         hasPlayed: false,
         tokenBalance: '0',
+        dailyPlaysRemaining,
+        maxDailyPlays,
+        currentDailyPlays,
       });
     }
 
@@ -76,6 +114,9 @@ export async function POST(request: NextRequest) {
         reason: 'no_wallet',
         hasPlayed: true,
         tokenBalance: '0',
+        dailyPlaysRemaining,
+        maxDailyPlays,
+        currentDailyPlays,
       });
     }
 
@@ -124,6 +165,9 @@ export async function POST(request: NextRequest) {
         reason: hasTokens ? 'has_tokens' : 'insufficient_tokens',
         hasPlayed: true,
         tokenBalance: balance,
+        dailyPlaysRemaining,
+        maxDailyPlays,
+        currentDailyPlays,
       });
     } catch (balanceError) {
       console.error('Error checking token balance:', balanceError);
@@ -133,6 +177,9 @@ export async function POST(request: NextRequest) {
         reason: 'balance_check_failed',
         hasPlayed: true,
         tokenBalance: '0',
+        dailyPlaysRemaining,
+        maxDailyPlays,
+        currentDailyPlays,
       });
     }
   } catch (error) {

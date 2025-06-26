@@ -100,4 +100,75 @@ export class RateLimiter {
       };
     }
   }
+
+  /**
+   * Check if a user has exceeded their daily play limit for a specific coin
+   * @param fid The user's FID
+   * @param coinId The coin/game ID
+   * @param maxPlays The maximum plays per day for this coin
+   * @returns Whether the request should be allowed
+   */
+  static async checkDailyPlayLimit(
+    fid: number,
+    coinId: string,
+    maxPlays: number
+  ): Promise<RateLimitResult> {
+    const key = `daily_plays:${fid}:${coinId}:${new Date().toISOString().split('T')[0]}`;
+    const ttl = 86400; // 24 hours in seconds
+
+    try {
+      // Get current plays for today for this specific coin
+      const currentPlays = (await redis.get<number>(key)) || 0;
+
+      // Check if adding one more play would exceed the limit
+      if (currentPlays >= maxPlays) {
+        return {
+          success: false,
+          limit: maxPlays,
+          remaining: Math.max(0, maxPlays - currentPlays),
+          reset: Date.now() + ttl * 1000,
+        };
+      }
+
+      // Increment the counter
+      await redis.incr(key);
+      await redis.expire(key, ttl);
+
+      return {
+        success: true,
+        limit: maxPlays,
+        remaining: maxPlays - (currentPlays + 1),
+        reset: Date.now() + ttl * 1000,
+      };
+    } catch (error) {
+      console.error('Rate limit error:', error);
+      // Allow the request if Redis is down
+      return {
+        success: true,
+        limit: maxPlays,
+        remaining: maxPlays - 1,
+        reset: Date.now() + ttl * 1000,
+      };
+    }
+  }
+
+  /**
+   * Get current daily play count for a specific coin without incrementing
+   * @param fid The user's FID
+   * @param coinId The coin/game ID
+   * @returns The current play count for today
+   */
+  static async getDailyPlayCount(
+    fid: number,
+    coinId: string
+  ): Promise<number> {
+    const key = `daily_plays:${fid}:${coinId}:${new Date().toISOString().split('T')[0]}`;
+
+    try {
+      return (await redis.get<number>(key)) || 0;
+    } catch (error) {
+      console.error('Error getting daily play count:', error);
+      return 0;
+    }
+  }
 }

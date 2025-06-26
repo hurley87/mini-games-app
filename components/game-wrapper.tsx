@@ -96,6 +96,12 @@ export function GameWrapper({
     try {
       console.log('🎮 GameWrapper: Starting game - clearing all states');
 
+      // Check if play is allowed
+      if (playStatus?.reason === 'daily_limit_reached') {
+        console.log('🚫 GameWrapper: Cannot start game - daily limit reached');
+        return;
+      }
+
       // Clear any conflicting states first
       setShowResult(false);
       setGameFinished(false);

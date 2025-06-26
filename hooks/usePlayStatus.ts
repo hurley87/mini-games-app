@@ -10,10 +10,14 @@ export type PlayStatus = {
     | 'has_tokens'
     | 'wait_for_free'
     | 'no_wallet'
-    | 'balance_check_failed';
+    | 'balance_check_failed'
+    | 'daily_limit_reached';
   hasPlayed: boolean;
   tokenBalance: string;
   nextFreePlayTime?: string;
+  dailyPlaysRemaining?: number;
+  maxDailyPlays?: number;
+  currentDailyPlays?: number;
 };
 
 export function usePlayStatus() {

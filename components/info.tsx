@@ -20,6 +20,7 @@ import { EnhancedAuthScreen } from './enhanced-auth-screen';
 import { PREMIUM_THRESHOLD, TOKEN_MULTIPLIER } from '@/lib/config';
 import { BottomNav } from './bottom-nav';
 import { useMiniApp } from '@/contexts/miniapp-context';
+import { trackGameEvent } from '@/lib/posthog';
 
 interface InfoProps {
   name: string;
@@ -69,19 +70,23 @@ export function Info({
     e: React.MouseEvent<HTMLButtonElement, MouseEvent>
   ) => {
     e.preventDefault();
-    if (isStartingGame) return; // Prevent multiple clicks
+    e.stopPropagation();
 
-    console.log('🎮 Info: Starting game...');
-    setIsStartingGame(true);
+    // Prevent play if daily limit is reached
+    if (playStatus?.reason === 'daily_limit_reached') {
+      return;
+    }
 
     try {
-      await onPlay();
+      await sdk.haptics.impactOccurred('medium');
     } catch (error) {
-      console.error('Error starting game:', error);
-    } finally {
-      // Reset loading state after a delay to prevent rapid clicking
-      setTimeout(() => setIsStartingGame(false), 1000);
+      console.error('Haptics error:', error);
     }
+
+    // Track game start
+    trackGameEvent.gameStart(coinId, name, coinAddress);
+
+    onPlay();
   };
 
   // Check play status on mount and when dependencies change
@@ -285,8 +290,7 @@ export function Info({
                   {name}
                 </h1>
 
-                <p
-                  className="text-sm text-purple-400 mt-1 cursor-pointer"
+                <p className="text-sm text-purple-400 mt-1 cursor-pointer"
                   onClick={handleViewCoinClick}
                 >
                   ${symbol}
@@ -306,6 +310,34 @@ export function Info({
           </div>
 
           {/* Warning/Status Section */}
+          {playStatus.reason === 'daily_limit_reached' && (
+            <div className="p-6 bg-red-900/30 border-b border-red-700/30">
+              <div className="flex items-start space-x-3">
+                <div className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <svg
+                    className="w-4 h-4 text-red-400"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-red-200">
+                    Daily Play Limit Reached
+                  </h3>
+                  <p className="text-xs text-red-300 mt-1">
+                    You've used all {playStatus.maxDailyPlays} of your daily plays for this game. 
+                    Come back tomorrow for more free plays!
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
           {playStatus.reason === 'wait_for_free' && (
             <div className="p-6 bg-amber-900/30 border-b border-amber-700/30">
               <div className="flex items-start space-x-3">
@@ -530,14 +562,19 @@ export function Info({
             <p className="text-sm text-white/70 leading-relaxed">
               {description}
             </p>
-            <button
-              type="button"
-              onClick={handlePlay}
-              disabled={isStartingGame}
-              className="w-full bg-purple-600 text-white px-4 py-4 rounded-full font-semibold shadow-xl shadow-purple-500/20 hover:brightness-110 transition-all duration-200 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isStartingGame ? 'Starting...' : 'PLAY'}
-            </button>
+            <div className="p-6 pt-0">
+              <button
+                onClick={handlePlay}
+                disabled={playStatus.reason === 'daily_limit_reached'}
+                className={`w-full py-4 px-6 rounded-2xl font-bold text-lg transition-all duration-200 shadow-xl ${
+                  playStatus.reason === 'daily_limit_reached'
+                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed shadow-gray-500/20'
+                    : 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-purple-500/20'
+                }`}
+              >
+                {playStatus.reason === 'daily_limit_reached' ? 'Daily Limit Reached' : 'PLAY'}
+              </button>
+            </div>
           </div>
         )}
 
@@ -572,6 +609,37 @@ export function Info({
               </div>
             </div>
           )}
+
+        {/* Daily Plays Counter */}
+        {playStatus.dailyPlaysRemaining !== undefined && 
+         playStatus.maxDailyPlays !== undefined && 
+         playStatus.reason !== 'daily_limit_reached' && (
+          <div className="p-6 bg-blue-900/20 border-b border-blue-700/30">
+            <div className="flex items-start space-x-3">
+              <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg
+                  className="w-4 h-4 text-blue-400"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-blue-200">
+                  Daily Plays
+                </h3>
+                <p className="text-xs text-blue-300 mt-1">
+                  {playStatus.dailyPlaysRemaining} of {playStatus.maxDailyPlays} plays remaining today
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {playStatus.reason === 'has_tokens' && (
           <div className="p-6 bg-blue-900/30 border-b border-blue-700/30">
