@@ -223,6 +223,7 @@ export function Game({
     checkingTokens,
     isGameOver,
     onRoundComplete,
+    onScoreUpdate,
     roundScore,
   ]);
 

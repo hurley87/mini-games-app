@@ -86,7 +86,7 @@ export default async function GamePage({
         creator={creator}
         coinId={coin.id}
         timeoutSeconds={coin.duration && coin.duration > 0 ? coin.duration : 10}
-        maxPoints={coin.max_points}
+        maxPoints={coin.max_points ?? 100}
       />
     </div>
   );
