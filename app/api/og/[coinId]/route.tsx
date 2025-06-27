@@ -8,10 +8,10 @@ import { supabaseService } from '@/lib/supabase';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-// Define the dimensions for the generated OpenGraph image
+// Define the dimensions for the generated OpenGraph image (3:2 aspect ratio)
 const size = {
   width: 1200,
-  height: 1200,
+  height: 800,
 };
 
 /**
