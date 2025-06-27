@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     // Get authenticated FID from middleware-set header
     const authenticatedFid = parseInt(request.headers.get('x-user-fid') || '0');
 
-    const { coinId, score, reservationId } = await request.json();
+    const { coinId, score } = await request.json();
 
     // 3. Basic input validation
     if (
@@ -155,30 +155,26 @@ export async function POST(request: Request) {
       );
     }
 
-    // 7.5. Atomically check and increment daily play count to prevent race conditions
+    // 7.5. Check daily play limit before any state changes
     const maxAllowedPlays = coin.max_plays || 3;
-    const playCountResult =
-      await supabaseService.incrementDailyPlayCountIfAllowed(
-        authenticatedFid,
-        coinId,
-        maxAllowedPlays
-      );
+    const currentDailyPlays = await supabaseService.getDailyPlayCount(
+      authenticatedFid,
+      coinId
+    );
 
-    if (!playCountResult.success) {
+    if (currentDailyPlays >= maxAllowedPlays) {
       return NextResponse.json(
         {
-          error:
-            playCountResult.message ||
-            'Daily play limit exceeded for this game',
+          error: 'Daily play limit exceeded for this game',
           limit: maxAllowedPlays,
-          remaining: playCountResult.playsRemaining,
-          currentPlays: playCountResult.currentPlays,
+          remaining: Math.max(0, maxAllowedPlays - currentDailyPlays),
+          currentPlays: currentDailyPlays,
         },
         { status: 429, headers }
       );
     }
 
-    // 9. Check daily points limit before any database writes
+    // 8. Check daily points limit before any database writes
     const dailyLimitResult = await RateLimiter.checkDailyPointsLimit(
       authenticatedFid,
       score,
@@ -197,7 +193,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // 10. Increment the player's points
+    // 9. Increment the player's points
     try {
       await supabaseService.incrementPlayerPoints(
         Number(authenticatedFid),
@@ -217,30 +213,25 @@ export async function POST(request: Request) {
       );
     }
 
-    // 10.5. Daily play count was already incremented atomically before point award
-    // No additional increment needed - this prevents race conditions
+    // 10. After successful points award, increment daily play count
+    const playCountResult =
+      await supabaseService.incrementDailyPlayCountIfAllowed(
+        authenticatedFid,
+        coinId,
+        maxAllowedPlays
+      );
 
-    // 10.6. Clean up Redis reservation if provided (during transition period)
-    if (reservationId && typeof reservationId === 'string') {
-      try {
-        const redisCommitSuccess = await RateLimiter.commitDailyPlaySlot(
+    if (!playCountResult.success) {
+      console.error(
+        'Failed to increment play count after successful point award:',
+        {
           authenticatedFid,
           coinId,
-          reservationId
-        );
-        if (!redisCommitSuccess) {
-          console.warn('Failed to commit Redis reservation (non-critical):', {
-            reservationId,
-            authenticatedFid,
-            coinId,
-          });
+          playCountResult,
         }
-      } catch (error) {
-        console.warn(
-          'Error committing Redis reservation (non-critical):',
-          error
-        );
-      }
+      );
+      // Note: Points were already awarded, so we don't return an error here
+      // This is a logging issue that should be monitored
     }
 
     // 11. Save the score to the scores table (after successful point increment)
@@ -284,16 +275,24 @@ export async function POST(request: Request) {
       }
     }
 
-    // Use play count results from atomic operation
+    // Calculate final play count values
+    const finalCurrentPlays = playCountResult.success
+      ? playCountResult.currentPlays
+      : currentDailyPlays + 1; // If increment failed, estimate the count
+    const finalPlaysRemaining = Math.max(
+      0,
+      maxAllowedPlays - finalCurrentPlays
+    );
+
     return NextResponse.json(
       {
         success: true,
         score,
         dailyPointsRemaining: dailyLimitResult.remaining,
-        playsRemaining: playCountResult.playsRemaining,
+        playsRemaining: finalPlaysRemaining,
         maxDailyPlays: maxAllowedPlays,
-        currentDailyPlays: playCountResult.currentPlays,
-        playRecorded: true, // Always true since atomic operation succeeded
+        currentDailyPlays: finalCurrentPlays,
+        playRecorded: playCountResult.success,
       },
       { headers }
     );
