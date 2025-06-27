@@ -137,15 +137,15 @@ export function Game({
           '🏁 Game: Game over message received, final score:',
           currentScore
         );
-        setIsGameOver(true);
         onScoreUpdate?.(currentScore);
         onRoundComplete?.(currentScore);
+        setIsGameOver(true);
       }
     };
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [onRoundComplete, onScoreUpdate, iframeUrl, roundScore]);
+  }, [onRoundComplete, onScoreUpdate, iframeUrl, isGameOver]);
 
   // Check token balance
   useEffect(() => {

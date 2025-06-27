@@ -346,6 +346,8 @@ export function GameWrapper({
     });
   }, [showGame, showResult, gameFinished, isCreatingScore, isScoreCreated]);
 
+  console.log('maxPoints', maxPoints);
+
   // Render logic with defensive checks
   // Prioritize showGame when it's true to prevent navigation issues
   if (showGame) {
@@ -375,7 +377,9 @@ export function GameWrapper({
           <div
             className={
               'px-4 py-2 rounded-full border border-white/20 bg-black/40 backdrop-blur-md text-sm font-mono text-white/70 ' +
-              (currentScore >= maxPoints ? 'text-emerald-400 animate-bounce' : '')
+              (currentScore >= maxPoints
+                ? 'text-emerald-400 animate-bounce'
+                : '')
             }
           >
             {currentScore}/{maxPoints}

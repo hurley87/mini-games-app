@@ -60,6 +60,7 @@ export default async function GamePage({
 }) {
   const { id } = await params;
   const coin = await supabaseService.getCoinById(id);
+  console.log('coin', coin);
   const coinAddress = coin.coin_address;
   const buildId = coin.build_id;
   const build = await supabaseService.getBuildById(buildId);
@@ -72,6 +73,8 @@ export default async function GamePage({
   } catch (error) {
     console.error(`Failed to fetch creator for coin ${coin.fid}:`, error);
   }
+
+  console.log('coin.max_points', coin.max_points);
 
   return (
     <div>
