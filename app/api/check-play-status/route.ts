@@ -3,6 +3,7 @@ import { supabaseService } from '@/lib/supabase';
 import { createPublicClient, http, Address } from 'viem';
 import { base } from 'viem/chains';
 import { RateLimiter } from '@/lib/rate-limit';
+import { PREMIUM_THRESHOLD } from '@/lib/config';
 
 const rpcUrl = process.env.RPC_URL!;
 
@@ -28,11 +29,6 @@ const ERC20_ABI = [
     outputs: [{ name: 'decimals', type: 'uint8' }],
   },
 ] as const;
-
-const PREMIUM_THRESHOLD = parseInt(
-  process.env.NEXT_PUBLIC_PREMIUM_THRESHOLD ?? '1000000',
-  10
-);
 
 export async function POST(request: NextRequest) {
   try {
