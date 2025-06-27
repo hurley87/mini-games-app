@@ -26,6 +26,10 @@ interface CoinCardProps {
 export function CoinCard({ coin }: CoinCardProps) {
   const handleCopyAddress = () => {
     try {
+      if (!coin.coin_address) {
+        toast.error('No address available to copy');
+        return;
+      }
       navigator.clipboard.writeText(coin.coin_address);
       toast.success('Address copied to clipboard!');
       trackGameEvent.coinAddressCopy(coin.coin_address, coin.name);
@@ -44,6 +48,10 @@ export function CoinCard({ coin }: CoinCardProps) {
 
   const handleCopyLink = () => {
     try {
+      if (!coin.id) {
+        toast.error('No link available to copy');
+        return;
+      }
       const link = `https://app.minigames.studio/coins/${coin.id}`;
       navigator.clipboard.writeText(link);
       toast.success('Link copied to clipboard!');
@@ -130,31 +138,37 @@ export function CoinCard({ coin }: CoinCardProps) {
               align="end"
             >
               <div className="space-y-1">
-                <button
-                  className="flex items-center gap-3 w-full px-3 py-2 text-sm text-white/70 hover:brightness-110 transition-all duration-200 rounded-md"
-                  onClick={handleCopyAddress}
-                >
-                  <Copy className="w-4 h-4" />
-                  Copy address
-                </button>
-                <button
-                  className="flex items-center gap-3 w-full px-3 py-2 text-sm text-white/70 hover:brightness-110 transition-all duration-200 rounded-md"
-                  onClick={handleCopyLink}
-                >
-                  <LinkIcon className="w-4 h-4" />
-                  Copy link
-                </button>
-                <Link
-                  href={`https://zora.co/coin/base:${coin.coin_address}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={handleDexScreenerClick}
-                >
-                  <button className="flex items-center gap-3 w-full px-3 py-2 text-sm text-white/70 hover:brightness-110 transition-all duration-200 rounded-md">
-                    <ExternalLink className="w-4 h-4" />
-                    Trade on Zora
+                {coin.coin_address && (
+                  <button
+                    className="flex items-center gap-3 w-full px-3 py-2 text-sm text-white/70 hover:brightness-110 transition-all duration-200 rounded-md"
+                    onClick={handleCopyAddress}
+                  >
+                    <Copy className="w-4 h-4" />
+                    Copy address
                   </button>
-                </Link>
+                )}
+                {coin.id && (
+                  <button
+                    className="flex items-center gap-3 w-full px-3 py-2 text-sm text-white/70 hover:brightness-110 transition-all duration-200 rounded-md"
+                    onClick={handleCopyLink}
+                  >
+                    <LinkIcon className="w-4 h-4" />
+                    Copy link
+                  </button>
+                )}
+                {coin.coin_address && (
+                  <Link
+                    href={`https://zora.co/coin/base:${coin.coin_address}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={handleDexScreenerClick}
+                  >
+                    <button className="flex items-center gap-3 w-full px-3 py-2 text-sm text-white/70 hover:brightness-110 transition-all duration-200 rounded-md">
+                      <ExternalLink className="w-4 h-4" />
+                      Trade on Zora
+                    </button>
+                  </Link>
+                )}
               </div>
             </PopoverContent>
           </Popover>
@@ -185,60 +199,85 @@ export function CoinCard({ coin }: CoinCardProps) {
             {/* Duration - Top Left */}
             {coin.duration && (
               <div className="bg-black/60 backdrop-blur-sm rounded-lg px-3 py-1.5">
-                <div className="text-white/80 text-xs font-medium">Duration</div>
-                <div className="text-white font-bold text-sm">{coin.duration}min</div>
+                <div className="text-white/80 text-xs font-medium">
+                  Duration
+                </div>
+                <div className="text-white font-bold text-sm">
+                  {coin.duration}min
+                </div>
               </div>
             )}
-            
+
             {/* Premium Threshold - Top Right */}
-            <div className="bg-black/60 backdrop-blur-sm rounded-lg px-3 py-1.5">
-              <div className="text-white/80 text-xs font-medium">Premium</div>
-              <div className="text-white font-bold text-sm">{coin.premium_threshold.toLocaleString()}</div>
-            </div>
+            {coin.premium_threshold && (
+              <div className="bg-black/60 backdrop-blur-sm rounded-lg px-3 py-1.5">
+                <div className="text-white/80 text-xs font-medium">Premium</div>
+                <div className="text-white font-bold text-sm">
+                  {coin.premium_threshold.toLocaleString()}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Bottom overlay */}
           <div className="absolute bottom-0 left-0 right-0 p-4">
             <div className="flex justify-between items-end mb-2">
               {/* Max earning potential - Bottom Left */}
-              <div className="bg-black/60 backdrop-blur-sm rounded-lg px-3 py-1.5">
-                <div className="text-white/80 text-xs font-medium">Max Earn</div>
-                <div className="text-green-400 font-bold text-sm">
-                  {(coin.max_points * coin.token_multiplier).toLocaleString()} ${coin.symbol}
+              {coin.max_points && coin.token_multiplier && (
+                <div className="bg-black/60 backdrop-blur-sm rounded-lg px-3 py-1.5">
+                  <div className="text-white/80 text-xs font-medium">
+                    Max Earn
+                  </div>
+                  <div className="text-green-400 font-bold text-sm">
+                    {(coin.max_points * coin.token_multiplier).toLocaleString()}{' '}
+                    {coin.symbol ? `$${coin.symbol}` : ''}
+                  </div>
                 </div>
-              </div>
-              
+              )}
+
               {/* Token Multiplier - Bottom Right */}
-              <div className="bg-black/60 backdrop-blur-sm rounded-lg px-3 py-1.5">
-                <div className="text-white/80 text-xs font-medium">Multiplier</div>
-                <div className="text-purple-400 font-bold text-sm">{coin.token_multiplier}x</div>
-              </div>
+              {coin.token_multiplier && (
+                <div className="bg-black/60 backdrop-blur-sm rounded-lg px-3 py-1.5">
+                  <div className="text-white/80 text-xs font-medium">
+                    Multiplier
+                  </div>
+                  <div className="text-purple-400 font-bold text-sm">
+                    {coin.token_multiplier}x
+                  </div>
+                </div>
+              )}
             </div>
-            
+
             {/* Game Title */}
-            <h3 className="text-white font-bold text-xl truncate">
-              {coin.name}
-            </h3>
+            {coin.name && (
+              <h3 className="text-white font-bold text-xl truncate">
+                {coin.name}
+              </h3>
+            )}
           </div>
         </div>
       </div>
 
-      <Link href={`/coins/${coin.id}`}>
-        <button className="bg-purple-600 text-white rounded-full font-semibold w-full mt-4 text-xl py-4 hover:brightness-110 transition-all duration-200 shadow-xl">
-          View Game
-        </button>
-      </Link>
+      {coin.id && (
+        <Link href={`/coins/${coin.id}`}>
+          <button className="bg-purple-600 text-white rounded-full font-semibold w-full mt-4 text-xl py-4 hover:brightness-110 transition-all duration-200 shadow-xl">
+            View Game
+          </button>
+        </Link>
+      )}
 
       {/* Post Actions */}
-      <div className="flex items-center justify-center pt-4 gap-1">
-        Play {coin.name}, earn
-        <span
-          onClick={handleViewCoinClick}
-          className="text-purple-400 cursor-pointer"
-        >
-          ${coin.symbol}
-        </span>
-      </div>
+      {coin.name && coin.symbol && (
+        <div className="flex items-center justify-center pt-4 gap-1">
+          Play {coin.name}, earn
+          <span
+            onClick={handleViewCoinClick}
+            className="text-purple-400 cursor-pointer"
+          >
+            ${coin.symbol}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
