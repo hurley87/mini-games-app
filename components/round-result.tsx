@@ -1,7 +1,7 @@
 'use client';
 
 import { Share2, Home } from 'lucide-react';
-import { TOKEN_MULTIPLIER } from '@/lib/config';
+import { Coin } from '@/lib/types';
 
 interface RoundResultProps {
   score: number;
@@ -9,6 +9,7 @@ interface RoundResultProps {
   onShare: () => void;
   onExit?: () => void;
   error?: string;
+  coin: Coin;
 }
 
 export function RoundResult({
@@ -17,6 +18,7 @@ export function RoundResult({
   onShare,
   onExit,
   error,
+  coin,
 }: RoundResultProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md">
@@ -72,7 +74,7 @@ export function RoundResult({
             <span className="font-bold text-red-400">{error}</span>
           ) : (
             <>
-              {(score * TOKEN_MULTIPLIER).toLocaleString()} ${symbol} tokens
+              {(score * coin.token_multiplier).toLocaleString()} ${symbol} tokens
               will be sent to your wallet
             </>
           )}

@@ -7,7 +7,6 @@ import { SendNotificationRequest } from '@farcaster/frame-node';
 import { NextResponse } from 'next/server';
 import { Address, createPublicClient, http } from 'viem';
 import { base } from 'viem/chains';
-import { PREMIUM_THRESHOLD } from '@/lib/config';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -41,6 +40,7 @@ const decimalsCache = new Map<string, number>();
 
 async function isBelowPremiumThreshold(
   coinAddress: string,
+  premiumThreshold: number,
   walletAddress?: string | null
 ): Promise<boolean> {
   if (!walletAddress) return true;
@@ -72,7 +72,7 @@ async function isBelowPremiumThreshold(
     };
 
     const minimumTokens =
-      BigInt(PREMIUM_THRESHOLD) * powerOfTenBigInt(decimals);
+      BigInt(premiumThreshold) * powerOfTenBigInt(decimals);
     return (balance as bigint) < minimumTokens;
   } catch (err) {
     console.error(
@@ -134,6 +134,7 @@ async function processReminders() {
           if (
             await isBelowPremiumThreshold(
               coin.coinAddress,
+              coin.premium_threshold,
               player.wallet_address
             )
           ) {
@@ -148,6 +149,7 @@ async function processReminders() {
           if (
             await isBelowPremiumThreshold(
               coin.coinAddress,
+              coin.premium_threshold,
               player.wallet_address
             )
           ) {
@@ -162,6 +164,7 @@ async function processReminders() {
           if (
             await isBelowPremiumThreshold(
               coin.coinAddress,
+              coin.premium_threshold,
               player.wallet_address
             )
           ) {

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { usePlayStatus } from '@/hooks/usePlayStatus';
 import { useAccount, useConnect } from 'wagmi';
-import { Creator } from '@/lib/types';
+import { Creator, Coin } from '@/lib/types';
 import { Coins, Share2 } from 'lucide-react';
 import {
   formatTokenBalance,
@@ -17,7 +17,6 @@ import { CoinLeaderboard } from './coin-leaderboard';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Button } from '@/components/ui/button';
 import { EnhancedAuthScreen } from './enhanced-auth-screen';
-import { PREMIUM_THRESHOLD, TOKEN_MULTIPLIER } from '@/lib/config';
 import { BottomNav } from './bottom-nav';
 import { useMiniApp } from '@/contexts/miniapp-context';
 import { trackGameEvent } from '@/lib/posthog';
@@ -32,6 +31,7 @@ interface InfoProps {
   creator?: Creator;
   onPlay: () => void;
   coinId: string;
+  coin: Coin;
 }
 
 export function Info({
@@ -44,6 +44,7 @@ export function Info({
   creator,
   onPlay,
   coinId,
+  coin,
 }: InfoProps) {
   const { context } = useMiniApp();
   const { playStatus, isLoading, error, checkPlayStatus } = usePlayStatus();
@@ -415,7 +416,7 @@ export function Info({
                     Premium Access Required
                   </h3>
                   <p className="text-xs text-amber-300 mt-1">
-                    You need at least {formatNumber(PREMIUM_THRESHOLD)} {symbol}{' '}
+                    You need at least {formatNumber(coin.premium_threshold)} {symbol}{' '}
                     tokens or wait{' '}
                     {formatTimeUntil(playStatus.nextFreePlayTime!)} for your
                     next free play.
@@ -498,14 +499,14 @@ export function Info({
                   onClick={handleSwap}
                   className="px-4 py-4 rounded-full font-semibold shadow-xl shadow-purple-500/20 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white transition-all duration-200 text-lg w-full"
                 >
-                  Get {formatNumber(PREMIUM_THRESHOLD)} ${symbol}
+                  Get {formatNumber(coin.premium_threshold)} ${symbol}
                 </button>
                 <div className="bg-gradient-to-r from-purple-900/40 to-blue-900/40 p-4 rounded-lg border border-purple-500/20">
                   <h3 className="text-sm font-semibold text-purple-200 mb-2">
                     🎮 Unlock Unlimited Access
                   </h3>
                   <p className="text-xs text-white/70 leading-relaxed mb-3">
-                    Hold {formatNumber(PREMIUM_THRESHOLD)} ${symbol} tokens to
+                    Hold {formatNumber(coin.premium_threshold)} ${symbol} tokens to
                     enjoy unlimited gameplay with no waiting periods or
                     restrictions.
                   </p>
@@ -791,13 +792,13 @@ export function Info({
                 <div className="flex justify-between items-center py-1 px-2 bg-black/20 rounded">
                   <span className="text-yellow-300/70">Token Multiplier:</span>
                   <span className="text-yellow-200 font-mono">
-                    {formatNumber(TOKEN_MULTIPLIER)}
+                    {formatNumber(coin.token_multiplier)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-1 px-2 bg-black/20 rounded">
                   <span className="text-yellow-300/70">Premium Threshold:</span>
                   <span className="text-yellow-200 font-mono">
-                    {formatNumber(PREMIUM_THRESHOLD)} ${symbol}
+                    {formatNumber(coin.premium_threshold)} ${symbol}
                   </span>
                 </div>
               </div>
