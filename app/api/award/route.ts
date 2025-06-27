@@ -155,13 +155,23 @@ export async function POST(request: Request) {
       );
     }
 
-    // 7.5. Basic validation - reservation ID is legacy but still expected for now
-    // Note: We're transitioning away from the reservation system to database-based tracking
-    if (!reservationId || typeof reservationId !== 'string') {
-      console.warn(
-        'Missing reservation ID - continuing with database-based tracking only'
+    // 7.5. Check database-based daily play limit before processing
+    const currentDailyPlayCount = await supabaseService.getDailyPlayCount(
+      authenticatedFid,
+      coinId
+    );
+    const maxAllowedPlays = coin.max_plays || 3;
+
+    if (currentDailyPlayCount >= maxAllowedPlays) {
+      return NextResponse.json(
+        {
+          error: 'Daily play limit exceeded for this game',
+          limit: maxAllowedPlays,
+          remaining: 0,
+          currentPlays: currentDailyPlayCount,
+        },
+        { status: 429, headers }
       );
-      // Don't return error, just log and continue
     }
 
     // 9. Check daily points limit before any database writes
@@ -222,6 +232,29 @@ export async function POST(request: Request) {
       // We'll still return success since the user got their points
     }
 
+    // 10.6. Clean up Redis reservation if provided (during transition period)
+    if (reservationId && typeof reservationId === 'string') {
+      try {
+        const redisCommitSuccess = await RateLimiter.commitDailyPlaySlot(
+          authenticatedFid,
+          coinId,
+          reservationId
+        );
+        if (!redisCommitSuccess) {
+          console.warn('Failed to commit Redis reservation (non-critical):', {
+            reservationId,
+            authenticatedFid,
+            coinId,
+          });
+        }
+      } catch (error) {
+        console.warn(
+          'Error committing Redis reservation (non-critical):',
+          error
+        );
+      }
+    }
+
     // 11. Save the score to the scores table (after successful point increment)
     const { error: scoreError } = await supabaseService.from('scores').insert([
       {
@@ -264,12 +297,11 @@ export async function POST(request: Request) {
     }
 
     // Get updated play count for response
-    const currentPlayCount = await supabaseService.getDailyPlayCount(
+    const finalPlayCount = await supabaseService.getDailyPlayCount(
       authenticatedFid,
       coinId
     );
-    const maxDailyPlays = coin.max_plays || 3;
-    const playsRemaining = Math.max(0, maxDailyPlays - currentPlayCount);
+    const playsRemaining = Math.max(0, maxAllowedPlays - finalPlayCount);
 
     return NextResponse.json(
       {
@@ -277,7 +309,8 @@ export async function POST(request: Request) {
         score,
         dailyPointsRemaining: dailyLimitResult.remaining,
         playsRemaining,
-        maxDailyPlays,
+        maxDailyPlays: maxAllowedPlays,
+        currentDailyPlays: finalPlayCount,
         playRecorded: commitSuccess,
       },
       { headers }

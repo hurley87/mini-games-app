@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { RateLimiter } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,26 +36,19 @@ export async function POST(request: Request) {
       );
     }
 
-    // Release the play slot reservation
-    const released = await RateLimiter.releaseDailyPlaySlot(
-      authenticatedFid,
+    // Since we're using database-based tracking, there's nothing to release
+    // This endpoint is kept for backward compatibility with existing clients
+    console.log('Release play called (no-op with database tracking):', {
+      fid: authenticatedFid,
       coinId,
-      reservationId
-    );
-
-    if (!released) {
-      // This is not necessarily an error - the reservation might have already expired
-      console.warn('Failed to release play slot - likely already expired:', {
-        fid: authenticatedFid,
-        coinId,
-        reservationId,
-      });
-    }
+      reservationId,
+    });
 
     return NextResponse.json(
       {
         success: true,
-        released,
+        released: true,
+        message: 'Database-based tracking - no reservation to release',
       },
       { headers }
     );

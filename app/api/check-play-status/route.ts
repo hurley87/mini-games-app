@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseService } from '@/lib/supabase';
 import { createPublicClient, http, Address } from 'viem';
 import { base } from 'viem/chains';
-import { RateLimiter } from '@/lib/rate-limit';
 import { PREMIUM_THRESHOLD } from '@/lib/config';
 
 const rpcUrl = process.env.RPC_URL!;
@@ -59,24 +58,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Coin not found' }, { status: 404 });
     }
 
-    // Check current daily play count
+    // Check current daily play count using database-based tracking
     const currentDailyPlays = await supabaseService.getDailyPlayCount(
       fid,
       coinId
     );
     const maxDailyPlays = coin.max_plays || 3; // Default to 3 if not set
     const dailyPlaysRemaining = Math.max(0, maxDailyPlays - currentDailyPlays);
-
-    // Debug: Also check Redis for comparison during transition
-    const redisPlays = await RateLimiter.getDailyPlayCount(fid, coinId);
-    console.log('📊 Daily play comparison:', {
-      database: currentDailyPlays,
-      redis: redisPlays,
-      coinId,
-      fid,
-      maxDailyPlays,
-      dailyPlaysRemaining,
-    });
 
     // Check if player has played this game before
     const gamePlay = await supabaseService.getGamePlayRecord(fid, coinId);

@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { supabaseService } from '@/lib/supabase';
-import { RateLimiter } from '@/lib/rate-limit';
 import { SecurityService } from '@/lib/security';
 
 export const dynamic = 'force-dynamic';
@@ -55,68 +54,50 @@ export async function POST(request: Request) {
     }
 
     // Verify the game exists and get coin data
-    let coin = null;
-    let coinCheckError = null;
-
-    // First try to find by ID
-    const { data: coinById, error: idError } = await supabaseService
-      .from('coins')
-      .select('id, coin_address, max_plays')
-      .eq('id', coinId)
-      .single();
-
-    if (coinById) {
-      coin = coinById;
-    } else {
-      // If not found by ID, try by coin_address
-      const { data: coinByAddress, error: addressError } = await supabaseService
-        .from('coins')
-        .select('id, coin_address, max_plays')
-        .eq('coin_address', coinId)
-        .single();
-
-      if (coinByAddress) {
-        coin = coinByAddress;
-      } else {
-        coinCheckError = addressError || idError;
-      }
-    }
-
+    const coin = await supabaseService.getCoinById(coinId);
     if (!coin) {
-      console.error('Coin not found by ID or address:', coinId, coinCheckError);
+      console.error('Coin not found:', coinId);
       return NextResponse.json(
         { error: 'Coin not found' },
         { status: 404, headers }
       );
     }
 
-    // Reserve a play slot
-    const maxDailyPlays = coin.max_plays || 3; // Default to 3 if not set
-    const reservationResult = await RateLimiter.reserveDailyPlaySlot(
+    // Check database-based daily play limit
+    const currentDailyPlays = await supabaseService.getDailyPlayCount(
       authenticatedFid,
-      coinId,
-      maxDailyPlays
+      coinId
     );
+    const maxDailyPlays = coin.max_plays || 3; // Default to 3 if not set
 
-    if (!reservationResult.success) {
+    if (currentDailyPlays >= maxDailyPlays) {
       return NextResponse.json(
         {
           error: 'Daily play limit exceeded for this game',
-          limit: reservationResult.limit,
-          remaining: reservationResult.remaining,
-          resetAt: reservationResult.reset,
+          limit: maxDailyPlays,
+          remaining: 0,
+          currentPlays: currentDailyPlays,
+          resetAt: Date.now() + 86400 * 1000, // 24 hours from now
         },
         { status: 429, headers }
       );
     }
 
+    // Generate a simple reservation ID for backward compatibility
+    // This is now just a token for the client, not used for Redis tracking
+    const reservationId = `db-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+
+    const playsRemaining = maxDailyPlays - currentDailyPlays;
+
     return NextResponse.json(
       {
         success: true,
-        reservationId: reservationResult.reservationId,
-        limit: reservationResult.limit,
-        remaining: reservationResult.remaining,
-        resetAt: reservationResult.reset,
+        reservationId, // For backward compatibility
+        limit: maxDailyPlays,
+        remaining: playsRemaining,
+        currentPlays: currentDailyPlays,
+        resetAt: Date.now() + 86400 * 1000, // 24 hours from now
+        message: 'Database-based play tracking (Redis-free)',
       },
       { headers }
     );
