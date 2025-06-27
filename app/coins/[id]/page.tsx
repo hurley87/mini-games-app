@@ -16,10 +16,8 @@ export async function generateMetadata({
   const { id } = await params;
   const coin = await supabaseService.getCoinById(id);
 
-  // Ensure all URLs are absolute for Farcaster frames
-  const imageUrl = coin.image?.startsWith('http')
-    ? coin.image
-    : `${appUrl}/logo.png`;
+  // Use dynamic OG image
+  const imageUrl = `${appUrl}/api/og/${id}`;
 
   const frame = {
     version: 'next',
