@@ -59,12 +59,14 @@ export function Game({
   const [isGameOver, setIsGameOver] = useState(false);
   const [hasTokens, setHasTokens] = useState(false);
   const [checkingTokens, setCheckingTokens] = useState(true);
-  const [roundScore, setRoundScore] = useState<number | null>(null);
   const [tokenDecimals, setTokenDecimals] = useState<number>(18); // Default to 18, will be fetched
   const { context } = useMiniApp();
   const { address, isConnected } = useAccount();
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const roundScoreRef = useRef<number>(0);
+  const onRoundCompleteRef = useRef(onRoundComplete);
+  const onScoreUpdateRef = useRef(onScoreUpdate);
+  const isGameOverRef = useRef(isGameOver);
 
   // Define iframeUrl early to avoid declaration order issues
   const fid = context?.user?.fid;
@@ -72,6 +74,13 @@ export function Game({
 
   console.log('GAME');
   console.log('coinId', coinId);
+
+  // Keep refs in sync with props and state
+  useEffect(() => {
+    onRoundCompleteRef.current = onRoundComplete;
+    onScoreUpdateRef.current = onScoreUpdate;
+    isGameOverRef.current = isGameOver;
+  });
 
   // Fetch token decimals when component mounts
   useEffect(() => {
@@ -112,40 +121,23 @@ export function Game({
         } catch (error) {
           console.error('Error triggering haptic:', error);
         }
-
-        if (typeof score === 'number') {
-          // Accumulate points instead of overwriting
-          setRoundScore((prev) => {
-            const newScore = (prev || 0) + score;
-            roundScoreRef.current = newScore; // Keep ref in sync
-            console.log(
-              '🎯 Game: Accumulating score from',
-              prev,
-              'to',
-              newScore,
-              '(+' + score + ')'
-            );
-            onScoreUpdate?.(newScore);
-            return newScore;
-          });
-        }
       } else if (event.data && event.data.type === 'game-over') {
-        if (isGameOver) return; // Prevent duplicate execution
+        if (isGameOverRef.current) return; // Prevent duplicate execution
 
         const currentScore = roundScoreRef.current;
         console.log(
           '🏁 Game: Game over message received, final score:',
           currentScore
         );
-        onScoreUpdate?.(currentScore);
-        onRoundComplete?.(currentScore);
+        onScoreUpdateRef.current?.(currentScore);
+        onRoundCompleteRef.current?.(currentScore);
         setIsGameOver(true);
       }
     };
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [onRoundComplete, onScoreUpdate, iframeUrl, isGameOver]);
+  }, [iframeUrl]);
 
   // Check token balance
   useEffect(() => {
