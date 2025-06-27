@@ -61,6 +61,16 @@ export type GamePlay = {
   coin_address: string;
 };
 
+export type DailyPlay = {
+  id?: string;
+  fid: number;
+  coin_id: string;
+  play_date: string;
+  play_count: number;
+  created_at?: string;
+  updated_at?: string;
+};
+
 export type PlayerRank = {
   fid: number;
   username: string;
@@ -783,6 +793,373 @@ export const supabaseService = {
     const streakData = Array.isArray(data) ? data[0] : data;
 
     return { streak: streakData.streak as number, claimed: true };
+  },
+
+  // Daily Play Tracking (Database-based)
+  async getDailyPlayCount(fid: number, coinId: string): Promise<number> {
+    const today = new Date().toISOString().split('T')[0];
+
+    try {
+      const { data, error } = await supabase
+        .from('daily_plays')
+        .select('play_count')
+        .eq('fid', fid)
+        .eq('coin_id', coinId)
+        .eq('play_date', today)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error getting daily play count:', error);
+        return 0;
+      }
+
+      return data?.play_count || 0;
+    } catch (error) {
+      console.error('Error getting daily play count:', error);
+      return 0;
+    }
+  },
+
+  /**
+   * Atomically checks daily play limit and increments count if allowed
+   * This prevents race conditions where multiple concurrent requests could bypass the limit
+   */
+  async incrementDailyPlayCountIfAllowed(
+    fid: number,
+    coinId: string,
+    maxPlays: number
+  ): Promise<{
+    success: boolean;
+    currentPlays: number;
+    playsRemaining: number;
+    message?: string;
+  }> {
+    const today = new Date().toISOString().split('T')[0];
+
+    try {
+      // Use a database transaction to atomically check and increment
+      const { data, error } = await supabase.rpc(
+        'increment_daily_play_count_if_allowed',
+        {
+          p_fid: fid,
+          p_coin_id: coinId,
+          p_play_date: today,
+          p_max_plays: maxPlays,
+        }
+      );
+
+      if (error) {
+        console.error('Error in atomic play count increment:', error);
+
+        // If the RPC function doesn't exist, fall back to manual transaction
+        if (error.code === '42883') {
+          // function does not exist
+          return await this.incrementDailyPlayCountManualTransaction(
+            fid,
+            coinId,
+            maxPlays
+          );
+        }
+
+        throw new Error('Failed to increment daily play count');
+      }
+
+      return {
+        success: data.success,
+        currentPlays: data.current_plays,
+        playsRemaining: Math.max(0, maxPlays - data.current_plays),
+        message: data.message,
+      };
+    } catch (error) {
+      console.error('Error incrementing daily play count:', error);
+      return {
+        success: false,
+        currentPlays: 0,
+        playsRemaining: maxPlays,
+        message: 'Failed to check play limit',
+      };
+    }
+  },
+
+  /**
+   * Fallback manual transaction for atomic play count increment
+   * Used when the RPC function is not available
+   */
+  async incrementDailyPlayCountManualTransaction(
+    fid: number,
+    coinId: string,
+    maxPlays: number
+  ): Promise<{
+    success: boolean;
+    currentPlays: number;
+    playsRemaining: number;
+    message?: string;
+  }> {
+    const today = new Date().toISOString().split('T')[0];
+
+    try {
+      // Since upsert doesn't allow conditional updates with WHERE clauses,
+      // we need to use a different approach: raw SQL with atomic increment
+      const { data: updateResult, error: updateError } = await supabase.rpc(
+        'increment_play_count_with_limit_check',
+        {
+          p_fid: fid,
+          p_coin_id: coinId,
+          p_play_date: today,
+          p_max_plays: maxPlays,
+        }
+      );
+
+      // If the specific RPC doesn't exist, fall back to a safer manual approach
+      if (updateError && updateError.code === '42883') {
+        return await this.safeManualIncrement(fid, coinId, maxPlays);
+      }
+
+      if (updateError) {
+        console.error('Error in RPC increment:', updateError);
+        const currentCount = await this.getDailyPlayCount(fid, coinId);
+        return {
+          success: false,
+          currentPlays: currentCount,
+          playsRemaining: Math.max(0, maxPlays - currentCount),
+          message: 'Failed to increment play count',
+        };
+      }
+
+      return {
+        success: updateResult.success,
+        currentPlays: updateResult.current_plays,
+        playsRemaining: Math.max(0, maxPlays - updateResult.current_plays),
+        message: updateResult.message,
+      };
+    } catch (error) {
+      console.error('Error in manual transaction:', error);
+      return {
+        success: false,
+        currentPlays: 0,
+        playsRemaining: maxPlays,
+        message: 'Failed to increment play count',
+      };
+    }
+  },
+
+  /**
+   * Safe manual increment using retry logic with exponential backoff
+   * This is the final fallback when no atomic operations are available
+   */
+  async safeManualIncrement(
+    fid: number,
+    coinId: string,
+    maxPlays: number,
+    maxRetries: number = 3
+  ): Promise<{
+    success: boolean;
+    currentPlays: number;
+    playsRemaining: number;
+    message?: string;
+  }> {
+    const today = new Date().toISOString().split('T')[0];
+
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        // Add jitter to reduce thundering herd
+        if (attempt > 0) {
+          const delay = Math.min(
+            100 * Math.pow(2, attempt) + Math.random() * 50,
+            1000
+          );
+          await new Promise((resolve) => setTimeout(resolve, delay));
+        }
+
+        // Get current count
+        const { data: existing, error: selectError } = await supabase
+          .from('daily_plays')
+          .select('play_count')
+          .eq('fid', fid)
+          .eq('coin_id', coinId)
+          .eq('play_date', today)
+          .single();
+
+        if (selectError && selectError.code !== 'PGRST116') {
+          throw selectError;
+        }
+
+        const currentPlays = existing?.play_count || 0;
+
+        // Check limit
+        if (currentPlays >= maxPlays) {
+          return {
+            success: false,
+            currentPlays,
+            playsRemaining: 0,
+            message: 'Daily play limit reached',
+          };
+        }
+
+        const newPlayCount = currentPlays + 1;
+
+        // Try to update/insert atomically
+        if (existing) {
+          // Update existing record only if play_count hasn't changed (optimistic locking)
+          const { data: updateData, error: updateError } = await supabase
+            .from('daily_plays')
+            .update({
+              play_count: newPlayCount,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('fid', fid)
+            .eq('coin_id', coinId)
+            .eq('play_date', today)
+            .eq('play_count', currentPlays) // Only update if count hasn't changed
+            .select('play_count');
+
+          if (updateError) {
+            throw updateError;
+          }
+
+          // If no rows were updated, it means another request modified the count
+          if (!updateData || updateData.length === 0) {
+            // Retry on next iteration
+            continue;
+          }
+
+          const finalCount = updateData[0].play_count;
+
+          // Final safety check
+          if (finalCount > maxPlays) {
+            return {
+              success: false,
+              currentPlays: finalCount,
+              playsRemaining: 0,
+              message: 'Play limit exceeded',
+            };
+          }
+
+          return {
+            success: true,
+            currentPlays: finalCount,
+            playsRemaining: Math.max(0, maxPlays - finalCount),
+          };
+        } else {
+          // Insert new record
+          const { error: insertError } = await supabase
+            .from('daily_plays')
+            .insert({
+              fid,
+              coin_id: coinId,
+              play_date: today,
+              play_count: 1,
+            });
+
+          if (insertError) {
+            // If unique constraint violation, another request created the record
+            if (insertError.code === '23505') {
+              // Retry on next iteration
+              continue;
+            }
+            throw insertError;
+          }
+
+          return {
+            success: true,
+            currentPlays: 1,
+            playsRemaining: Math.max(0, maxPlays - 1),
+          };
+        }
+      } catch (error) {
+        console.error(`Attempt ${attempt + 1} failed:`, error);
+        if (attempt === maxRetries - 1) {
+          // Final attempt failed
+          const currentCount = await this.getDailyPlayCount(fid, coinId);
+          return {
+            success: false,
+            currentPlays: currentCount,
+            playsRemaining: Math.max(0, maxPlays - currentCount),
+            message: 'Failed to increment after retries',
+          };
+        }
+      }
+    }
+
+    // This should never be reached, but just in case
+    const currentCount = await this.getDailyPlayCount(fid, coinId);
+    return {
+      success: false,
+      currentPlays: currentCount,
+      playsRemaining: Math.max(0, maxPlays - currentCount),
+      message: 'Maximum retries exceeded',
+    };
+  },
+
+  async incrementDailyPlayCount(fid: number, coinId: string): Promise<boolean> {
+    const today = new Date().toISOString().split('T')[0];
+
+    try {
+      // First, try to get existing record
+      const { data: existing } = await supabase
+        .from('daily_plays')
+        .select('play_count')
+        .eq('fid', fid)
+        .eq('coin_id', coinId)
+        .eq('play_date', today)
+        .single();
+
+      if (existing) {
+        // Update existing record
+        const { error } = await supabase
+          .from('daily_plays')
+          .update({
+            play_count: existing.play_count + 1,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('fid', fid)
+          .eq('coin_id', coinId)
+          .eq('play_date', today);
+
+        if (error) {
+          console.error('Error updating daily play count:', error);
+          return false;
+        }
+      } else {
+        // Insert new record
+        const { error } = await supabase.from('daily_plays').insert({
+          fid,
+          coin_id: coinId,
+          play_date: today,
+          play_count: 1,
+        });
+
+        if (error) {
+          console.error('Error inserting daily play count:', error);
+          return false;
+        }
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error incrementing daily play count:', error);
+      return false;
+    }
+  },
+
+  async canUserPlay(
+    fid: number,
+    coinId: string,
+    maxPlays: number
+  ): Promise<{
+    canPlay: boolean;
+    currentPlays: number;
+    playsRemaining: number;
+  }> {
+    const currentPlays = await this.getDailyPlayCount(fid, coinId);
+    const canPlay = currentPlays < maxPlays;
+    const playsRemaining = Math.max(0, maxPlays - currentPlays);
+
+    return {
+      canPlay,
+      currentPlays,
+      playsRemaining,
+    };
   },
 
   // Add direct access to supabase client

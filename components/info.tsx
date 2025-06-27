@@ -20,6 +20,7 @@ import { EnhancedAuthScreen } from './enhanced-auth-screen';
 import { PREMIUM_THRESHOLD, TOKEN_MULTIPLIER } from '@/lib/config';
 import { BottomNav } from './bottom-nav';
 import { useMiniApp } from '@/contexts/miniapp-context';
+import { trackGameEvent } from '@/lib/posthog';
 
 interface InfoProps {
   name: string;
@@ -69,24 +70,41 @@ export function Info({
     e: React.MouseEvent<HTMLButtonElement, MouseEvent>
   ) => {
     e.preventDefault();
-    if (isStartingGame) return; // Prevent multiple clicks
+    e.stopPropagation();
 
-    console.log('🎮 Info: Starting game...');
+    // Prevent play if daily limit is reached or already starting
+    if (playStatus?.reason === 'daily_limit_reached' || isStartingGame) {
+      return;
+    }
+
     setIsStartingGame(true);
+
+    try {
+      await sdk.haptics.impactOccurred('medium');
+    } catch (error) {
+      console.error('Haptics error:', error);
+    }
+
+    // Track game start
+    trackGameEvent.gameStart(coinId, name, coinAddress);
 
     try {
       await onPlay();
     } catch (error) {
-      console.error('Error starting game:', error);
+      console.error('Failed to start game:', error);
     } finally {
-      // Reset loading state after a delay to prevent rapid clicking
-      setTimeout(() => setIsStartingGame(false), 1000);
+      setIsStartingGame(false);
     }
   };
 
   // Check play status on mount and when dependencies change
   useEffect(() => {
     if (context?.user?.fid && !hasCheckedStatus) {
+      console.log('🎯 Info: Initial play status check', {
+        coinId,
+        coinAddress,
+        fid: context.user.fid,
+      });
       checkPlayStatus(coinId, coinAddress);
       setHasCheckedStatus(true);
     }
@@ -113,6 +131,44 @@ export function Info({
     hasCheckedStatus,
     checkPlayStatus,
   ]);
+
+  // Periodically refresh play status to ensure it's up to date
+  useEffect(() => {
+    if (!context?.user?.fid || !hasCheckedStatus) return;
+
+    const interval = setInterval(() => {
+      console.log('🔄 Info: Periodic refresh of play status');
+      checkPlayStatus(coinId, coinAddress);
+    }, 10000); // Refresh every 10 seconds
+
+    return () => clearInterval(interval);
+  }, [
+    context?.user?.fid,
+    coinId,
+    coinAddress,
+    hasCheckedStatus,
+    checkPlayStatus,
+  ]);
+
+  // Manual refresh function
+  const handleRefreshPlayStatus = () => {
+    console.log('🔄 Info: Manual refresh of play status');
+    checkPlayStatus(coinId, coinAddress);
+  };
+
+  // Debug log play status changes
+  useEffect(() => {
+    if (playStatus) {
+      console.log('🎯 Info: Play status updated:', {
+        canPlay: playStatus.canPlay,
+        reason: playStatus.reason,
+        dailyPlaysRemaining: playStatus.dailyPlaysRemaining,
+        maxDailyPlays: playStatus.maxDailyPlays,
+        currentDailyPlays: playStatus.currentDailyPlays,
+        hasPlayed: playStatus.hasPlayed,
+      });
+    }
+  }, [playStatus]);
 
   const handleViewProfile = async () => {
     try {
@@ -170,9 +226,12 @@ export function Info({
 
   if (error) {
     // If it's an authentication error, show the enhanced auth screen
-    if (error.includes('not authenticated') || error.includes('Failed to check play status')) {
+    if (
+      error.includes('not authenticated') ||
+      error.includes('Failed to check play status')
+    ) {
       return (
-        <EnhancedAuthScreen 
+        <EnhancedAuthScreen
           onAuthSuccess={() => {
             // Reset the error and retry checking play status
             setHasCheckedStatus(false);
@@ -180,7 +239,7 @@ export function Info({
         />
       );
     }
-    
+
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4">
         <div className="bg-black/20 backdrop-blur rounded-2xl shadow-xl p-8 text-center max-w-md border border-white/20">
@@ -306,6 +365,35 @@ export function Info({
           </div>
 
           {/* Warning/Status Section */}
+          {playStatus.reason === 'daily_limit_reached' && (
+            <div className="p-6 bg-red-900/30 border-b border-red-700/30">
+              <div className="flex items-start space-x-3">
+                <div className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <svg
+                    className="w-4 h-4 text-red-400"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-red-200">
+                    Daily Play Limit Reached
+                  </h3>
+                  <p className="text-xs text-red-300 mt-1">
+                    You&apos;ve used all {playStatus.maxDailyPlays} of your
+                    daily plays for this game. Come back tomorrow for more free
+                    plays!
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
           {playStatus.reason === 'wait_for_free' && (
             <div className="p-6 bg-amber-900/30 border-b border-amber-700/30">
               <div className="flex items-start space-x-3">
@@ -530,14 +618,25 @@ export function Info({
             <p className="text-sm text-white/70 leading-relaxed">
               {description}
             </p>
-            <button
-              type="button"
-              onClick={handlePlay}
-              disabled={isStartingGame}
-              className="w-full bg-purple-600 text-white px-4 py-4 rounded-full font-semibold shadow-xl shadow-purple-500/20 hover:brightness-110 transition-all duration-200 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isStartingGame ? 'Starting...' : 'PLAY'}
-            </button>
+            <div className="pt-0 w-full">
+              <button
+                onClick={handlePlay}
+                disabled={
+                  playStatus.reason === 'daily_limit_reached' || isStartingGame
+                }
+                className={`w-full py-4 px-6 rounded-2xl font-bold text-lg transition-all duration-200 shadow-xl ${
+                  playStatus.reason === 'daily_limit_reached' || isStartingGame
+                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed shadow-gray-500/20'
+                    : 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-purple-500/20'
+                }`}
+              >
+                {playStatus.reason === 'daily_limit_reached'
+                  ? 'Daily Limit Reached'
+                  : isStartingGame
+                    ? 'Starting Game...'
+                    : 'PLAY'}
+              </button>
+            </div>
           </div>
         )}
 
@@ -569,6 +668,59 @@ export function Info({
                       : 'Play for free on your first attempt!'}
                   </p>
                 </div>
+              </div>
+            </div>
+          )}
+
+        {/* Daily Plays Counter */}
+        {playStatus.dailyPlaysRemaining !== undefined &&
+          playStatus.maxDailyPlays !== undefined &&
+          playStatus.reason !== 'daily_limit_reached' && (
+            <div className="p-6 bg-blue-900/20 border-b border-blue-700/30">
+              <div className="flex items-start justify-between">
+                <div className="flex items-start space-x-3">
+                  <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <svg
+                      className="w-4 h-4 text-blue-400"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-blue-200">
+                      Daily Plays
+                    </h3>
+                    <p className="text-xs text-blue-300 mt-1">
+                      {playStatus.dailyPlaysRemaining} of{' '}
+                      {playStatus.maxDailyPlays} plays remaining today
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleRefreshPlayStatus}
+                  className="text-blue-400 hover:text-blue-300 p-1 rounded transition-colors"
+                  title="Refresh play status"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                    />
+                  </svg>
+                </button>
               </div>
             </div>
           )}
