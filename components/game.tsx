@@ -6,8 +6,8 @@ import { useAccount } from 'wagmi';
 import { Address, createPublicClient, http } from 'viem';
 import { base } from 'viem/chains';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { PREMIUM_THRESHOLD } from '@/lib/config';
 import { useMiniApp } from '@/contexts/miniapp-context';
+import { Coin } from '@/lib/types';
 
 const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL!;
 
@@ -42,6 +42,7 @@ interface GameProps {
   onRoundComplete?: (score: number) => void;
   forceEnd?: boolean;
   hasPlayedBefore?: boolean;
+  coin: Coin;
 }
 
 export function Game({
@@ -52,6 +53,7 @@ export function Game({
   onRoundComplete,
   forceEnd = false,
   hasPlayedBefore = false,
+  coin,
 }: GameProps) {
   const [loading, setLoading] = useState(true);
   const [isGameOver, setIsGameOver] = useState(false);
@@ -167,7 +169,7 @@ export function Game({
         };
 
         const minimumTokens =
-          BigInt(PREMIUM_THRESHOLD) * powerOfTenBigInt(tokenDecimals);
+          BigInt(coin.premium_threshold) * powerOfTenBigInt(tokenDecimals);
         const tokenBalance = balance >= minimumTokens;
         setHasTokens(tokenBalance);
       } catch (error) {

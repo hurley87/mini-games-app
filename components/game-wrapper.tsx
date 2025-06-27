@@ -5,14 +5,14 @@ import { Info } from './info';
 import { Game } from './game';
 import { RoundResult } from './round-result';
 import { GameFinished } from './game-finished';
-import { Creator } from '@/lib/types';
+import { Creator, Coin } from '@/lib/types';
 import { ArrowLeft, Clock } from 'lucide-react';
 import { Button } from './ui/button';
 import { trackGameEvent, trackEvent } from '@/lib/posthog';
 import { sentryTracker, setSentryTags } from '@/lib/sentry';
 import { sdk } from '@farcaster/frame-sdk';
-import { TOKEN_MULTIPLIER } from '@/lib/config';
 import { usePlayStatus } from '@/hooks/usePlayStatus';
+import { LoadingSpinner } from './ui/loading-spinner';
 
 interface GameWrapperProps {
   id: string;
@@ -50,9 +50,43 @@ export function GameWrapper({
   const [gameFinished, setGameFinished] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [reservationId, setReservationId] = useState<string | null>(null);
+  const [coin, setCoin] = useState<Coin | null>(null);
+  const [coinLoading, setCoinLoading] = useState(true);
   const { playStatus } = usePlayStatus();
 
   console.log('coinId', coinId);
+
+  // Fetch coin data
+  useEffect(() => {
+    const fetchCoinData = async () => {
+      try {
+        setCoinLoading(true);
+        const response = await fetch(`/api/coins/${coinId}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch coin data');
+        }
+        const coinData = await response.json();
+        setCoin(coinData);
+      } catch (error) {
+        console.error('Error fetching coin data:', error);
+        sentryTracker.gameError(
+          error instanceof Error ? error : new Error('Failed to fetch coin data'),
+          {
+            game_id: id,
+            game_name: name,
+            coin_address: coinAddress,
+            action: 'fetch_coin_data',
+          }
+        );
+      } finally {
+        setCoinLoading(false);
+      }
+    };
+
+    if (coinId) {
+      fetchCoinData();
+    }
+  }, [coinId, id, name, coinAddress]);
 
   const handleRoundComplete = (score: number) => {
     try {
@@ -238,7 +272,7 @@ export function GameWrapper({
               ? '🎉'
               : '🎮';
       const shareText = `${scoreEmoji} Just earned ${(
-        finalScore * TOKEN_MULTIPLIER
+        finalScore * (coin?.token_multiplier || 1000)
       ).toLocaleString()} $${symbol} tokens playing ${name}!\n\nThink you can beat my score? 🎯`;
 
       // Use Farcaster SDK to compose cast
@@ -392,8 +426,34 @@ export function GameWrapper({
       gameFinished,
       isCreatingScore,
       isScoreCreated,
+      coinLoading,
+      hasCoin: !!coin,
     });
-  }, [showGame, showResult, gameFinished, isCreatingScore, isScoreCreated]);
+  }, [showGame, showResult, gameFinished, isCreatingScore, isScoreCreated, coinLoading, coin]);
+
+  // Show loading state while fetching coin data
+  if (coinLoading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="flex flex-col items-center space-y-4">
+          <LoadingSpinner />
+          <div className="text-white/70">Loading game data...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error if coin data failed to load
+  if (!coin) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center p-8">
+          <div className="text-red-400 font-medium mb-2">Error</div>
+          <div className="text-white/70">Failed to load game configuration</div>
+        </div>
+      </div>
+    );
+  }
 
   // Render logic with defensive checks
   // Prioritize showGame when it's true to prevent navigation issues
@@ -429,6 +489,7 @@ export function GameWrapper({
             onRoundComplete={handleRoundComplete}
             forceEnd={forceGameEnd}
             hasPlayedBefore={playStatus?.hasPlayed ?? false}
+            coin={coin}
           />
         </div>
       </div>
@@ -442,6 +503,7 @@ export function GameWrapper({
         onShare={handleShare}
         onExit={handleExit}
         symbol={symbol}
+        coin={coin}
       />
     );
   }
@@ -457,6 +519,7 @@ export function GameWrapper({
         error={saveError}
         onShare={handleShare}
         onExit={handleExit}
+        coin={coin}
       />
     );
   }
@@ -472,6 +535,7 @@ export function GameWrapper({
       creator={creator}
       onPlay={handleGameStart}
       coinId={coinId}
+      coin={coin}
     />
   );
 }

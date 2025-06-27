@@ -2,8 +2,8 @@
 
 import { Button } from './ui/button';
 import { Trophy, Loader2 } from 'lucide-react';
-import { TOKEN_MULTIPLIER } from '@/lib/config';
 import { RoundResult } from './round-result';
+import { Coin } from '@/lib/types';
 
 interface GameFinishedProps {
   score: number;
@@ -14,6 +14,7 @@ interface GameFinishedProps {
   error?: string | null;
   onShare: () => void;
   onExit: () => void;
+  coin: Coin;
 }
 
 export function GameFinished({
@@ -25,6 +26,7 @@ export function GameFinished({
   error,
   onShare,
   onExit,
+  coin,
 }: GameFinishedProps) {
   if (error) {
     return (
@@ -34,6 +36,7 @@ export function GameFinished({
         onShare={onShare}
         onExit={onExit}
         error={error}
+        coin={coin}
       />
     );
   }
@@ -45,6 +48,7 @@ export function GameFinished({
         symbol={symbol}
         onShare={onShare}
         onExit={onExit}
+        coin={coin}
       />
     );
   }
@@ -88,7 +92,7 @@ export function GameFinished({
         <div className="text-sm font-medium text-white/50">
           Save your score to get{' '}
           <span className="font-bold text-white">
-            {(score * TOKEN_MULTIPLIER).toLocaleString()} ${symbol}
+            {(score * coin.token_multiplier).toLocaleString()} ${symbol}
           </span>{' '}
           tokens.
         </div>

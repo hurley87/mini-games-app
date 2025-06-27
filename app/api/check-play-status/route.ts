@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseService } from '@/lib/supabase';
 import { createPublicClient, http, Address } from 'viem';
 import { base } from 'viem/chains';
-import { PREMIUM_THRESHOLD } from '@/lib/config';
 
 const rpcUrl = process.env.RPC_URL!;
 
@@ -142,7 +141,7 @@ export async function POST(request: NextRequest) {
       };
 
       const minimumTokens =
-        BigInt(PREMIUM_THRESHOLD) * powerOfTenBigInt(Number(decimals));
+        BigInt(coin.premium_threshold) * powerOfTenBigInt(Number(decimals));
 
       const hasTokens = balance >= minimumTokens;
 
