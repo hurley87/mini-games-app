@@ -105,15 +105,18 @@ export function GameWrapper({
 
       // Reserve a play slot before starting the game
       console.log('🎯 GameWrapper: Reserving play slot...');
-      const reserveResponse = await fetch('/api/reserve-play', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          coinId,
-        }),
-      });
+      const reserveResponse = await sdk.quickAuth.fetch(
+        `${process.env.NEXT_PUBLIC_URL}/api/reserve-play`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            coinId,
+          }),
+        }
+      );
 
       if (!reserveResponse.ok) {
         const errorData = await reserveResponse.json();
@@ -183,16 +186,19 @@ export function GameWrapper({
             '🎯 GameWrapper: Releasing play reservation on exit:',
             reservationId
           );
-          await fetch('/api/release-play', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              coinId,
-              reservationId,
-            }),
-          });
+          await sdk.quickAuth.fetch(
+            `${process.env.NEXT_PUBLIC_URL}/api/release-play`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                coinId,
+                reservationId,
+              }),
+            }
+          );
           setReservationId(null);
         } catch (releaseError) {
           console.error('Failed to release play reservation:', releaseError);
