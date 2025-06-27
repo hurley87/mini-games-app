@@ -208,7 +208,7 @@ export function CoinCard({ coin }: CoinCardProps) {
                   Duration
                 </div>
                 <div className="text-white font-bold text-sm">
-                  {coin.duration}min
+                  {coin.duration}s
                 </div>
               </div>
             )}
