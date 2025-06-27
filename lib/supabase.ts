@@ -40,13 +40,17 @@ type Conversation = {
 };
 
 export type Coin = {
+  id: string;
   fid: number;
-  coinAddress: `0x${string}`;
+  coin_address: string;
   name: string;
   symbol: string;
   description: string;
   parent: string;
   build_id: string;
+  created_at: string;
+  updated_at: string;
+  image: string;
   duration?: number;
   token_multiplier: number;
   premium_threshold: number;
