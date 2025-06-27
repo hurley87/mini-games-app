@@ -58,8 +58,11 @@ export async function GET(
         const build = await supabaseService.getBuildById(coin.build_id);
         if (build?.image) {
           backgroundImage = build.image;
-        } else {
+        } else if (appUrl) {
           backgroundImage = `${appUrl}/logo.png`;
+        } else {
+          // Fall back to gradient if no appUrl is available
+          backgroundImage = 'linear-gradient(45deg, #000, #222)';
         }
       }
     } catch (error) {
