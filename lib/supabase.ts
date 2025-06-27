@@ -61,6 +61,16 @@ export type GamePlay = {
   coin_address: string;
 };
 
+export type DailyPlay = {
+  id?: string;
+  fid: number;
+  coin_id: string;
+  play_date: string;
+  play_count: number;
+  created_at?: string;
+  updated_at?: string;
+};
+
 export type PlayerRank = {
   fid: number;
   username: string;
@@ -783,6 +793,102 @@ export const supabaseService = {
     const streakData = Array.isArray(data) ? data[0] : data;
 
     return { streak: streakData.streak as number, claimed: true };
+  },
+
+  // Daily Play Tracking (Database-based)
+  async getDailyPlayCount(fid: number, coinId: string): Promise<number> {
+    const today = new Date().toISOString().split('T')[0];
+
+    try {
+      const { data, error } = await supabase
+        .from('daily_plays')
+        .select('play_count')
+        .eq('fid', fid)
+        .eq('coin_id', coinId)
+        .eq('play_date', today)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error getting daily play count:', error);
+        return 0;
+      }
+
+      return data?.play_count || 0;
+    } catch (error) {
+      console.error('Error getting daily play count:', error);
+      return 0;
+    }
+  },
+
+  async incrementDailyPlayCount(fid: number, coinId: string): Promise<boolean> {
+    const today = new Date().toISOString().split('T')[0];
+
+    try {
+      // First, try to get existing record
+      const { data: existing } = await supabase
+        .from('daily_plays')
+        .select('play_count')
+        .eq('fid', fid)
+        .eq('coin_id', coinId)
+        .eq('play_date', today)
+        .single();
+
+      if (existing) {
+        // Update existing record
+        const { error } = await supabase
+          .from('daily_plays')
+          .update({
+            play_count: existing.play_count + 1,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('fid', fid)
+          .eq('coin_id', coinId)
+          .eq('play_date', today);
+
+        if (error) {
+          console.error('Error updating daily play count:', error);
+          return false;
+        }
+      } else {
+        // Insert new record
+        const { error } = await supabase.from('daily_plays').insert({
+          fid,
+          coin_id: coinId,
+          play_date: today,
+          play_count: 1,
+        });
+
+        if (error) {
+          console.error('Error inserting daily play count:', error);
+          return false;
+        }
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error incrementing daily play count:', error);
+      return false;
+    }
+  },
+
+  async canUserPlay(
+    fid: number,
+    coinId: string,
+    maxPlays: number
+  ): Promise<{
+    canPlay: boolean;
+    currentPlays: number;
+    playsRemaining: number;
+  }> {
+    const currentPlays = await this.getDailyPlayCount(fid, coinId);
+    const canPlay = currentPlays < maxPlays;
+    const playsRemaining = Math.max(0, maxPlays - currentPlays);
+
+    return {
+      canPlay,
+      currentPlays,
+      playsRemaining,
+    };
   },
 
   // Add direct access to supabase client

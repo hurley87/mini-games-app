@@ -100,6 +100,11 @@ export function Info({
   // Check play status on mount and when dependencies change
   useEffect(() => {
     if (context?.user?.fid && !hasCheckedStatus) {
+      console.log('🎯 Info: Initial play status check', {
+        coinId,
+        coinAddress,
+        fid: context.user.fid,
+      });
       checkPlayStatus(coinId, coinAddress);
       setHasCheckedStatus(true);
     }
@@ -126,6 +131,44 @@ export function Info({
     hasCheckedStatus,
     checkPlayStatus,
   ]);
+
+  // Periodically refresh play status to ensure it's up to date
+  useEffect(() => {
+    if (!context?.user?.fid || !hasCheckedStatus) return;
+
+    const interval = setInterval(() => {
+      console.log('🔄 Info: Periodic refresh of play status');
+      checkPlayStatus(coinId, coinAddress);
+    }, 10000); // Refresh every 10 seconds
+
+    return () => clearInterval(interval);
+  }, [
+    context?.user?.fid,
+    coinId,
+    coinAddress,
+    hasCheckedStatus,
+    checkPlayStatus,
+  ]);
+
+  // Manual refresh function
+  const handleRefreshPlayStatus = () => {
+    console.log('🔄 Info: Manual refresh of play status');
+    checkPlayStatus(coinId, coinAddress);
+  };
+
+  // Debug log play status changes
+  useEffect(() => {
+    if (playStatus) {
+      console.log('🎯 Info: Play status updated:', {
+        canPlay: playStatus.canPlay,
+        reason: playStatus.reason,
+        dailyPlaysRemaining: playStatus.dailyPlaysRemaining,
+        maxDailyPlays: playStatus.maxDailyPlays,
+        currentDailyPlays: playStatus.currentDailyPlays,
+        hasPlayed: playStatus.hasPlayed,
+      });
+    }
+  }, [playStatus]);
 
   const handleViewProfile = async () => {
     try {
@@ -634,29 +677,50 @@ export function Info({
           playStatus.maxDailyPlays !== undefined &&
           playStatus.reason !== 'daily_limit_reached' && (
             <div className="p-6 bg-blue-900/20 border-b border-blue-700/30">
-              <div className="flex items-start space-x-3">
-                <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <div className="flex items-start justify-between">
+                <div className="flex items-start space-x-3">
+                  <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <svg
+                      className="w-4 h-4 text-blue-400"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-blue-200">
+                      Daily Plays
+                    </h3>
+                    <p className="text-xs text-blue-300 mt-1">
+                      {playStatus.dailyPlaysRemaining} of{' '}
+                      {playStatus.maxDailyPlays} plays remaining today
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleRefreshPlayStatus}
+                  className="text-blue-400 hover:text-blue-300 p-1 rounded transition-colors"
+                  title="Refresh play status"
+                >
                   <svg
-                    className="w-4 h-4 text-blue-400"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
                   >
                     <path
-                      fillRule="evenodd"
-                      d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
-                      clipRule="evenodd"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
                     />
                   </svg>
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-blue-200">
-                    Daily Plays
-                  </h3>
-                  <p className="text-xs text-blue-300 mt-1">
-                    {playStatus.dailyPlaysRemaining} of{' '}
-                    {playStatus.maxDailyPlays} plays remaining today
-                  </p>
-                </div>
+                </button>
               </div>
             </div>
           )}

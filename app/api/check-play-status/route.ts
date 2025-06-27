@@ -60,9 +60,23 @@ export async function POST(request: NextRequest) {
     }
 
     // Check current daily play count
-    const currentDailyPlays = await RateLimiter.getDailyPlayCount(fid, coinId);
+    const currentDailyPlays = await supabaseService.getDailyPlayCount(
+      fid,
+      coinId
+    );
     const maxDailyPlays = coin.max_plays || 3; // Default to 3 if not set
     const dailyPlaysRemaining = Math.max(0, maxDailyPlays - currentDailyPlays);
+
+    // Debug: Also check Redis for comparison during transition
+    const redisPlays = await RateLimiter.getDailyPlayCount(fid, coinId);
+    console.log('📊 Daily play comparison:', {
+      database: currentDailyPlays,
+      redis: redisPlays,
+      coinId,
+      fid,
+      maxDailyPlays,
+      dailyPlaysRemaining,
+    });
 
     // Check if player has played this game before
     const gamePlay = await supabaseService.getGamePlayRecord(fid, coinId);

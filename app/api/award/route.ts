@@ -156,28 +156,14 @@ export async function POST(request: Request) {
       );
     }
 
-    // 7.5. Verify the play reservation exists and is valid
-    // Note: The actual daily limit check was done when the reservation was created
-    // This is just a preliminary validation that we have a valid reservation
+    // 7.5. Basic validation - reservation ID is legacy but still expected for now
+    // Note: We're transitioning away from the reservation system to database-based tracking
     if (!reservationId || typeof reservationId !== 'string') {
-      return NextResponse.json(
-        {
-          error:
-            'Invalid or missing reservation ID. Please start the game properly.',
-        },
-        { status: 400, headers }
+      console.warn(
+        'Missing reservation ID - continuing with database-based tracking only'
       );
+      // Don't return error, just log and continue
     }
-
-    // 8. Verify the player has actually played the game
-    // const hasPlayed = await SecurityService.verifyGamePlay(fid, coinId);
-    // if (!hasPlayed) {
-    //   console.error('Player has not played this game:', { fid, coinId });
-    //   return NextResponse.json(
-    //     { error: 'Must play the game before earning points' },
-    //     { status: 400, headers }
-    //   );
-    // }
 
     // 9. Check daily points limit before any database writes
     const dailyLimitResult = await RateLimiter.checkDailyPointsLimit(
@@ -205,24 +191,12 @@ export async function POST(request: Request) {
         score
       );
     } catch (error) {
-      // Points increment failed - reservation will expire automatically
+      // Points increment failed
       console.error('Error updating points:', {
         error,
         authenticatedFid,
         score,
-        reservationId,
       });
-
-      // Try to release the reservation immediately since we failed
-      try {
-        await RateLimiter.releaseDailyPlaySlot(
-          authenticatedFid,
-          coinId,
-          reservationId
-        );
-      } catch (releaseError) {
-        console.error('Failed to release play slot after error:', releaseError);
-      }
 
       return NextResponse.json(
         { error: 'Failed to update points' },
@@ -230,22 +204,23 @@ export async function POST(request: Request) {
       );
     }
 
-    // 10.5. Commit the play slot after successful point increment
-    const commitSuccess = await RateLimiter.commitDailyPlaySlot(
+    // 10.5. Increment daily play count after successful point increment
+    const commitSuccess = await supabaseService.incrementDailyPlayCount(
       authenticatedFid,
-      coinId,
-      reservationId
+      coinId
     );
 
     if (!commitSuccess) {
-      console.error('Failed to commit play slot, but points were awarded:', {
-        authenticatedFid,
-        coinId,
-        reservationId,
-        score,
-      });
+      console.error(
+        'Failed to increment daily play count, but points were awarded:',
+        {
+          authenticatedFid,
+          coinId,
+          score,
+        }
+      );
       // Points were awarded but play tracking failed - this is non-critical
-      // The reservation will expire automatically
+      // We'll still return success since the user got their points
     }
 
     // 11. Save the score to the scores table (after successful point increment)
@@ -290,7 +265,7 @@ export async function POST(request: Request) {
     }
 
     // Get updated play count for response
-    const currentPlayCount = await RateLimiter.getDailyPlayCount(
+    const currentPlayCount = await supabaseService.getDailyPlayCount(
       authenticatedFid,
       coinId
     );
@@ -304,7 +279,7 @@ export async function POST(request: Request) {
         dailyPointsRemaining: dailyLimitResult.remaining,
         playsRemaining,
         maxDailyPlays,
-        playCommitted: commitSuccess,
+        playRecorded: commitSuccess,
       },
       { headers }
     );
