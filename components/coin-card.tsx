@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { useState } from 'react';
 import {
   ExternalLink,
   Copy,
@@ -18,12 +19,16 @@ import {
 import { toast } from 'sonner';
 import { trackGameEvent } from '@/lib/posthog';
 import { sentryTracker } from '@/lib/sentry';
+import { useBuild } from '@/hooks/useBuild';
 
 interface CoinCardProps {
   coin: CoinWithCreator;
 }
 
 export function CoinCard({ coin }: CoinCardProps) {
+  const { data: build, isLoading: buildLoading } = useBuild(coin.build_id);
+  const [isExpanded, setIsExpanded] = useState(false);
+
   const handleCopyAddress = () => {
     try {
       if (!coin.coin_address) {
@@ -249,15 +254,40 @@ export function CoinCard({ coin }: CoinCardProps) {
             </div>
 
             {/* Game Title */}
-            {coin.name && (
-              <h3 className="text-white font-bold text-xl truncate">
-                {coin.name}
-              </h3>
-            )}
           </div>
         </div>
       </div>
-
+      <div className="flex flex-col gap-1 mt-4">
+        {coin.name && (
+          <h3 className="text-white font-bold truncate">{coin.name}</h3>
+        )}
+        <div className="text-white/70 text-sm">
+          {buildLoading ? (
+            <p>Loading tutorial...</p>
+          ) : (
+            <>
+              <p
+                className={`${
+                  isExpanded ? '' : 'line-clamp-2'
+                } transition-all duration-200`}
+              >
+                {build?.tutorial ||
+                  coin.description ||
+                  'No description available'}
+              </p>
+              {(build?.tutorial || coin.description) &&
+                (build?.tutorial || coin.description || '').length > 100 && (
+                  <button
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    className="text-purple-400 hover:text-purple-300 text-xs mt-1 transition-colors"
+                  >
+                    {isExpanded ? 'Show less' : 'Show more'}
+                  </button>
+                )}
+            </>
+          )}
+        </div>
+      </div>
       {coin.id && (
         <Link href={`/coins/${coin.id}`}>
           <button className="bg-purple-600 text-white rounded-full font-semibold w-full mt-4 text-xl py-4 hover:brightness-110 transition-all duration-200 shadow-xl">

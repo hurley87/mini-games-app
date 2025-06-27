@@ -22,7 +22,6 @@ import {
   Zap,
   Users,
 } from 'lucide-react';
-import { PREMIUM_THRESHOLD } from '@/lib/config';
 
 const WELCOME_STORAGE_KEY = 'mini-games-welcome-seen';
 
@@ -179,13 +178,6 @@ export function WelcomeDialog({ trigger, onClose }: WelcomeDialogProps) {
                     Unlimited
                   </span>
                 </div>
-                <p className="text-xs text-white/80 mb-2">
-                  Hold{' '}
-                  <span className="font-bold text-yellow-400">
-                    {PREMIUM_THRESHOLD.toLocaleString('en-US')}
-                  </span>{' '}
-                  tokens of any game for:
-                </p>
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <CheckCircle className="w-3 h-3 text-emerald-400" />

@@ -18,7 +18,6 @@ import {
   Lock,
   Unlock,
 } from 'lucide-react';
-import { PREMIUM_THRESHOLD } from '@/lib/config';
 
 export default function InfoPage() {
   return (
@@ -179,13 +178,6 @@ export default function InfoPage() {
                   </div>
 
                   <div className="bg-black/30 rounded-lg p-3">
-                    <p className="text-sm text-white/90 mb-2">
-                      Hold{' '}
-                      <span className="font-bold text-yellow-400">
-                        {PREMIUM_THRESHOLD.toLocaleString('en-US')}
-                      </span>{' '}
-                      tokens of any game to unlock:
-                    </p>
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
                         <CheckCircle className="w-4 h-4 text-emerald-400" />
@@ -280,18 +272,6 @@ export default function InfoPage() {
                 <div className="px-4 pb-4 text-sm text-white/70">
                   Game tokens can be traded on Zora, held for premium access, or
                   used in future game features and tournaments.
-                </div>
-              </details>
-
-              <details className="bg-white/5 rounded-xl border border-white/10 group">
-                <summary className="p-4 cursor-pointer flex items-center justify-between font-semibold text-white">
-                  <span>How do I get premium access?</span>
-                  <Info className="w-4 h-4 text-white/60 group-open:rotate-180 transition-transform" />
-                </summary>
-                <div className="px-4 pb-4 text-sm text-white/70">
-                  Hold at least {PREMIUM_THRESHOLD.toLocaleString('en-US')}{' '}
-                  tokens from any game to unlock unlimited plays and exclusive
-                  features.
                 </div>
               </details>
 
