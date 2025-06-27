@@ -820,6 +820,158 @@ export const supabaseService = {
     }
   },
 
+  /**
+   * Atomically checks daily play limit and increments count if allowed
+   * This prevents race conditions where multiple concurrent requests could bypass the limit
+   */
+  async incrementDailyPlayCountIfAllowed(
+    fid: number,
+    coinId: string,
+    maxPlays: number
+  ): Promise<{
+    success: boolean;
+    currentPlays: number;
+    playsRemaining: number;
+    message?: string;
+  }> {
+    const today = new Date().toISOString().split('T')[0];
+
+    try {
+      // Use a database transaction to atomically check and increment
+      const { data, error } = await supabase.rpc(
+        'increment_daily_play_count_if_allowed',
+        {
+          p_fid: fid,
+          p_coin_id: coinId,
+          p_play_date: today,
+          p_max_plays: maxPlays,
+        }
+      );
+
+      if (error) {
+        console.error('Error in atomic play count increment:', error);
+
+        // If the RPC function doesn't exist, fall back to manual transaction
+        if (error.code === '42883') {
+          // function does not exist
+          return await this.incrementDailyPlayCountManualTransaction(
+            fid,
+            coinId,
+            maxPlays
+          );
+        }
+
+        throw new Error('Failed to increment daily play count');
+      }
+
+      return {
+        success: data.success,
+        currentPlays: data.current_plays,
+        playsRemaining: Math.max(0, maxPlays - data.current_plays),
+        message: data.message,
+      };
+    } catch (error) {
+      console.error('Error incrementing daily play count:', error);
+      return {
+        success: false,
+        currentPlays: 0,
+        playsRemaining: maxPlays,
+        message: 'Failed to check play limit',
+      };
+    }
+  },
+
+  /**
+   * Fallback manual transaction for atomic play count increment
+   * Used when the RPC function is not available
+   */
+  async incrementDailyPlayCountManualTransaction(
+    fid: number,
+    coinId: string,
+    maxPlays: number
+  ): Promise<{
+    success: boolean;
+    currentPlays: number;
+    playsRemaining: number;
+    message?: string;
+  }> {
+    const today = new Date().toISOString().split('T')[0];
+
+    try {
+      // First get the current count
+      const { data: existing } = await supabase
+        .from('daily_plays')
+        .select('play_count')
+        .eq('fid', fid)
+        .eq('coin_id', coinId)
+        .eq('play_date', today)
+        .single();
+
+      const currentPlays = existing?.play_count || 0;
+
+      // Check limit before incrementing
+      if (currentPlays >= maxPlays) {
+        return {
+          success: false,
+          currentPlays,
+          playsRemaining: 0,
+          message: 'Daily play limit already reached',
+        };
+      }
+
+      const newPlayCount = currentPlays + 1;
+
+      // Upsert with the new count
+      const { data, error } = await supabase
+        .from('daily_plays')
+        .upsert(
+          {
+            fid,
+            coin_id: coinId,
+            play_date: today,
+            play_count: newPlayCount,
+            updated_at: new Date().toISOString(),
+          },
+          {
+            onConflict: 'fid,coin_id,play_date',
+          }
+        )
+        .select('play_count')
+        .single();
+
+      if (error) {
+        console.error('Error in manual transaction upsert:', error);
+        throw error;
+      }
+
+      const finalPlayCount = data.play_count;
+
+      // Double-check limit after upsert (race condition protection)
+      if (finalPlayCount > maxPlays) {
+        return {
+          success: false,
+          currentPlays: finalPlayCount,
+          playsRemaining: 0,
+          message: 'Daily play limit exceeded due to concurrent request',
+        };
+      }
+
+      return {
+        success: true,
+        currentPlays: finalPlayCount,
+        playsRemaining: Math.max(0, maxPlays - finalPlayCount),
+      };
+    } catch (error) {
+      console.error('Error in manual transaction:', error);
+      return {
+        success: false,
+        currentPlays: 0,
+        playsRemaining: maxPlays,
+        message: 'Failed to increment play count',
+      };
+    }
+  },
+
   async incrementDailyPlayCount(fid: number, coinId: string): Promise<boolean> {
     const today = new Date().toISOString().split('T')[0];
 

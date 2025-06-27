@@ -155,20 +155,24 @@ export async function POST(request: Request) {
       );
     }
 
-    // 7.5. Check database-based daily play limit before processing
-    const currentDailyPlayCount = await supabaseService.getDailyPlayCount(
-      authenticatedFid,
-      coinId
-    );
+    // 7.5. Atomically check and increment daily play count to prevent race conditions
     const maxAllowedPlays = coin.max_plays || 3;
+    const playCountResult =
+      await supabaseService.incrementDailyPlayCountIfAllowed(
+        authenticatedFid,
+        coinId,
+        maxAllowedPlays
+      );
 
-    if (currentDailyPlayCount >= maxAllowedPlays) {
+    if (!playCountResult.success) {
       return NextResponse.json(
         {
-          error: 'Daily play limit exceeded for this game',
+          error:
+            playCountResult.message ||
+            'Daily play limit exceeded for this game',
           limit: maxAllowedPlays,
-          remaining: 0,
-          currentPlays: currentDailyPlayCount,
+          remaining: playCountResult.playsRemaining,
+          currentPlays: playCountResult.currentPlays,
         },
         { status: 429, headers }
       );
@@ -213,24 +217,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // 10.5. Increment daily play count after successful point increment
-    const commitSuccess = await supabaseService.incrementDailyPlayCount(
-      authenticatedFid,
-      coinId
-    );
-
-    if (!commitSuccess) {
-      console.error(
-        'Failed to increment daily play count, but points were awarded:',
-        {
-          authenticatedFid,
-          coinId,
-          score,
-        }
-      );
-      // Points were awarded but play tracking failed - this is non-critical
-      // We'll still return success since the user got their points
-    }
+    // 10.5. Daily play count was already incremented atomically before point award
+    // No additional increment needed - this prevents race conditions
 
     // 10.6. Clean up Redis reservation if provided (during transition period)
     if (reservationId && typeof reservationId === 'string') {
@@ -296,22 +284,16 @@ export async function POST(request: Request) {
       }
     }
 
-    // Get updated play count for response
-    const finalPlayCount = await supabaseService.getDailyPlayCount(
-      authenticatedFid,
-      coinId
-    );
-    const playsRemaining = Math.max(0, maxAllowedPlays - finalPlayCount);
-
+    // Use play count results from atomic operation
     return NextResponse.json(
       {
         success: true,
         score,
         dailyPointsRemaining: dailyLimitResult.remaining,
-        playsRemaining,
+        playsRemaining: playCountResult.playsRemaining,
         maxDailyPlays: maxAllowedPlays,
-        currentDailyPlays: finalPlayCount,
-        playRecorded: commitSuccess,
+        currentDailyPlays: playCountResult.currentPlays,
+        playRecorded: true, // Always true since atomic operation succeeded
       },
       { headers }
     );
