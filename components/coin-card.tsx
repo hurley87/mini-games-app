@@ -197,7 +197,7 @@ export function CoinCard({ coin }: CoinCardProps) {
           {/* Top corner stats */}
           <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-start">
             {/* Duration - Top Left */}
-            {coin.duration && (
+            {coin.duration != null && (
               <div className="bg-black/60 backdrop-blur-sm rounded-lg px-3 py-1.5">
                 <div className="text-white/80 text-xs font-medium">
                   Duration
@@ -209,7 +209,7 @@ export function CoinCard({ coin }: CoinCardProps) {
             )}
 
             {/* Premium Threshold - Top Right */}
-            {coin.premium_threshold && (
+            {coin.premium_threshold != null && (
               <div className="bg-black/60 backdrop-blur-sm rounded-lg px-3 py-1.5">
                 <div className="text-white/80 text-xs font-medium">Premium</div>
                 <div className="text-white font-bold text-sm">
@@ -223,7 +223,7 @@ export function CoinCard({ coin }: CoinCardProps) {
           <div className="absolute bottom-0 left-0 right-0 p-4">
             <div className="flex justify-between items-end mb-2">
               {/* Max earning potential - Bottom Left */}
-              {coin.max_points && coin.token_multiplier && (
+              {coin.max_points != null && coin.token_multiplier != null && (
                 <div className="bg-black/60 backdrop-blur-sm rounded-lg px-3 py-1.5">
                   <div className="text-white/80 text-xs font-medium">
                     Max Earn
@@ -236,7 +236,7 @@ export function CoinCard({ coin }: CoinCardProps) {
               )}
 
               {/* Token Multiplier - Bottom Right */}
-              {coin.token_multiplier && (
+              {coin.token_multiplier != null && (
                 <div className="bg-black/60 backdrop-blur-sm rounded-lg px-3 py-1.5">
                   <div className="text-white/80 text-xs font-medium">
                     Multiplier
