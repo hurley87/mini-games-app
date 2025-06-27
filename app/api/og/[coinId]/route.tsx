@@ -110,103 +110,57 @@ export async function GET(
             }}
           />
 
-          <div
-            style={{
-              position: 'absolute',
-              top: 32,
-              left: 32,
-              right: 32,
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'flex-start',
-            }}
-          >
-            {coin.duration != null && (
+          {/* Centered text showing combined earning and duration info */}
+          {(maxEarn != null || coin.duration != null) && (
+            <div
+              style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textAlign: 'center',
+              }}
+            >
               <div
                 style={{
-                  backgroundColor: 'rgba(0,0,0,0.6)',
-                  borderRadius: 16,
-                  padding: '16px 24px',
+                  backgroundColor: 'rgba(0,0,0,0.7)',
+                  borderRadius: 24,
+                  padding: '32px 48px',
                   display: 'flex',
-                  flexDirection: 'row',
-                  alignItems: 'flex-end',
-                  gap: 4,
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 8,
                 }}
               >
                 <div
                   style={{
                     display: 'flex',
-                    color: 'rgba(255,255,255,0.8)',
-                    fontSize: 32,
-                    fontWeight: 'bold',
-                    marginBottom: 6,
-                  }}
-                >
-                  Play for
-                </div>
-                <div
-                  style={{
-                    display: 'flex',
-                    fontSize: 48,
+                    color: '#ffffff',
+                    fontSize: 56,
                     fontWeight: 900,
                     textAlign: 'center',
-                    color: '#10b981',
+                    lineHeight: 1.1,
                   }}
                 >
-                  {coin.duration}s
+                  {maxEarn != null && coin.duration != null
+                    ? `Earn ${maxEarn.toLocaleString()}${
+                        coin.symbol ? ` $${coin.symbol}` : ''
+                      } in ${coin.duration}s`
+                    : maxEarn != null
+                      ? `Earn ${maxEarn.toLocaleString()}${
+                          coin.symbol ? ` $${coin.symbol}` : ''
+                        }`
+                      : coin.duration != null
+                        ? `Play for ${coin.duration}s`
+                        : ''}
                 </div>
               </div>
-            )}
-          </div>
-
-          <div
-            style={{
-              position: 'absolute',
-              bottom: 32,
-              left: 32,
-              right: 32,
-              display: 'flex',
-              justifyContent: 'flex-end',
-              alignItems: 'flex-end',
-            }}
-          >
-            {maxEarn != null && (
-              <div
-                style={{
-                  backgroundColor: 'rgba(0,0,0,0.6)',
-                  borderRadius: 16,
-                  padding: '16px 24px',
-                  display: 'flex',
-                  flexDirection: 'row',
-                  alignItems: 'flex-end',
-                  gap: 4,
-                }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    color: 'rgba(255,255,255,0.8)',
-                    fontSize: 32,
-                    fontWeight: 'bold',
-                    marginBottom: 6,
-                  }}
-                >
-                  Earn
-                </div>
-                <div
-                  style={{
-                    display: 'flex',
-                    color: '#10b981',
-                    fontSize: 48,
-                    fontWeight: 900,
-                  }}
-                >
-                  {maxEarn.toLocaleString()}{' '}
-                  {coin.symbol ? `$${coin.symbol}` : ''}
-                </div>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       ),
       {
