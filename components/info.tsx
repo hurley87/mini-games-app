@@ -575,7 +575,7 @@ export function Info({
             <p className="text-sm text-white/70 leading-relaxed">
               {description}
             </p>
-            <div className="p-6 pt-0">
+            <div className="pt-0 w-full">
               <button
                 onClick={handlePlay}
                 disabled={
