@@ -40,6 +40,7 @@ interface GameProps {
   coinAddress: string;
   coinId: string;
   onRoundComplete?: (score: number) => void;
+  onScoreUpdate?: (score: number) => void;
   forceEnd?: boolean;
   hasPlayedBefore?: boolean;
   coin: Coin;
@@ -51,6 +52,7 @@ export function Game({
   coinAddress,
   coinId,
   onRoundComplete,
+  onScoreUpdate,
   forceEnd = false,
   hasPlayedBefore = false,
   coin,
@@ -123,6 +125,10 @@ export function Game({
               newScore,
               '(+' + score + ')'
             );
+            
+            // Call the score update callback with the new total score
+            onScoreUpdate?.(newScore);
+            
             return newScore;
           });
         }
@@ -138,7 +144,7 @@ export function Game({
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [onRoundComplete, iframeUrl, roundScore]);
+  }, [onRoundComplete, onScoreUpdate, iframeUrl, roundScore]);
 
   // Check token balance
   useEffect(() => {
@@ -185,7 +191,7 @@ export function Game({
     } else {
       setCheckingTokens(false);
     }
-  }, [address, coinAddress, isConnected, tokenDecimals]);
+  }, [address, coinAddress, isConnected, tokenDecimals, coin.premium_threshold]);
 
   // Set timeout logic:
   // - First-time players always get 10-second preview (regardless of tokens)

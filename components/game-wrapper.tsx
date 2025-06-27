@@ -6,7 +6,7 @@ import { Game } from './game';
 import { RoundResult } from './round-result';
 import { GameFinished } from './game-finished';
 import { Creator, Coin } from '@/lib/types';
-import { ArrowLeft, Clock } from 'lucide-react';
+import { ArrowLeft, Clock, Target, Trophy } from 'lucide-react';
 import { Button } from './ui/button';
 import { trackGameEvent, trackEvent } from '@/lib/posthog';
 import { sentryTracker, setSentryTags } from '@/lib/sentry';
@@ -42,6 +42,8 @@ export function GameWrapper({
   const [showGame, setShowGame] = useState(false);
   const [showResult, setShowResult] = useState(false);
   const [finalScore, setFinalScore] = useState(0);
+  const [currentScore, setCurrentScore] = useState(0);
+  const [maxPointsReached, setMaxPointsReached] = useState(false);
   const [remainingTime, setRemainingTime] = useState(timeoutSeconds);
   const [forceGameEnd, setForceGameEnd] = useState(false);
   const gameStartTime = useRef<number | null>(null);
@@ -87,6 +89,26 @@ export function GameWrapper({
       fetchCoinData();
     }
   }, [coinId, id, name, coinAddress]);
+
+  const handleScoreUpdate = (score: number) => {
+    try {
+      setCurrentScore(score);
+      
+      // Check if max points reached for the first time
+      if (coin?.max_points && score >= coin.max_points && !maxPointsReached) {
+        setMaxPointsReached(true);
+        
+        // Trigger haptic feedback for success
+        try {
+          sdk.haptics.impactOccurred('heavy');
+        } catch (error) {
+          console.error('Error triggering success haptic:', error);
+        }
+      }
+    } catch (error) {
+      console.error('Error updating current score:', error);
+    }
+  };
 
   const handleRoundComplete = (score: number) => {
     try {
@@ -185,6 +207,8 @@ export function GameWrapper({
       gameStartTime.current = Date.now();
       setForceGameEnd(false);
       setFinalScore(0);
+      setCurrentScore(0);
+      setMaxPointsReached(false);
 
       // Force a small delay to ensure state cleanup, then show game
       setTimeout(() => {
@@ -461,6 +485,7 @@ export function GameWrapper({
     console.log('🎮 GameWrapper: Rendering game interface');
     return (
       <div className="flex flex-col h-full relative z-50">
+        {/* Left side: Exit button and Timer */}
         <div className="fixed top-4 left-4 z-50 flex items-center gap-3 rounded-full px-4 py-2 shadow-lg">
           <Button
             variant="ghost"
@@ -480,6 +505,34 @@ export function GameWrapper({
             </span>
           </div>
         </div>
+
+        {/* Right side: Points display */}
+        <div className="fixed top-4 right-4 z-50 rounded-full px-4 py-2 shadow-lg">
+          <div className="flex items-center gap-2 text-white">
+            <div className={`flex items-center gap-2 transition-all duration-300 ${
+              maxPointsReached 
+                ? 'text-yellow-400 animate-pulse' 
+                : 'text-white/70'
+            }`}>
+              {maxPointsReached ? (
+                <>
+                  <Trophy size={14} className="animate-bounce" />
+                  <span className="text-sm font-bold">
+                    MAX REACHED! 🎉
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Target size={14} />
+                  <span className="text-sm font-mono">
+                    {currentScore.toLocaleString()}/{coin?.max_points?.toLocaleString() || '∞'}
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
         <div className="flex-1">
           <Game
             id={id}
@@ -487,6 +540,7 @@ export function GameWrapper({
             coinAddress={coinAddress}
             coinId={coinId}
             onRoundComplete={handleRoundComplete}
+            onScoreUpdate={handleScoreUpdate}
             forceEnd={forceGameEnd}
             hasPlayedBefore={playStatus?.hasPlayed ?? false}
             coin={coin}
