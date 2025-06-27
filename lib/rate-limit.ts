@@ -121,55 +121,78 @@ export class RateLimiter {
     const reservationTtl = 1800; // 30 minutes for reservations
 
     try {
-      // Get current committed plays and active reservations
-      const [currentPlaysResult, reservationsResult] = await Promise.all([
-        redis.get<number>(playsKey),
-        redis.smembers<string[]>(reservationsKey),
-      ]);
+      // Create a unique reservation ID (fixed deprecated substr)
+      const reservationId = `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+      const reservationDetailKey = `reservation:${reservationId}`;
 
-      const currentPlays = currentPlaysResult || 0;
-      const reservations = reservationsResult || [];
+      // Atomic check-and-reserve using Lua script to prevent race conditions
+      const luaScript = `
+        local playsKey = KEYS[1]
+        local reservationsKey = KEYS[2]
+        local reservationDetailKey = KEYS[3]
+        local maxPlays = tonumber(ARGV[1])
+        local ttl = tonumber(ARGV[2])
+        local reservationTtl = tonumber(ARGV[3])
+        local reservationId = ARGV[4]
+        local reservationData = ARGV[5]
+        
+        -- Get current committed plays and active reservations
+        local currentPlays = redis.call('GET', playsKey) or 0
+        local reservations = redis.call('SMEMBERS', reservationsKey) or {}
+        
+        -- Calculate total used slots (committed + reserved)
+        local totalUsedSlots = tonumber(currentPlays) + #reservations
+        
+        -- Check if we can reserve a slot
+        if totalUsedSlots >= maxPlays then
+          return {0, totalUsedSlots, maxPlays}
+        end
+        
+        -- Add reservation to the set with expiration
+        redis.call('SADD', reservationsKey, reservationId)
+        redis.call('EXPIRE', reservationsKey, ttl)
+        
+        -- Set individual reservation with shorter TTL for cleanup
+        redis.call('SETEX', reservationDetailKey, reservationTtl, reservationData)
+        
+        -- Return success with updated counts
+        return {1, totalUsedSlots + 1, maxPlays}
+      `;
 
-      // Calculate total used slots (committed + reserved)
-      const totalUsedSlots = currentPlays + reservations.length;
+      const reservationData = JSON.stringify({
+        fid,
+        coinId,
+        dateStr,
+        created: Date.now(),
+      });
 
-      // Check if we can reserve a slot
-      if (totalUsedSlots >= maxPlays) {
+      const result = (await redis.eval(
+        luaScript,
+        [playsKey, reservationsKey, reservationDetailKey],
+        [
+          maxPlays.toString(),
+          ttl.toString(),
+          reservationTtl.toString(),
+          reservationId,
+          reservationData,
+        ]
+      )) as [number, number, number];
+
+      const [success, totalUsedSlots, limit] = result;
+
+      if (success === 0) {
         return {
           success: false,
-          limit: maxPlays,
-          remaining: Math.max(0, maxPlays - totalUsedSlots),
+          limit,
+          remaining: Math.max(0, limit - totalUsedSlots),
           reset: Date.now() + ttl * 1000,
         };
       }
 
-      // Create a unique reservation ID
-      const reservationId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
-      // Add reservation to the set with expiration
-      const multi = redis.multi();
-      multi.sadd(reservationsKey, reservationId);
-      multi.expire(reservationsKey, ttl);
-
-      // Set individual reservation with shorter TTL for cleanup
-      const reservationDetailKey = `reservation:${reservationId}`;
-      multi.setex(
-        reservationDetailKey,
-        reservationTtl,
-        JSON.stringify({
-          fid,
-          coinId,
-          dateStr,
-          created: Date.now(),
-        })
-      );
-
-      await multi.exec();
-
       return {
         success: true,
-        limit: maxPlays,
-        remaining: maxPlays - (totalUsedSlots + 1),
+        limit,
+        remaining: limit - totalUsedSlots,
         reset: Date.now() + ttl * 1000,
         reservationId,
       };
