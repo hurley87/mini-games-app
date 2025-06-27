@@ -155,26 +155,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // 7.5. Check daily play limit before any state changes
-    const maxAllowedPlays = coin.max_plays || 3;
-    const currentDailyPlays = await supabaseService.getDailyPlayCount(
-      authenticatedFid,
-      coinId
-    );
-
-    if (currentDailyPlays >= maxAllowedPlays) {
-      return NextResponse.json(
-        {
-          error: 'Daily play limit exceeded for this game',
-          limit: maxAllowedPlays,
-          remaining: Math.max(0, maxAllowedPlays - currentDailyPlays),
-          currentPlays: currentDailyPlays,
-        },
-        { status: 429, headers }
-      );
-    }
-
-    // 8. Check daily points limit before any database writes
+    // 7.5. Check daily points limit before any database writes
     const dailyLimitResult = await RateLimiter.checkDailyPointsLimit(
       authenticatedFid,
       score,
@@ -193,27 +174,9 @@ export async function POST(request: Request) {
       );
     }
 
-    // 9. Increment the player's points
-    try {
-      await supabaseService.incrementPlayerPoints(
-        Number(authenticatedFid),
-        score
-      );
-    } catch (error) {
-      // Points increment failed
-      console.error('Error updating points:', {
-        error,
-        authenticatedFid,
-        score,
-      });
-
-      return NextResponse.json(
-        { error: 'Failed to update points' },
-        { status: 500, headers }
-      );
-    }
-
-    // 10. After successful points award, increment daily play count
+    // 8. CRITICAL: Increment daily play count FIRST to prevent race conditions
+    // This atomically checks and increments the play count, preventing TOCTOU issues
+    const maxAllowedPlays = coin.max_plays || 3;
     const playCountResult =
       await supabaseService.incrementDailyPlayCountIfAllowed(
         authenticatedFid,
@@ -222,16 +185,39 @@ export async function POST(request: Request) {
       );
 
     if (!playCountResult.success) {
-      console.error(
-        'Failed to increment play count after successful point award:',
+      return NextResponse.json(
         {
-          authenticatedFid,
-          coinId,
-          playCountResult,
-        }
+          error: 'Daily play limit exceeded for this game',
+          limit: maxAllowedPlays,
+          remaining: Math.max(
+            0,
+            maxAllowedPlays - (playCountResult.currentPlays || 0)
+          ),
+          currentPlays: playCountResult.currentPlays || 0,
+        },
+        { status: 429, headers }
       );
-      // Note: Points were already awarded, so we don't return an error here
-      // This is a logging issue that should be monitored
+    }
+
+    // 9. Only award points AFTER successfully incrementing play count
+    try {
+      await supabaseService.incrementPlayerPoints(
+        Number(authenticatedFid),
+        score
+      );
+    } catch (error) {
+      // Points increment failed - this is critical since we already incremented play count
+      console.error('Error updating points after play count increment:', {
+        error,
+        authenticatedFid,
+        score,
+        playCountResult,
+      });
+
+      return NextResponse.json(
+        { error: 'Failed to update points' },
+        { status: 500, headers }
+      );
     }
 
     // 11. Save the score to the scores table (after successful point increment)
@@ -276,9 +262,7 @@ export async function POST(request: Request) {
     }
 
     // Calculate final play count values
-    const finalCurrentPlays = playCountResult.success
-      ? playCountResult.currentPlays
-      : currentDailyPlays + 1; // If increment failed, estimate the count
+    const finalCurrentPlays = playCountResult.currentPlays || 0;
     const finalPlaysRemaining = Math.max(
       0,
       maxAllowedPlays - finalCurrentPlays

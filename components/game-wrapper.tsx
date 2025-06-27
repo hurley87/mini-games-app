@@ -295,11 +295,6 @@ export function GameWrapper({
   };
 
   const handleCreateScore = async () => {
-    // Check if we have a valid reservation ID
-    if (!reservationId) {
-      throw new Error('No play reservation found. Please restart the game.');
-    }
-
     const response = await sdk.quickAuth.fetch(
       `${process.env.NEXT_PUBLIC_URL}/api/award`,
       {
@@ -308,7 +303,6 @@ export function GameWrapper({
         body: JSON.stringify({
           coinId: coinId,
           score: finalScore,
-          reservationId,
         }),
       }
     );
