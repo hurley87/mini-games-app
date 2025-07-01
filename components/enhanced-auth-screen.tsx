@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from './ui/button';
 import { LoadingSpinner } from './ui/loading-spinner';
 import { useMiniApp } from '@/contexts/miniapp-context';
@@ -50,6 +50,31 @@ export function EnhancedAuthScreen({
 
   const [manualRetryCount, setManualRetryCount] = useState(0);
   const [isCheckingAuth, setIsCheckingAuth] = useState(false);
+
+  // Handle wallet connection
+  const handleConnectWallet = useCallback(async () => {
+    try {
+      if (connectors && connectors.length > 0) {
+        connect({ connector: connectors[0] });
+      } else {
+        toast.error('No wallet connectors available');
+      }
+    } catch (error) {
+      console.error('Failed to connect wallet:', error);
+      toast.error('Failed to connect wallet');
+    }
+  }, [connect, connectors]);
+
+  // Handle Farcaster sign in
+  const handleFarcasterSignIn = useCallback(async () => {
+    try {
+      await signIn();
+      toast.success('Successfully signed in!');
+    } catch (error) {
+      console.error('Sign in failed:', error);
+      toast.error('Sign in failed. Please try again.');
+    }
+  }, [signIn]);
 
   // Authentication steps
   const [steps, setSteps] = useState<AuthStep[]>([
@@ -147,35 +172,12 @@ export function EnhancedAuthScreen({
     user,
     isSigningIn,
     signInError,
+    handleConnectWallet,
+    handleFarcasterSignIn,
   ]);
 
   // Check if all steps are complete
   const allStepsComplete = steps.every((step) => step.status === 'success');
-
-  // Handle wallet connection
-  const handleConnectWallet = async () => {
-    try {
-      if (connectors && connectors.length > 0) {
-        connect({ connector: connectors[0] });
-      } else {
-        toast.error('No wallet connectors available');
-      }
-    } catch (error) {
-      console.error('Failed to connect wallet:', error);
-      toast.error('Failed to connect wallet');
-    }
-  };
-
-  // Handle Farcaster sign in
-  const handleFarcasterSignIn = async () => {
-    try {
-      await signIn();
-      toast.success('Successfully signed in!');
-    } catch (error) {
-      console.error('Sign in failed:', error);
-      toast.error('Sign in failed. Please try again.');
-    }
-  };
 
   // Handle disconnecting wallet (for retry)
   const handleDisconnectWallet = () => {
