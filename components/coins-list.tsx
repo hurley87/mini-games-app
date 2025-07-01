@@ -6,6 +6,7 @@ import { CoinCard } from './coin-card';
 const getCoinsWithData = unstable_cache(
   async () => {
     const coins: Coin[] = await supabaseService.getCoins();
+    console.log('coins', coins);
     const coinsWithCreators: CoinWithCreator[] = await Promise.all(
       coins.map(async (coin) => {
         try {
@@ -23,6 +24,7 @@ const getCoinsWithData = unstable_cache(
         }
       })
     );
+    console.log('coinsWithCreators', coinsWithCreators);
     return coinsWithCreators;
   },
   ['coins-with-data'],

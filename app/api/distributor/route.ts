@@ -51,8 +51,8 @@ async function processTransfers() {
       }
 
       const account = await getWalletAccount(
-        'q6pjcc0zexrczw37fm88rc3j',
-        '0xe67C7640c647Ee0Bb85a70f08EDBC385FBeCae3F'
+        coin.wallet_id,
+        coin.wallet_address
       );
 
       const walletClient = createClientForWallet(account);
