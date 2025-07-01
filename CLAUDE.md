@@ -101,3 +101,11 @@ Critical env vars from README:
 - Custom middleware handles auth for API routes
 - OpenGraph images generated dynamically for coins
 - Background task processing with queue system
+
+## Code Formatting
+
+A Claude Code hook is configured in `.claude/hooks.json` to automatically format code using Prettier after edits. The hook applies to TypeScript, JavaScript, JSON, CSS, and Markdown files, using the project's Prettier configuration:
+
+- Single quotes, semicolons enabled
+- 2-space tabs, 80 character line width
+- ES5 trailing commas, LF line endings
