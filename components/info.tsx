@@ -218,7 +218,7 @@ export function Info({
     );
   }
 
-  if (walletBalance !== null && walletBalance <= 0) {
+  if (walletBalance != null && walletBalance <= 0) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4">
         <div className="bg-black/20 backdrop-blur rounded-2xl shadow-xl p-8 text-center max-w-md border border-white/20 space-y-4">
@@ -437,8 +437,8 @@ export function Info({
                     Premium Access Required
                   </h3>
                   <p className="text-xs text-amber-300 mt-1">
-                    You need at least {formatNumber(coin.premium_threshold)} {symbol}{' '}
-                    tokens or wait{' '}
+                    You need at least {formatNumber(coin.premium_threshold)}{' '}
+                    {symbol} tokens or wait{' '}
                     {formatTimeUntil(playStatus.nextFreePlayTime!)} for your
                     next free play.
                   </p>
@@ -527,8 +527,8 @@ export function Info({
                     🎮 Unlock Unlimited Access
                   </h3>
                   <p className="text-xs text-white/70 leading-relaxed mb-3">
-                    Hold {formatNumber(coin.premium_threshold)} ${symbol} tokens to
-                    enjoy unlimited gameplay with no waiting periods or
+                    Hold {formatNumber(coin.premium_threshold)} ${symbol} tokens
+                    to enjoy unlimited gameplay with no waiting periods or
                     restrictions.
                   </p>
                   <div className="flex items-center gap-2 text-xs text-purple-300">
