@@ -1,0 +1,9 @@
+{
+  "postEdit": {
+    "command": "npx prettier --write",
+    "args": ["${filePath}"],
+    "description": "Format code with Prettier after editing",
+    "includePatterns": ["**/*.{js,jsx,ts,tsx,json,css,scss,md}"],
+    "excludePatterns": ["node_modules/**", ".next/**", "dist/**"]
+  }
+}
