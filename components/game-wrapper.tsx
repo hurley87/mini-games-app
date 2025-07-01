@@ -54,6 +54,8 @@ export function GameWrapper({
   const [reservationId, setReservationId] = useState<string | null>(null);
   const [coin, setCoin] = useState<Coin | null>(null);
   const [coinLoading, setCoinLoading] = useState(true);
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const [walletLoading, setWalletLoading] = useState(false);
   const { playStatus } = usePlayStatus();
 
   console.log('coinId', coinId);
@@ -89,6 +91,35 @@ export function GameWrapper({
       fetchCoinData();
     }
   }, [coinId, id, name, coinAddress]);
+
+  // Fetch game wallet balance once coin data is loaded
+  useEffect(() => {
+    const fetchWalletBalance = async () => {
+      if (!coin?.wallet_address || !coin.coin_address) return;
+      try {
+        setWalletLoading(true);
+        const response = await fetch('/api/wallet-balance', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            coinAddress: coin.coin_address,
+            walletAddress: coin.wallet_address,
+          }),
+        });
+        if (!response.ok) {
+          throw new Error('Failed to fetch wallet balance');
+        }
+        const data = await response.json();
+        setWalletBalance(parseFloat(data.balance));
+      } catch (err) {
+        console.error('Error fetching wallet balance:', err);
+      } finally {
+        setWalletLoading(false);
+      }
+    };
+
+    fetchWalletBalance();
+  }, [coin]);
 
   const handleScoreUpdate = (score: number) => {
     try {
@@ -590,6 +621,8 @@ export function GameWrapper({
       onPlay={handleGameStart}
       coinId={coinId}
       coin={coin}
+      walletBalance={walletBalance}
+      walletAddress={coin?.wallet_address}
     />
   );
 }

@@ -13,6 +13,8 @@ export interface Coin {
   id: string;
   fid: number;
   coin_address: string;
+  wallet_address?: string;
+  wallet_id?: string;
   name: string;
   symbol: string;
   description: string;
