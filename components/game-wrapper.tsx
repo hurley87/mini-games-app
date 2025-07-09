@@ -534,7 +534,7 @@ export function GameWrapper({
             <span className="text-sm">Exit</span>
           </Button>
 
-          <div className="flex items-center gap-2 text-white/70 border-l border-white/20 pl-3 bg-black/50 backdrop-blur-sm">
+          <div className="flex items-center gap-2 text-white/70 border-l border-white/20 pl-3">
             <Clock size={14} />
             <span className="text-sm font-mono">
               {Math.floor((remainingTime ?? 0) / 60)}:
@@ -544,7 +544,7 @@ export function GameWrapper({
         </div>
 
         {/* Right side: Points display */}
-        <div className="fixed top-4 right-4 z-50 rounded-full px-4 py-2 shadow-lg">
+        <div className="fixed top-4 right-4 z-50 rounded-full px-4 py-2 shadow-lg bg-black/50 backdrop-blur-sm">
           <div className="flex items-center gap-2 text-white">
             <div
               className={`flex items-center gap-2 transition-all duration-300 ${
