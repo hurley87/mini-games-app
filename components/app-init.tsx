@@ -18,7 +18,7 @@ export function AppInit({ children }: AppInitProps) {
   const [streak, setStreak] = useState<{
     streak: number;
     claimed: boolean;
-    fid?: number; // Track which FID this streak belongs to
+    fid?: number;
   } | null>(null);
   const { isLoading, error, user } = useSignIn({
     autoSignIn: true,
@@ -97,7 +97,7 @@ export function AppInit({ children }: AppInitProps) {
   if (error) {
     console.error('Sign-in error:', error);
     return (
-      <EnhancedAuthScreen 
+      <EnhancedAuthScreen
         onAuthSuccess={() => {
           // User successfully authenticated, continue to app
           console.log('Authentication successful from error recovery');
